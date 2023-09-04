@@ -34,6 +34,15 @@
       "rules": {
         "import/unambiguous": "off"
       }
+    },
+    {
+      "files": [
+        "**/bin/query.ts",
+        "**/lib/QueryEngine.ts"
+      ],
+      "rules": {
+        "import/extensions": "off"
+      }
     }
   ]
 }
