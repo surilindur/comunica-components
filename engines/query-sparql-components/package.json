@@ -1,0 +1,27 @@
+{
+  "name": "@comunica/query-sparql-components",
+  "version": "0.0.0",
+  "description": "Comunica using custom components",
+  "main": "lib/index.js",
+  "types": "lib/index",
+  "license": "MIT",
+  "private": true,
+  "lsd:module": true,
+  "bin": {
+    "comunica-sparql-components": "bin/query.js",
+    "comunica-sparql-components-http": "bin/http.js",
+    "comunica-dynamic-sparql-components": "bin/query-dynamic.js"
+  },
+  "scripts": {
+    "build": "npm run build:ts",
+    "build:ts": "tsc",
+    "prepare": "comunica-compile-config config/config-default.json > engine-default.js"
+  },
+  "dependencies": {
+    "@comunica/actor-init-query": "^2.0.0",
+    "@comunica/actor-rdf-metadata-extract-void-count": "^0.0.0",
+    "@comunica/config-query-sparql-components": "^0.0.0",
+    "@comunica/query-sparql-link-traversal-solid": "^0.2.0",
+    "@comunica/runner-cli": "^2.0.0"
+  }
+}
