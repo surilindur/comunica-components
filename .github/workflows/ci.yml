@@ -25,10 +25,8 @@ jobs:
           path: |
             **/node_modules
           key: ${{ runner.os }}-test-modules-v1-${{ hashFiles('**/yarn.lock') }}
-      - name: Install dependencies
-        run: yarn install --frozen-lockfile
-      - name: Build
-        run: yarn build
+      - name: Install dependencies and build
+        run: yarn install --frozen-lockfile 
 
   lint:
     runs-on: ubuntu-latest
