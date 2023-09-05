@@ -1,3 +1,7 @@
+import {
+  type ActorInitQueryBase,
+  QueryEngineBase,
+} from '@comunica/actor-init-query';
 import { type MediatorDereferenceRdf } from '@comunica/bus-dereference-rdf';
 import {
   type IActionRdfMetadataExtract,
@@ -9,7 +13,6 @@ import { KeysQueryOperation, KeysInitQuery } from '@comunica/context-entries';
 import { type IActorTest } from '@comunica/core';
 import { type IActionContext } from '@comunica/types';
 import type * as RDF from '@rdfjs/types';
-import { NamedNode } from 'rdf-data-factory';
 import { storeStream } from 'rdf-store-stream';
 
 /**
@@ -18,31 +21,15 @@ import { storeStream } from 'rdf-store-stream';
 export class ActorRdfMetadataExtractVoIDCount extends ActorRdfMetadataExtract {
   public readonly mediatorDereferenceRdf: MediatorDereferenceRdf;
 
-  private readonly predicateCountsByUriPrefix: Map<string, Map<string, number>>;
+  private readonly queryEngine: QueryEngineBase;
+  private readonly predicateCounts: Map<string, Map<string, number>>;
   private readonly processedUrls: Set<string>;
-
-  public static readonly RDF_PREFIX = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#';
-  public static readonly XSD_PREFIX = 'http://www.w3.org/2001/XMLSchema#';
-  public static readonly VOID_PREFIX = 'http://rdfs.org/ns/void#';
-
-  public static readonly IRI_A = new NamedNode(`${ActorRdfMetadataExtractVoIDCount.RDF_PREFIX}type`);
-  public static readonly IRI_VOID_DATASET = new NamedNode(`${ActorRdfMetadataExtractVoIDCount.VOID_PREFIX}Dataset`);
-  public static readonly IRI_VOID_IN_DATASET = new NamedNode(`${ActorRdfMetadataExtractVoIDCount.VOID_PREFIX}inDataset`);
-  public static readonly IRI_VOID_URI_SPACE = new NamedNode(`${ActorRdfMetadataExtractVoIDCount.VOID_PREFIX}uriSpace`);
-  public static readonly IRI_VOID_TRIPLES = new NamedNode(`${ActorRdfMetadataExtractVoIDCount.VOID_PREFIX}triples`);
-  public static readonly IRI_VOID_CLASSES = new NamedNode(`${ActorRdfMetadataExtractVoIDCount.VOID_PREFIX}classes`);
-  public static readonly IRI_VOID_PROPERTIES = new NamedNode(`${ActorRdfMetadataExtractVoIDCount.VOID_PREFIX}properties`);
-  public static readonly IRI_VOID_PROPERTY = new NamedNode(`${ActorRdfMetadataExtractVoIDCount.VOID_PREFIX}property`);
-  public static readonly IRI_VOID_PROPERTY_PARTITION = new NamedNode(`${ActorRdfMetadataExtractVoIDCount.VOID_PREFIX}propertyPartition`);
-  public static readonly IRI_VOID_DISTINCT_SUBJECTS = new NamedNode(`${ActorRdfMetadataExtractVoIDCount.VOID_PREFIX}distinctSubjects`);
-  public static readonly IRI_VOID_DISTINCT_OBJECTS = new NamedNode(`${ActorRdfMetadataExtractVoIDCount.VOID_PREFIX}distinctObjects`);
-  public static readonly IRI_VOID_DOCUMENTS = new NamedNode(`${ActorRdfMetadataExtractVoIDCount.VOID_PREFIX}documents`);
-  public static readonly IRI_XSD_INTEGER = new NamedNode(`${ActorRdfMetadataExtractVoIDCount.XSD_PREFIX}integer`);
 
   public constructor(args: IActorRdfMetadataExtractVoIDCountArgs) {
     super(args);
     this.mediatorDereferenceRdf = args.mediatorDereferenceRdf;
-    this.predicateCountsByUriPrefix = new Map();
+    this.queryEngine = new QueryEngineBase(args.actorInitQuery);
+    this.predicateCounts = new Map();
     this.processedUrls = new Set();
   }
 
@@ -53,137 +40,120 @@ export class ActorRdfMetadataExtractVoIDCount extends ActorRdfMetadataExtract {
     if (!action.context.get(KeysQueryOperation.operation)) {
       throw new Error(`Actor ${this.name} can only work in the context of a query operation.`);
     }
+    if (!this.getCurrentQueryOperationPredicateValue(action.context)) {
+      throw new Error(`Actor ${this.name} can only work when the query operation pattern predicate is an IRI.`);
+    }
     return true;
   }
 
   public async run(action: IActionRdfMetadataExtract): Promise<IActorRdfMetadataExtractOutput> {
-    let predicateCountMap = this.getPredicateCountMap(action.url);
+    const predicate: string = this.getCurrentQueryOperationPredicateValue(action.context)!;
 
-    if (!predicateCountMap && !this.processedUrls.has(action.url)) {
-      const links: string[] = await this.extractVoIDDescriptionLinks(action.metadata);
-      if (links.length > 0) {
-        for (const link of links) {
-          await this.parseVoIDDescription(link, action.context);
-        }
-        //
-        // // New predicate index file discovered
-        // // Switching to phase two
-        // const callback: any = action.context.get(KeysRdfJoin.adaptiveJoinCallback);
-        // if (callback) {
-        // callback();
-        // }
-        //
-        predicateCountMap = this.getPredicateCountMap(action.url);
+    let cardinality = this.getPredicateCardinalityValue(action.url, predicate);
+
+    if (!cardinality && !this.processedUrls.has(action.url)) {
+      const metadata = await storeStream(action.metadata);
+      await this.extractPredicateCardinalities(metadata);
+
+      const links = await this.extractVoIDDescriptionLinks(metadata);
+      for (const url of links) {
+        const response = await this.mediatorDereferenceRdf.mediate({ url, context: action.context });
+        const store = await storeStream(response.data);
+        await this.extractPredicateCardinalities(store);
       }
+
       this.processedUrls.add(action.url);
+
+      cardinality = this.getPredicateCardinalityValue(action.url, predicate);
     }
 
     // eslint-disable-next-line no-console
-    console.log(action.context);
+    console.log(predicate, cardinality);
 
-    return {
-      metadata: {
-        cardinality: {
-          type: 'estimate',
-          value: predicateCountMap?.get('aaaaaa') ?? Number.POSITIVE_INFINITY,
-        },
-      },
-    };
+    return { metadata: { cardinality: { type: 'estimate', value: cardinality ?? Number.POSITIVE_INFINITY }}};
   }
 
-  private getPredicateCountMap(uri: string): Map<string, number> | undefined {
-    for (const [ uriPrefix, predicateCountMap ] of this.predicateCountsByUriPrefix) {
-      if (uri.startsWith(uriPrefix)) {
-        return predicateCountMap;
+  private getCurrentQueryOperationPredicateValue(context: IActionContext): string | undefined {
+    // The operation is an algebra pattern, but treating it as Quad allows accessing the predicate neatly
+    const operation: RDF.Quad = context.getSafe(KeysQueryOperation.operation);
+    return operation.predicate.termType === 'NamedNode' ? operation.predicate.value : undefined;
+  }
+
+  private getPredicateCardinalityValue(url: string, predicate: string): number | undefined {
+    let longestMatch = 0;
+    let cardinality: number | undefined;
+    const getMatchLength = (first: string, second: string): number => {
+      let i;
+      for (i = 0; i < Math.min(first.length, second.length); i++) {
+        if (first[i] !== second[i]) {
+          break;
+        }
+      }
+      return i;
+    };
+    for (const [ datasetUri, predicateCountMap ] of this.predicateCounts) {
+      const matchingLength = getMatchLength(datasetUri, url);
+      if (matchingLength > longestMatch) {
+        longestMatch = matchingLength;
+        cardinality = predicateCountMap.get(predicate) ?? cardinality;
       }
     }
+    return cardinality;
   }
 
-  private extractVoIDDescriptionLinks(metadata: RDF.Stream): Promise<string[]> {
-    return new Promise<string[]>((resolve, reject) => {
-      const links: Set<string> = new Set<string>();
-      metadata
-        .on('data', (quad: RDF.Quad) => {
-          if (quad.predicate.value === ActorRdfMetadataExtractVoIDCount.IRI_VOID_IN_DATASET.value) {
-            links.add(quad.object.value);
-          }
-        })
-        .on('error', reject)
-        .on('end', () => resolve([ ...links.values() ]));
+  private async extractVoIDDescriptionLinks(store: RDF.Store): Promise<string[]> {
+    const bindingsStream = await this.queryEngine.queryBindings(`
+      PREFIX void: <http://rdfs.org/ns/void#>
+
+      SELECT DISTINCT ?dataset WHERE {
+        ?s void:inDataset ?dataset .
+      }
+    `, { sources: [ store ]});
+
+    return new Promise((resolve, reject) => {
+      const links: string[] = [];
+      bindingsStream.on('data', (bindings: RDF.Bindings) => {
+        const dataset: string = bindings.get('dataset')!.value;
+        links.push(dataset);
+      }).on('end', () => resolve(links)).on('error', reject);
     });
   }
 
-  private async parseVoIDDescription(url: string, context: IActionContext): Promise<void> {
-    const response = await this.mediatorDereferenceRdf.mediate({ url, context });
-    const store = await storeStream(response.data);
-    const datasetQuads: RDF.Quad[] = await this.getMatchingQuads(
-      store,
-      undefined,
-      ActorRdfMetadataExtractVoIDCount.IRI_A,
-      ActorRdfMetadataExtractVoIDCount.IRI_VOID_DATASET,
-    );
-    for (const datasetQuad of datasetQuads) {
-      const uriSpaceQuads = await this.getMatchingQuads(
-        store,
-        datasetQuad.subject,
-        ActorRdfMetadataExtractVoIDCount.IRI_VOID_URI_SPACE,
-      );
-      const uriSpace = uriSpaceQuads.at(0)?.object.value ?? datasetQuad.subject.value;
-      const predicateCounts: Map<string, number> = new Map();
-      const propertyPartitions = await this.getMatchingQuads(
-        store,
-        datasetQuad.subject,
-        ActorRdfMetadataExtractVoIDCount.IRI_VOID_PROPERTY_PARTITION,
-      );
-      const properties: RDF.NamedNode[] = [];
-      for (const propertyPartition of propertyPartitions) {
-        let property: string | undefined;
-        let count: number | undefined;
-        const quads = await this.getMatchingQuads(
-          store,
-          propertyPartition.subject,
-        );
-        for (const quad of quads) {
-          if (
-            quad.predicate.value === ActorRdfMetadataExtractVoIDCount.IRI_VOID_PROPERTY.value &&
-            quad.object.termType === 'NamedNode'
-          ) {
-            property = quad.object.value;
-          }
-          if (
-            quad.predicate.value === ActorRdfMetadataExtractVoIDCount.IRI_VOID_TRIPLES.value &&
-            quad.object.termType === 'Literal' &&
-            quad.object.datatype.value === ActorRdfMetadataExtractVoIDCount.IRI_XSD_INTEGER.value
-          ) {
-            count = Number.parseInt(quad.object.value, 10);
-          }
-          if (property && count) {
-            predicateCounts.set(property, count);
-            break;
-          }
-        }
-      }
-      this.predicateCountsByUriPrefix.set(uriSpace, predicateCounts);
-    }
-  }
+  private async extractPredicateCardinalities(store: RDF.Store): Promise<void> {
+    const bindingsStream = await this.queryEngine.queryBindings(`
+      PREFIX void: <http://rdfs.org/ns/void#>
 
-  private getMatchingQuads(
-    store: RDF.Store,
-    subject?: RDF.Quad_Subject,
-    predicate?: RDF.Quad_Predicate,
-    object?: RDF.Quad_Object,
-  ): Promise<RDF.Quad[]> {
+      SELECT ?dataset ?predicate ?count WHERE {
+        ?dataset a void:Dataset ;
+          void:propertyPartition [
+            void:property ?predicate ;
+            void:triples ?count
+          ] .
+      }
+    `, { sources: [ store ]});
+
     return new Promise((resolve, reject) => {
-      const matchingQuads: RDF.Quad[] = [];
-      store.match(subject, predicate, object)
-        .on('data', (quad: RDF.Quad) => matchingQuads.push(quad))
-        .on('error', reject)
-        .on('end', () => resolve(matchingQuads));
+      bindingsStream.on('data', (bindings: RDF.Bindings) => {
+        const dataset: string = bindings.get('dataset')!.value;
+        const predicate: string = bindings.get('predicate')!.value;
+        const count: number = Number.parseInt(bindings.get('count')!.value, 10);
+        const counts = this.predicateCounts.get(dataset);
+        if (counts) {
+          counts.set(predicate, count);
+        } else {
+          this.predicateCounts.set(dataset, new Map([[ predicate, count ]]));
+        }
+      }).on('end', resolve).on('error', reject);
     });
   }
 }
 
 export interface IActorRdfMetadataExtractVoIDCountArgs extends IActorRdfMetadataExtractArgs {
+  /**
+   * An init query actor that is used to query shapes.
+   * @default {<urn:comunica:default:init/actors#query>}
+   */
+  actorInitQuery: ActorInitQueryBase;
   /**
    * The Dereference RDF mediator.
    * @default {<urn:comunica:default:dereference-rdf/mediators#main>}

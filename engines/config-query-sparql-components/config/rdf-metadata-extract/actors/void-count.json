@@ -9,6 +9,9 @@
     {
       "@id": "urn:comunica:default:rdf-metadata-extract/actors#void-count",
       "@type": "ActorRdfMetadataExtractVoIDCount",
+      "actorInitQuery": {
+        "@id": "urn:comunica:default:init/actors#query"
+      },
       "mediatorDereferenceRdf": {
         "@id": "urn:comunica:default:dereference-rdf/mediators#main"
       }
