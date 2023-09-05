@@ -6,7 +6,10 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest]
+        os:
+          - ubuntu-latest
+        yarn-version:
+          - stable
         node-version:
           - 18.x
           - 20.x
@@ -15,6 +18,8 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node-version }}
+      - name: Use Yarn ${{ matrix.yarn-version }}
+        run: corepack prepare yarn@${{ matrix.yarn-version }} --activate
       - name: Ensure line endings are consistent
         run: git config --global core.autocrlf input
       - name: Check out repository
@@ -26,7 +31,7 @@ jobs:
             **/node_modules
           key: ${{ runner.os }}-test-modules-v1-${{ hashFiles('**/yarn.lock') }}
       - name: Install dependencies and build
-        run: yarn install --frozen-lockfile 
+        run: yarn install --immutable
 
   lint:
     runs-on: ubuntu-latest
@@ -35,6 +40,8 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: 18.x
+      - name: Use Yarn stable
+        run: corepack prepare yarn@stable --activate
       - name: Check out repository
         uses: actions/checkout@v3
       - name: Load cache
@@ -43,6 +50,6 @@ jobs:
           path: '**/node_modules'
           key: ${{ runner.os }}-lint-modules-v1-${{ hashFiles('**/yarn.lock') }}
       - name: Install dependencies
-        run: yarn install --frozen-lockfile
+        run: yarn install --immutable
       - name: Run linter
         run: yarn run lint

@@ -8,9 +8,9 @@
   "private": true,
   "lsd:module": true,
   "bin": {
+    "comunica-dynamic-sparql-components": "bin/query-dynamic.js",
     "comunica-sparql-components": "bin/query.js",
-    "comunica-sparql-components-http": "bin/http.js",
-    "comunica-dynamic-sparql-components": "bin/query-dynamic.js"
+    "comunica-sparql-components-http": "bin/http.js"
   },
   "scripts": {
     "build": "npm run build:ts",
