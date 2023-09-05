@@ -9,7 +9,7 @@ jobs:
         os:
           - ubuntu-latest
         yarn-version:
-          - berry
+          - latest
         node-version:
           - 18.x
           - 20.x
@@ -18,8 +18,6 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node-version }}
-      - name: Use Yarn ${{ matrix.yarn-version }}
-        run: yarn set version ${{ matrix.yarn-version }}
       - name: Ensure line endings are consistent
         run: git config --global core.autocrlf input
       - name: Check out repository
@@ -30,6 +28,8 @@ jobs:
           path: |
             **/node_modules
           key: ${{ runner.os }}-test-modules-v1-${{ hashFiles('**/yarn.lock') }}
+      - name: Use Yarn ${{ matrix.yarn-version }}
+        run: yarn set version ${{ matrix.yarn-version }}
       - name: Install dependencies
         run: yarn install --immutable
       - name: Build
@@ -44,8 +44,6 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: 18.x
-      - name: Use Yarn 3.x
-        run: yarn set version berry
       - name: Check out repository
         uses: actions/checkout@v3
       - name: Load cache
@@ -53,6 +51,8 @@ jobs:
         with:
           path: '**/node_modules'
           key: ${{ runner.os }}-lint-modules-v1-${{ hashFiles('**/yarn.lock') }}
+      - name: Use Yarn latest
+        run: yarn set version latest
       - name: Install dependencies
         run: yarn install --immutable
       - name: Run linter
