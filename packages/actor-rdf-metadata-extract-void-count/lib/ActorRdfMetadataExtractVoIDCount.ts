@@ -40,35 +40,39 @@ export class ActorRdfMetadataExtractVoIDCount extends ActorRdfMetadataExtract {
     if (!action.context.get(KeysQueryOperation.operation)) {
       throw new Error(`Actor ${this.name} can only work in the context of a query operation.`);
     }
-    if (!this.getCurrentQueryOperationPredicateValue(action.context)) {
-      throw new Error(`Actor ${this.name} can only work when the query operation pattern predicate is an IRI.`);
-    }
+    // This apparently always fails
+    // if (!this.getCurrentQueryOperationPredicateValue(action.context)) {
+    //  throw new Error(`Actor ${this.name} can only work when the query operation pattern predicate is an IRI.`);
+    // }
     return true;
   }
 
   public async run(action: IActionRdfMetadataExtract): Promise<IActorRdfMetadataExtractOutput> {
-    const predicate: string = this.getCurrentQueryOperationPredicateValue(action.context)!;
+    const predicate = this.getCurrentQueryOperationPredicateValue(action.context);
+    let cardinality: number | undefined;
 
-    let cardinality = this.getPredicateCardinalityValue(action.url, predicate);
+    if (predicate) {
+      cardinality = this.getPredicateCardinalityValue(action.url, predicate);
 
-    if (!cardinality && !this.processedUrls.has(action.url)) {
-      const metadata = await storeStream(action.metadata);
-      await this.extractPredicateCardinalities(metadata);
+      if (!cardinality && !this.processedUrls.has(action.url)) {
+        const metadata = await storeStream(action.metadata);
+        await this.extractPredicateCardinalities(metadata);
 
-      const links = await this.extractVoIDDescriptionLinks(metadata);
-      for (const url of links) {
-        const response = await this.mediatorDereferenceRdf.mediate({ url, context: action.context });
-        const store = await storeStream(response.data);
-        await this.extractPredicateCardinalities(store);
+        const links = await this.extractVoIDDescriptionLinks(metadata);
+        for (const url of links) {
+          const response = await this.mediatorDereferenceRdf.mediate({ url, context: action.context });
+          const store = await storeStream(response.data);
+          await this.extractPredicateCardinalities(store);
+        }
+
+        this.processedUrls.add(action.url);
+
+        cardinality = this.getPredicateCardinalityValue(action.url, predicate);
       }
 
-      this.processedUrls.add(action.url);
-
-      cardinality = this.getPredicateCardinalityValue(action.url, predicate);
+      // eslint-disable-next-line no-console
+      console.log(predicate, cardinality);
     }
-
-    // eslint-disable-next-line no-console
-    console.log(predicate, cardinality);
 
     return { metadata: { cardinality: { type: 'estimate', value: cardinality ?? Number.POSITIVE_INFINITY }}};
   }
