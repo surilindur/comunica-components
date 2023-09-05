@@ -20,17 +20,12 @@ import { storeStream } from 'rdf-store-stream';
  */
 export class ActorRdfMetadataExtractVoIDCount extends ActorRdfMetadataExtract {
   public readonly mediatorDereferenceRdf: MediatorDereferenceRdf;
-
   private readonly queryEngine: QueryEngineBase;
-  private readonly predicateCounts: Map<string, number>;
-  private readonly processedDatasets: Set<string>;
 
   public constructor(args: IActorRdfMetadataExtractVoIDCountArgs) {
     super(args);
     this.mediatorDereferenceRdf = args.mediatorDereferenceRdf;
     this.queryEngine = new QueryEngineBase(args.actorInitQuery);
-    this.predicateCounts = new Map();
-    this.processedDatasets = new Set();
   }
 
   public async test(action: IActionRdfMetadataExtract): Promise<IActorTest> {
@@ -40,10 +35,6 @@ export class ActorRdfMetadataExtractVoIDCount extends ActorRdfMetadataExtract {
     if (!action.context.get(KeysQueryOperation.operation)) {
       throw new Error(`Actor ${this.name} can only work in the context of a query operation.`);
     }
-    // This apparently always fails
-    // if (!this.getCurrentQueryOperationPredicateValue(action.context)) {
-    //  throw new Error(`Actor ${this.name} can only work when the query operation pattern predicate is an IRI.`);
-    // }
     return true;
   }
 
@@ -52,21 +43,20 @@ export class ActorRdfMetadataExtractVoIDCount extends ActorRdfMetadataExtract {
     let count: number | undefined;
 
     if (predicate) {
-      count = this.predicateCounts.get(predicate);
+      const metadata = await storeStream(action.metadata);
+      const counts = await this.extractPredicateCounts(metadata);
 
-      if (!count) {
-        const metadata = await storeStream(action.metadata);
-        await this.extractPredicateCounts(metadata);
-
-        const links = await this.extractDatasetDescriptionLinks(metadata);
-        for (const url of links) {
-          const response = await this.mediatorDereferenceRdf.mediate({ url, context: action.context });
-          const store = await storeStream(response.data);
-          await this.extractPredicateCounts(store);
+      const links = await this.extractDatasetDescriptionLinks(metadata);
+      for (const url of links) {
+        const response = await this.mediatorDereferenceRdf.mediate({ url, context: action.context });
+        const store = await storeStream(response.data);
+        const incomingCounts = await this.extractPredicateCounts(store);
+        for (const [ key, value ] of incomingCounts) {
+          counts.set(key, (counts.get(key) ?? 0) + value);
         }
-
-        count = this.predicateCounts.get(predicate);
       }
+
+      count = counts.get(predicate);
     }
 
     return { metadata: { cardinality: { type: 'estimate', value: count ?? Number.POSITIVE_INFINITY }}};
@@ -91,14 +81,12 @@ export class ActorRdfMetadataExtractVoIDCount extends ActorRdfMetadataExtract {
       const links: string[] = [];
       bindingsStream.on('data', (bindings: RDF.Bindings) => {
         const dataset: string = bindings.get('dataset')!.value;
-        if (!this.processedDatasets.has(dataset)) {
-          links.push(dataset);
-        }
+        links.push(dataset);
       }).on('end', () => resolve(links)).on('error', reject);
     });
   }
 
-  private async extractPredicateCounts(store: RDF.Store): Promise<void> {
+  private async extractPredicateCounts(store: RDF.Store): Promise<Map<string, number>> {
     const bindingsStream = await this.queryEngine.queryBindings(`
       PREFIX void: <http://rdfs.org/ns/void#>
 
@@ -112,17 +100,12 @@ export class ActorRdfMetadataExtractVoIDCount extends ActorRdfMetadataExtract {
     `, { sources: [ store ]});
 
     return new Promise((resolve, reject) => {
+      const counts: Map<string, number> = new Map();
       bindingsStream.on('data', (bindings: RDF.Bindings) => {
-        const dataset: string = bindings.get('dataset')!.value;
-        if (!this.processedDatasets.has(dataset)) {
-          this.processedDatasets.add(dataset);
-          const predicate: string = bindings.get('predicate')!.value;
-          const previousCount = this.predicateCounts.get(predicate) ?? 0;
-          const incomingCount: number = Number.parseInt(bindings.get('count')!.value, 10);
-          this.predicateCounts.set(predicate, previousCount + incomingCount);
-          // Console.log('DISCOVER:', predicate, previousCount, incomingCount, '->', previousCount + incomingCount);
-        }
-      }).on('end', resolve).on('error', reject);
+        const predicate: string = bindings.get('predicate')!.value;
+        const count: number = Number.parseInt(bindings.get('count')!.value, 10);
+        counts.set(predicate, count);
+      }).on('end', () => resolve(counts)).on('error', reject);
     });
   }
 }
