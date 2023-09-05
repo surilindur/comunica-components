@@ -45,7 +45,7 @@ jobs:
         with:
           node-version: 18.x
       - name: Use Yarn 3.x
-        run: yarn set version 3.x
+        run: yarn set version berry
       - name: Check out repository
         uses: actions/checkout@v3
       - name: Load cache
