@@ -9,7 +9,7 @@ jobs:
         os:
           - ubuntu-latest
         yarn-version:
-          - 3.x
+          - berry
         node-version:
           - 18.x
           - 20.x
