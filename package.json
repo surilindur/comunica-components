@@ -12,10 +12,10 @@
   "scripts": {
     "dev": "node node_modules/.bin/comunica-sparql-components",
     "lint": "eslint . --ext .ts --max-warnings 0",
+    "prepare": "lerna run prepare",
     "build": "npm run build:ts && npm run build:components",
     "build:ts": "tsc",
-    "build:components": "componentsjs-generator engines/* packages/*",
-    "postinstall": "yarn run build && lerna run prepare"
+    "build:components": "componentsjs-generator engines/* packages/*"
   },
   "devDependencies": {
     "@rdfjs/types": "*",
