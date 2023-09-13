@@ -6,11 +6,10 @@
       "DOM"
     ],
     "module": "CommonJS",
-    "allowJs": false,
+    "sourceMap": true,
     "declaration": true,
-    "esModuleInterop": true,
+    "allowJs": false,
     "forceConsistentCasingInFileNames": true,
-    "strict": true,
-    "skipLibCheck": false
+    "strict": true
   }
 }

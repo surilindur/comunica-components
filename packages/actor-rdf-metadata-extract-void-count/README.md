@@ -20,7 +20,7 @@ $ yarn add @comunica/actor-rdf-metadata-extract-void-count
 
 This actor adds the following entries to the metadata object.
 
-* `cardinality`: Value of `http://rdfs.org/ns/void#triples` for the property partition of the currently executing triple pattern, represented as `{ type: 'estimate', value: number }`.
+* `predicates`: Nested map of dataset predicate counts, taken from the VoID description property partition `http://rdfs.org/ns/void#triples` values.
 
 ## Configure
 

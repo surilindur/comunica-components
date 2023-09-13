@@ -1,0 +1,17 @@
+{
+  "name": "@comunica/actor-rdf-metadata-accumulate-predicate-count",
+  "version": "0.0.0",
+  "description": "A Comunica metadata extract actor",
+  "main": "lib/index.js",
+  "types": "lib/index",
+  "repository": "https://github.com/surilindur/comunica-components",
+  "author": "surilindur",
+  "license": "MIT",
+  "private": true,
+  "lsd:module": true,
+  "dependencies": {
+    "@comunica/actor-rdf-metadata-accumulate-cardinality": "^2.0.0",
+    "@comunica/bus-rdf-metadata-accumulate": "^2.0.0",
+    "@comunica/context-entries": "^2.0.0"
+  }
+}

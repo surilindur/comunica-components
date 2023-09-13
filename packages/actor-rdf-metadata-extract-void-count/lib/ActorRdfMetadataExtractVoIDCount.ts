@@ -40,26 +40,34 @@ export class ActorRdfMetadataExtractVoIDCount extends ActorRdfMetadataExtract {
 
   public async run(action: IActionRdfMetadataExtract): Promise<IActorRdfMetadataExtractOutput> {
     const predicate = this.getCurrentQueryOperationPredicateValue(action.context);
-    let count: number | undefined;
+    let countByDataset: Map<string, Map<string, number>> | undefined;
 
     if (predicate) {
       const metadata = await storeStream(action.metadata);
-      const counts = await this.extractPredicateCounts(metadata);
+      countByDataset = await this.extractPredicateCounts(metadata);
 
       const links = await this.extractDatasetDescriptionLinks(metadata);
       for (const url of links) {
         const response = await this.mediatorDereferenceRdf.mediate({ url, context: action.context });
         const store = await storeStream(response.data);
         const incomingCounts = await this.extractPredicateCounts(store);
-        for (const [ key, value ] of incomingCounts) {
-          counts.set(key, (counts.get(key) ?? 0) + value);
+        for (const [ dataset, data ] of incomingCounts) {
+          let existingData = countByDataset.get(dataset);
+          if (!existingData) {
+            existingData = new Map();
+            countByDataset.set(dataset, existingData);
+          }
+          for (const [ key, value ] of data) {
+            existingData.set(key, (existingData.get(key) ?? 0) + value);
+          }
         }
       }
-
-      count = counts.get(predicate);
     }
 
-    return { metadata: { cardinality: { type: 'estimate', value: count ?? Number.POSITIVE_INFINITY }}};
+    const cardinality = { cardinality: { type: 'estimate', value: 1 } };
+    const predicates = countByDataset?.size ? { predicates: countByDataset } : {};
+
+    return { metadata: {  ...cardinality, ...predicates } };
   }
 
   private getCurrentQueryOperationPredicateValue(context: IActionContext): string | undefined {
@@ -86,7 +94,7 @@ export class ActorRdfMetadataExtractVoIDCount extends ActorRdfMetadataExtract {
     });
   }
 
-  private async extractPredicateCounts(store: RDF.Store): Promise<Map<string, number>> {
+  private async extractPredicateCounts(store: RDF.Store): Promise<Map<string, Map<string, number>>> {
     const bindingsStream = await this.queryEngine.queryBindings(`
       PREFIX void: <http://rdfs.org/ns/void#>
 
@@ -100,11 +108,17 @@ export class ActorRdfMetadataExtractVoIDCount extends ActorRdfMetadataExtract {
     `, { sources: [ store ]});
 
     return new Promise((resolve, reject) => {
-      const counts: Map<string, number> = new Map();
+      const counts: Map<string, Map<string, number>> = new Map();
       bindingsStream.on('data', (bindings: RDF.Bindings) => {
+        const dataset: string = bindings.get('dataset')!.value;
         const predicate: string = bindings.get('predicate')!.value;
         const count: number = Number.parseInt(bindings.get('count')!.value, 10);
-        counts.set(predicate, count);
+        let data = counts.get(dataset);
+        if (!data) {
+          data = new Map();
+          counts.set(dataset, data);
+        }
+        data.set(predicate, (data.get(predicate) ?? 0) + count);
       }).on('end', () => resolve(counts)).on('error', reject);
     });
   }

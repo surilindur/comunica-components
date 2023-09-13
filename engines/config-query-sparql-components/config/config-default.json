@@ -4,6 +4,7 @@
   ],
   "import": [
     "ccqslt:config/config-solid-default.json",
-    "rdf-metadata-extract/actors/void-count.json"
+    "rdf-metadata-accumulate/actors.json",
+    "rdf-metadata-extract/actors.json"
   ]
 }

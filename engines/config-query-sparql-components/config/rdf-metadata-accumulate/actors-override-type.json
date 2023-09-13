@@ -1,0 +1,17 @@
+{
+  "@context": [
+    "https://linkedsoftwaredependencies.org/bundles/npm/@comunica/actor-rdf-metadata-accumulate-predicate-count/^0.0.0/components/context.jsonld"
+  ],
+  "@graph": [
+    {
+      "@id": "urn:comunica:default:rdf-metadata-accumulate/actors#cardinality-override",
+      "@type": "Override",
+      "overrideInstance": {
+        "@id": "urn:comunica:default:rdf-metadata-accumulate/actors#cardinality"
+      },
+      "overrideParameters": {
+        "@type": "ActorRdfMetadataAccumulatePredicateCount"
+      }
+    }
+  ]
+}

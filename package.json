@@ -2,7 +2,7 @@
   "name": "comunica-components",
   "version": "0.0.0",
   "description": "Various work-in-progress components for Comunica",
-  "repository": "git@github.com:surilindur/comunica-components.git",
+  "repository": "https://github.com/surilindur/comunica-components",
   "packageManager": "yarn@3.6.3",
   "license": "MIT",
   "private": true,
@@ -13,7 +13,7 @@
   "scripts": {
     "dev": "node node_modules/.bin/comunica-sparql-components",
     "lint": "eslint . --ext .ts --max-warnings 0",
-    "build": "npm run build:ts && npm run build:components && npm run build:bundles",
+    "build": "yarn build:ts && yarn build:components && yarn build:bundles",
     "build:ts": "tsc",
     "build:components": "componentsjs-generator engines/* packages/*",
     "build:bundles": "lerna run prepare"
