@@ -54,9 +54,13 @@ export class ActorRdfMetadataAccumulatePredicateCount extends ActorRdfMetadataAc
         // The predicate counts are grouped by dataset, so first try to figure out the dataset to use
         let dataset: string | undefined = accumulatedMetadata.cardinality.dataset;
 
+        // If the cardinality is for a dataset, find the matching dataset from the predicate count map
         if (dataset) {
           dataset = this.getLongestMatchingKeyFromMap(dataset, accumulatedMetadata.predicates!);
-        } else if (pattern.subject.termType === 'NamedNode') {
+        }
+
+        // If there is still no dataset, try to find one by the subject IRI if subject is a named node
+        if (!dataset && pattern.subject.termType === 'NamedNode') {
           dataset = this.getLongestMatchingKeyFromMap(pattern.subject.value, accumulatedMetadata.predicates!);
         }
 
