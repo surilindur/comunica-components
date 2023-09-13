@@ -64,10 +64,10 @@ export class ActorRdfMetadataExtractVoIDCount extends ActorRdfMetadataExtract {
       }
     }
 
-    const cardinality = { cardinality: { type: 'estimate', value: 1 } };
+    const cardinality = { cardinality: { type: 'estimate', value: 1 }};
     const predicates = countByDataset?.size ? { predicates: countByDataset } : {};
 
-    return { metadata: {  ...cardinality, ...predicates } };
+    return { metadata: { ...cardinality, ...predicates }};
   }
 
   private getCurrentQueryOperationPredicateValue(context: IActionContext): string | undefined {

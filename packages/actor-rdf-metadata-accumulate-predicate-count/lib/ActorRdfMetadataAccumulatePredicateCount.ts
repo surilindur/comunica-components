@@ -34,11 +34,10 @@ export class ActorRdfMetadataAccumulatePredicateCount extends ActorRdfMetadataAc
 
     // Otherwise, attempt to update existing value if the metadata has predicate counts available
     if (accumulatedMetadata.predicates || appendingMetadata.predicates) {
-
       // Transfer the predicate count map data from the appending one to the accumulating one if any
       if (appendingMetadata.predicates) {
         if (accumulatedMetadata.predicates) {
-          for (const [dataset, counts] of appendingMetadata.predicates) {
+          for (const [ dataset, counts ] of appendingMetadata.predicates) {
             accumulatedMetadata.predicates.set(dataset, counts);
           }
         } else {
@@ -52,7 +51,6 @@ export class ActorRdfMetadataAccumulatePredicateCount extends ActorRdfMetadataAc
       // If the predicate for current pattern is an IRI, we can try estimating the pattern cardinality
       // by assuming that the number of triples with the same predicate roughly indicates the cardinality
       if (pattern.predicate.termType === 'NamedNode') {
-
         // The predicate counts are grouped by dataset, so first try to figure out the dataset to use
         let dataset: string | undefined = accumulatedMetadata.cardinality.dataset;
 
@@ -67,7 +65,8 @@ export class ActorRdfMetadataAccumulatePredicateCount extends ActorRdfMetadataAc
           const predicateCountsInDataset = accumulatedMetadata.predicates!.get(dataset);
           const count = predicateCountsInDataset?.get(pattern.predicate.value);
           if (count && count !== accumulatedMetadata.cardinality.value) {
-            // console.log('Estimate:', dataset, pattern.predicate.value, accumulatedMetadata.cardinality.value, '->', count);
+            // eslint-disable-next-line max-len
+            // Console.log('Estimate:', dataset, pattern.predicate.value, accumulatedMetadata.cardinality.value, '->', count);
             accumulatedMetadata.cardinality.type = 'estimate';
             accumulatedMetadata.cardinality.value = count;
             if (accumulatedMetadata.cardinality.dataset !== dataset) {

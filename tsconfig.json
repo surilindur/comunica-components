@@ -11,5 +11,13 @@
     "allowJs": false,
     "forceConsistentCasingInFileNames": true,
     "strict": true
-  }
+  },
+  "include": [
+    "engines/*/lib/*.ts",
+    "engines/*/bin/*.ts",
+    "packages/*/lib/*.ts"
+  ],
+  "exclude": [
+    "**/node_modules"
+  ]
 }

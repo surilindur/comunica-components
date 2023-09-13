@@ -16,9 +16,6 @@
     "import/group-exports": "off",
     "import/exports-last": "off"
   },
-  "ignorePatterns": [
-    "*.d.ts"
-  ],
   "overrides": [
     {
       "files": [
