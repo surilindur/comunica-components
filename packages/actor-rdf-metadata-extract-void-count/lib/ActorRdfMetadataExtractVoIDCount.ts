@@ -11,7 +11,6 @@ import {
 } from '@comunica/bus-rdf-metadata-extract';
 import { KeysQueryOperation, KeysInitQuery } from '@comunica/context-entries';
 import { type IActorTest } from '@comunica/core';
-import { type IActionContext } from '@comunica/types';
 import type * as RDF from '@rdfjs/types';
 import { storeStream } from 'rdf-store-stream';
 
@@ -39,10 +38,10 @@ export class ActorRdfMetadataExtractVoIDCount extends ActorRdfMetadataExtract {
   }
 
   public async run(action: IActionRdfMetadataExtract): Promise<IActorRdfMetadataExtractOutput> {
-    const predicate = this.getCurrentQueryOperationPredicateValue(action.context);
+    const operation: RDF.Quad = action.context.getSafe(KeysQueryOperation.operation);
     let countByDataset: Map<string, Map<string, number>> | undefined;
 
-    if (predicate) {
+    if (operation.predicate.termType === 'NamedNode') {
       const metadata = await storeStream(action.metadata);
       countByDataset = await this.extractPredicateCounts(metadata);
 
@@ -68,12 +67,6 @@ export class ActorRdfMetadataExtractVoIDCount extends ActorRdfMetadataExtract {
     const predicates = countByDataset?.size ? { predicates: countByDataset } : {};
 
     return { metadata: { ...cardinality, ...predicates }};
-  }
-
-  private getCurrentQueryOperationPredicateValue(context: IActionContext): string | undefined {
-    // The operation is an algebra pattern, but treating it as Quad allows accessing the predicate neatly
-    const operation: RDF.Quad = context.getSafe(KeysQueryOperation.operation);
-    return operation.predicate.termType === 'NamedNode' ? operation.predicate.value : undefined;
   }
 
   private async extractDatasetDescriptionLinks(store: RDF.Store): Promise<string[]> {
