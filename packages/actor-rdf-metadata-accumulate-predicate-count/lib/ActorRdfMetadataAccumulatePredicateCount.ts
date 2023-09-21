@@ -4,12 +4,10 @@ import type {
   IActorRdfMetadataAccumulateOutput,
   IActorRdfMetadataAccumulateArgs,
 } from '@comunica/bus-rdf-metadata-accumulate';
-import { KeysQueryOperation } from '@comunica/context-entries';
+import { KeysQueryOperation, KeysRdfResolveQuadPattern } from '@comunica/context-entries';
 import type { IActorTest } from '@comunica/core';
-import type { MetadataQuads } from '@comunica/types';
+import type { QueryResultCardinality } from '@comunica/types';
 import type * as RDF from '@rdfjs/types';
-
-type MetadataQuadsWithPredicates = MetadataQuads & { predicates?: Map<string, Map<string, number>> };
 
 /**
   * A comunica Predicate Count RDF Metadata Accumulate Actor.
@@ -29,72 +27,68 @@ export class ActorRdfMetadataAccumulatePredicateCount extends ActorRdfMetadataAc
       return { metadata: { cardinality: { type: 'exact', value: 0 }}};
     }
 
-    const accumulatedMetadata: MetadataQuadsWithPredicates = action.accumulatedMetadata;
-    const appendingMetadata: MetadataQuadsWithPredicates = action.appendingMetadata;
+    const accumulatedPredicates: Map<string, Map<string, number>> | undefined = action.accumulatedMetadata.predicates;
+    const appendingPredicates: Map<string, Map<string, number>> | undefined = action.appendingMetadata.predicates;
 
-    // Otherwise, attempt to update existing value if the metadata has predicate counts available
-    if (accumulatedMetadata.predicates || appendingMetadata.predicates) {
-      // Transfer the predicate count map data from the appending one to the accumulating one if any
-      if (appendingMetadata.predicates) {
-        if (accumulatedMetadata.predicates) {
-          for (const [ dataset, counts ] of appendingMetadata.predicates) {
-            accumulatedMetadata.predicates.set(dataset, counts);
-          }
-        } else {
-          accumulatedMetadata.predicates = appendingMetadata.predicates;
-        }
-      }
+    let predicates: Map<string, Map<string, number>> | undefined;
+    let cardinality: QueryResultCardinality | undefined;
 
-      // This is actually an algebra pattern, but seems to contain the same members as quad
+    if (accumulatedPredicates && appendingPredicates) {
+      predicates = new Map([ ...accumulatedPredicates, ...appendingPredicates ]);
+    } else if (accumulatedPredicates) {
+      predicates = new Map(accumulatedPredicates);
+    } else if (appendingPredicates) {
+      predicates = new Map(appendingPredicates);
+    }
+
+    if (predicates) {
+      // This is an algebra pattern, but has some common members with Quad
       const pattern: RDF.Quad = action.context.getSafe(KeysQueryOperation.operation);
 
-      // If the predicate for current pattern is an IRI, we can try estimating the pattern cardinality
-      // by assuming that the number of triples with the same predicate roughly indicates the cardinality
       if (pattern.predicate.termType === 'NamedNode') {
-        // The predicate counts are grouped by dataset, so first try to figure out the dataset to use
-        let dataset: string | undefined = accumulatedMetadata.cardinality.dataset;
+        const sourceIds: Map<string, string> | undefined = action.context.get(KeysRdfResolveQuadPattern.sourceIds);
+        if (sourceIds && sourceIds.size > 0) {
+          let count = 0;
+          const datasets: string[] = [];
 
-        // If the cardinality is for a dataset, find the matching dataset from the predicate count map
-        if (dataset) {
-          dataset = this.getLongestMatchingKeyFromMap(dataset, accumulatedMetadata.predicates!);
-        }
+          for (const source of sourceIds.keys()) {
+            const entry = this.getLongestMatchingEntry(source, predicates);
 
-        // If there is still no dataset, try to find one by the subject IRI if subject is a named node
-        if (!dataset && pattern.subject.termType === 'NamedNode') {
-          dataset = this.getLongestMatchingKeyFromMap(pattern.subject.value, accumulatedMetadata.predicates!);
-        }
-
-        // If a dataset was found, update the accumulate value to be that of the dataset
-        if (dataset) {
-          const predicateCountsInDataset = accumulatedMetadata.predicates!.get(dataset);
-          const count = predicateCountsInDataset?.get(pattern.predicate.value);
-          if (count && count !== accumulatedMetadata.cardinality.value) {
-            // eslint-disable-next-line max-len
-            // Console.log('Estimate:', dataset, pattern.predicate.value, accumulatedMetadata.cardinality.value, '->', count);
-            accumulatedMetadata.cardinality.type = 'estimate';
-            accumulatedMetadata.cardinality.value = count;
-            if (accumulatedMetadata.cardinality.dataset !== dataset) {
-              accumulatedMetadata.cardinality.dataset = dataset;
+            if (entry) {
+              const entryCount = entry[1].get(pattern.predicate.value);
+              if (entryCount) {
+                count += entryCount;
+                datasets.push(entry[0]);
+              }
             }
+          }
+
+          if (count > 0) {
+            cardinality = { type: 'estimate', value: count, ...datasets.length === 1 ? { dataset: datasets[0] } : {}};
           }
         }
       }
     }
 
-    return { metadata: action.accumulatedMetadata };
+    return { metadata: { ...predicates ? { predicates } : {}, ...cardinality ? { cardinality } : {}}};
   }
 
-  private getLongestMatchingKeyFromMap(value: string, map: Map<string, any>): string | undefined {
+  private getLongestMatchingEntry<T>(key: string, map: Map<string, T>): [string, T] | undefined {
+    if (map.has(key)) {
+      return [ key, map.get(key)! ];
+    }
     let bestMatch: string | undefined;
+    let bestMatchEntry: T | undefined;
     let bestMatchLength = 0;
-    for (const [ key, entry ] of map) {
-      const matchLength = this.getMatchingLength(value, key);
+    for (const [ mapKey, entry ] of map) {
+      const matchLength = this.getMatchingLength(mapKey, key);
       if (matchLength > bestMatchLength) {
-        bestMatch = key;
+        bestMatch = mapKey;
+        bestMatchEntry = entry;
         bestMatchLength = matchLength;
       }
     }
-    return bestMatch;
+    return bestMatch && bestMatchEntry ? [ bestMatch, bestMatchEntry ] : undefined;
   }
 
   private getMatchingLength(sa: string, sb: string): number {
