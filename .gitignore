@@ -6,5 +6,8 @@ components/
 *.js.map
 *.d.ts
 
+componentsjs-error-state.json
+
 test*
 docs*
+index*
