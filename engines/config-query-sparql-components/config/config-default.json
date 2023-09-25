@@ -1,10 +1,11 @@
 {
   "@context": [
-    "https://linkedsoftwaredependencies.org/bundles/npm/@comunica/config-query-sparql-link-traversal/^0.0.0/components/context.jsonld"
+    "https://linkedsoftwaredependencies.org/bundles/npm/@comunica/config-query-sparql-components/^0.0.0/components/context.jsonld"
   ],
   "import": [
-    "ccqslt:config/config-solid-default.json",
-    "rdf-metadata-accumulate/actors.json",
-    "rdf-metadata-extract/actors.json"
+    "ccqsc:config/config-base-adaptive.json",
+    "ccqsc:config/rdf-metadata-accumulate/actors.json",
+    "ccqsc:config/rdf-metadata-extract/actors.json",
+    "ccqsc:config/rdf-join/actors.json"
   ]
 }

@@ -7,6 +7,12 @@
   "license": "MIT",
   "private": true,
   "workspaces": [
+    "../comunica/engines/*",
+    "../comunica/packages/*",
+    "../comunica-feature-solid-fork/engines/*",
+    "../comunica-feature-solid-fork/packages/*",
+    "../comunica-feature-link-traversal-fork/engines/*",
+    "../comunica-feature-link-traversal-fork/packages/*",
     "packages/*",
     "engines/*"
   ],

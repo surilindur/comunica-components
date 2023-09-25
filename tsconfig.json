@@ -10,7 +10,9 @@
     "declaration": true,
     "allowJs": false,
     "forceConsistentCasingInFileNames": true,
-    "strict": true
+    "strict": true,
+    "strictFunctionTypes": false,
+    "strictPropertyInitialization": false
   },
   "include": [
     "engines/*/lib/*.ts",

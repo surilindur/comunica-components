@@ -18,13 +18,33 @@ The following components reside here:
 
 * [**VoID Count RDF Metadata Extract Actor**](packages/actor-rdf-metadata-extract-void-count/), that extracts predicate cardinalities from VoID descriptions and uses the cardinality of the predicate of the currently resolving triple pattern as an estimate for the cardinality of the entire pattern by assigning it in the metadata.
 
-This project can be setup by cloning and installing it as follows:
 
-```bash
-$ git clone https://github.com/comunica/comunica.git
-$ cd comunica
-$ yarn install
+## Development Setup
+
+This project is currently set to use local [Comunica](https://github.com/comunica/comunica), [Comunica Solid](https://github.com/comunica/comunica-feature-solid) and [Comunica Link Traversal](https://github.com/comunica/comunica-feature-link-traversal):
+
 ```
+.../comunica
+.../comunica-feature-solid
+.../comunica-feature-link-traversal
+.../comunica-components
+```
+
+With the workspaces definitions in the repositories pointing at each other, for example as in this repository:
+```json
+  "workspaces": [
+    "../comunica/engines/*",
+    "../comunica/packages/*",
+    "../comunica-feature-solid-fork/engines/*",
+    "../comunica-feature-solid-fork/packages/*",
+    "../comunica-feature-link-traversal-fork/engines/*",
+    "../comunica-feature-link-traversal-fork/packages/*",
+    "packages/*",
+    "engines/*"
+  ],
+```
+
+Afterwards, all the projects should be set up using `yarn install`.
 
 The default configuration for the engine using whichever components happen to be configured in it can then be executed:
 
