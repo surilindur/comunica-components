@@ -1,16 +1,16 @@
 #!/usr/bin/env node
 
-// eslint-disable-next-line import/no-nodejs-modules
 import { join } from 'node:path';
 import { HttpServiceSparqlEndpoint } from '@comunica/actor-init-query';
 
-const defaultConfigPath = `${__dirname}/../config/config-default.json`;
+const moduleRootPath = join(__dirname, '..');
+const defaultConfigPath = join(moduleRootPath, 'config', 'config-default.json');
 
 HttpServiceSparqlEndpoint.runArgsInProcess(
   process.argv.slice(2),
   process.stdout,
   process.stderr,
-  join(__dirname, '..'),
+  moduleRootPath,
   process.env,
   defaultConfigPath,
   code => process.exit(code),

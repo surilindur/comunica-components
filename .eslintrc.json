@@ -42,6 +42,16 @@
         "import/extensions": "off",
         "import/no-unresolved": "off"
       }
+    },
+    {
+      "files": [
+        "engines/*/bin/http.ts",
+        "engines/*/bin/query.ts",
+        "engines/*/bin/query-dynamic.ts"
+      ],
+      "rules": {
+        "import/no-nodejs-modules": "off"
+      }
     }
   ]
 }
