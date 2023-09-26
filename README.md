@@ -16,12 +16,32 @@ This is a monorepo that contains various work-in-progress components for [Comuni
 
 The following components reside here:
 
-* [**VoID Count RDF Metadata Extract Actor**](packages/actor-rdf-metadata-extract-void-count/), that extracts predicate cardinalities from VoID descriptions and uses the cardinality of the predicate of the currently resolving triple pattern as an estimate for the cardinality of the entire pattern by assigning it in the metadata.
-
+* [**VoID description RDF metadata extractor**](packages/actor-rdf-metadata-extract-void-count/), that extracts VoID description metadata from the metadata stream and stores it back in the metadata.
+* [**Simple "adaptive" inner join join actor**](packages/actor-rdf-join-inner-multi-adaptive-heuristics/), that keeps restarting joins every time there is a significance enough change in the estimated cardinalities.
+* [**Predicate count RDF metadata accumulator**](packages/actor-rdf-metadata-accumulate-predicate-count/), that ensures the predicate counts discovered via the metadat extractor are assigned correctly to different triple patterns.
 
 ## Development Setup
 
-This project is currently set to use local [Comunica](https://github.com/comunica/comunica), [Comunica Solid](https://github.com/comunica/comunica-feature-solid) and [Comunica Link Traversal](https://github.com/comunica/comunica-feature-link-traversal):
+The project can be cloned, after which the dependencies can be installed, with:
+
+```bash
+git clone https://github.com/surilindur/comunica-components
+cd comunica-components
+yarn install
+yarn build
+```
+
+The default configuration for the engine using whichever components happen to be configured in it can then be executed:
+
+```bash
+yarn comunica-sparql-components --help
+```
+
+There are no unit tests and nothing is guaranteed to function as one would expect it to.
+
+## Using Local Comunica
+
+This project can be set to use local [Comunica](https://github.com/comunica/comunica), [Comunica Solid](https://github.com/comunica/comunica-feature-solid) and [Comunica Link Traversal](https://github.com/comunica/comunica-feature-link-traversal):
 
 ```
 .../comunica
@@ -30,7 +50,7 @@ This project is currently set to use local [Comunica](https://github.com/comunic
 .../comunica-components
 ```
 
-With the workspaces definitions in the repositories pointing at each other, for example as in this repository:
+This can be done by having the workspaces definitions in the repositories pointing at each other, for example as in this repository:
 ```json
   "workspaces": [
     "../comunica/engines/*",
@@ -45,14 +65,6 @@ With the workspaces definitions in the repositories pointing at each other, for 
 ```
 
 Afterwards, all the projects should be set up using `yarn install`.
-
-The default configuration for the engine using whichever components happen to be configured in it can then be executed:
-
-```bash
-$ yarn comunica-sparql-components --help
-```
-
-There are no unit tests and nothing is guaranteed to function as one would expect it to.
 
 ## Issues
 

@@ -7,12 +7,6 @@
   "license": "MIT",
   "private": true,
   "workspaces": [
-    "../comunica/engines/*",
-    "../comunica/packages/*",
-    "../comunica-feature-solid-fork/engines/*",
-    "../comunica-feature-solid-fork/packages/*",
-    "../comunica-feature-link-traversal-fork/engines/*",
-    "../comunica-feature-link-traversal-fork/packages/*",
     "packages/*",
     "engines/*"
   ],
@@ -28,7 +22,7 @@
     "@rdfjs/types": "*",
     "@rubensworks/eslint-config": "^2.0.0",
     "componentsjs-generator": "^3.0.0",
-    "eslint": "~8.48.0",
+    "eslint": "^8.50.0",
     "lerna": "^7.0.0",
     "typescript": "^5.0.0"
   }
