@@ -47,6 +47,7 @@ export class ActorRdfJoinInnerMultiAdaptiveHeuristics extends ActorRdfJoinInnerM
               this.swapped = true;
             }
             const success = bindingsStreamAdaptive.swapSource();
+            // eslint-disable-next-line no-console
             console.log(`Restart join (success ${success}), cardinality ${old.cardinality.value} -> ${updated.cardinality.value}`);
           }
         });
@@ -65,7 +66,8 @@ export class ActorRdfJoinInnerMultiAdaptiveHeuristics extends ActorRdfJoinInnerM
     });
 
     const createSource = async(): Promise<BindingsStream> => {
-      console.log('-'.repeat(10), 'CREATE SOURCE', '-'.repeat(10));
+      // eslint-disable-next-line no-console
+      console.log('Create new source');
       const joinResult = await this.mediatorJoin.mediate({
         type: action.type,
         entries: handleMetadataInvalidation(this.cloneEntries(action.entries, false)),
