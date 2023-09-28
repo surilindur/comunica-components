@@ -25,7 +25,7 @@ This actor adds the following entries to the metadata object.
 ## Configure
 
 After installing, this package can be added to your engine's configuration as follows:
-```text
+```json
 {
   "@context": [
     ...

@@ -4,6 +4,7 @@
     "engines/query-sparql-components"
   ],
   "ignoreComponents": [
-    "BindingsStreamAdaptiveHeuristics"
+    "BindingsStreamAdaptiveHeuristics",
+    "Map"
   ]
 }

@@ -1,3 +1,4 @@
+import type { IVoIDDescription } from '@comunica/actor-rdf-metadata-extract-void-description';
 import { ActorRdfMetadataAccumulate } from '@comunica/bus-rdf-metadata-accumulate';
 import type {
   IActionRdfMetadataAccumulate,
@@ -12,8 +13,8 @@ import type * as RDF from '@rdfjs/types';
 /**
   * A comunica Predicate Count RDF Metadata Accumulate Actor.
   */
-export class ActorRdfMetadataAccumulatePredicateCount extends ActorRdfMetadataAccumulate {
-  public constructor(args: IActorRdfMetadataAccumulateArgs) {
+export class ActorRdfMetadataAccumulateVoIDDescription extends ActorRdfMetadataAccumulate {
+  public constructor(args: IActorRdfMetadataAccumulateVoIDDescriptionArgs) {
     super(args);
   }
 
@@ -27,21 +28,14 @@ export class ActorRdfMetadataAccumulatePredicateCount extends ActorRdfMetadataAc
       return { metadata: { cardinality: { type: 'exact', value: 0 }}};
     }
 
-    const accumulatedPredicates: Map<string, Map<string, number>> | undefined = action.accumulatedMetadata.predicates;
-    const appendingPredicates: Map<string, Map<string, number>> | undefined = action.appendingMetadata.predicates;
+    const descriptions: IVoIDDescription[] = [
+      ...action.accumulatedMetadata.voidDescriptions || [],
+      ...action.appendingMetadata.voidDescriptions || [],
+    ];
 
-    let predicates: Map<string, Map<string, number>> | undefined;
     let cardinality: QueryResultCardinality | undefined;
 
-    if (accumulatedPredicates && appendingPredicates) {
-      predicates = new Map([ ...accumulatedPredicates, ...appendingPredicates ]);
-    } else if (accumulatedPredicates) {
-      predicates = new Map(accumulatedPredicates);
-    } else if (appendingPredicates) {
-      predicates = new Map(appendingPredicates);
-    }
-
-    if (predicates) {
+    if (descriptions.length > 0) {
       // This is an algebra pattern, but has some common members with Quad
       const pattern: RDF.Quad = action.context.getSafe(KeysQueryOperation.operation);
 
@@ -52,43 +46,51 @@ export class ActorRdfMetadataAccumulatePredicateCount extends ActorRdfMetadataAc
           const datasets: string[] = [];
 
           for (const source of sourceIds.keys()) {
-            const entry = this.getLongestMatchingEntry(source, predicates);
-
-            if (entry) {
-              const entryCount = entry[1].get(pattern.predicate.value);
-              if (entryCount) {
-                count += entryCount;
-                datasets.push(entry[0]);
+            const matchingDescription = this.getDescriptionWithLongestMatch(source, descriptions);
+            if (matchingDescription) {
+              const predicateCount = matchingDescription.propertyPartitions.get(pattern.predicate.value);
+              if (predicateCount) {
+                count += predicateCount;
+                datasets.push(matchingDescription.dataset);
               }
             }
           }
 
           if (count > 0) {
-            cardinality = { type: 'estimate', value: count, ...datasets.length === 1 ? { dataset: datasets[0] } : {}};
+            cardinality = {
+              type: 'estimate',
+              value: count,
+              ...datasets.length === 1 ? { dataset: datasets[0] } : {},
+            };
           }
         }
       }
     }
 
-    return { metadata: { ...predicates ? { predicates } : {}, ...cardinality ? { cardinality } : {}}};
+    return { metadata: {
+      ...descriptions.length > 0 ? { voidDescriptions: descriptions } : {},
+      ...cardinality ? { cardinality } : {},
+    }};
   }
 
-  private getLongestMatchingEntry<T>(key: string, map: Map<string, T>): [string, T] | undefined {
-    if (map.has(key)) {
-      return [ key, map.get(key)! ];
-    }
-    let bestMatch: string | undefined;
-    let bestMatchEntry: T | undefined;
-    let bestMatchLength = 0;
-    for (const [ mapKey, entry ] of map) {
-      const matchLength = this.getMatchingLength(mapKey, key);
-      if (matchLength > bestMatchLength) {
-        bestMatch = mapKey;
-        bestMatchEntry = entry;
-        bestMatchLength = matchLength;
+  private getDescriptionWithLongestMatch(uri: string, descriptions: IVoIDDescription[]): IVoIDDescription | undefined {
+    let matchLength = 0;
+    let match: IVoIDDescription | undefined;
+    for (const description of descriptions) {
+      const matchTarget = description.uriSpace ?? description.dataset;
+      if (matchTarget === uri) {
+        match = description;
+        matchLength = matchTarget.length;
+        break;
+      } else {
+        const targetMatchLength = this.getMatchingLength(uri, matchTarget);
+        if (targetMatchLength > matchLength) {
+          matchLength = targetMatchLength;
+          match = description;
+        }
       }
     }
-    return bestMatch && bestMatchEntry ? [ bestMatch, bestMatchEntry ] : undefined;
+    return match;
   }
 
   private getMatchingLength(sa: string, sb: string): number {
@@ -103,3 +105,5 @@ export class ActorRdfMetadataAccumulatePredicateCount extends ActorRdfMetadataAc
     return matchingChars;
   }
 }
+
+export type IActorRdfMetadataAccumulateVoIDDescriptionArgs = IActorRdfMetadataAccumulateArgs;
