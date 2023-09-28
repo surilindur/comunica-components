@@ -1,13 +1,16 @@
 node_modules/
 components/
 .yarn/
+.venv/
 
 *.js
 *.js.map
 *.d.ts
+*.html
+*.png
 
 componentsjs-error-state.json
 
 test*
 docs*
-index*
+plot*
