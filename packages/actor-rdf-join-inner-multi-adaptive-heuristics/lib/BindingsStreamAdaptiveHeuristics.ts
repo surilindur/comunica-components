@@ -23,7 +23,7 @@ export class BindingsStreamAdaptiveHeuristics extends TransformIterator<Bindings
     createSource: () => Promise<BindingsStream>,
   ) {
     super(source, options);
-    this.timeout = options.timeout * 1_000_000;
+    this.timeout = options.timeout;
     this.createSource = createSource;
     this.pushedBindings = new Map();
   }

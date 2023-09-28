@@ -1575,17 +1575,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@comunica/actor-rdf-metadata-accumulate-predicate-count@^0.0.0, @comunica/actor-rdf-metadata-accumulate-predicate-count@workspace:packages/actor-rdf-metadata-accumulate-predicate-count":
-  version: 0.0.0-use.local
-  resolution: "@comunica/actor-rdf-metadata-accumulate-predicate-count@workspace:packages/actor-rdf-metadata-accumulate-predicate-count"
-  dependencies:
-    "@comunica/bus-rdf-metadata-accumulate": ^2.0.0
-    "@comunica/context-entries": ^2.0.0
-    "@comunica/core": ^2.0.0
-    "@comunica/types": ^2.0.0
-  languageName: unknown
-  linkType: soft
-
 "@comunica/actor-rdf-metadata-accumulate-requesttime@npm:^2.8.2":
   version: 2.8.2
   resolution: "@comunica/actor-rdf-metadata-accumulate-requesttime@npm:2.8.2"
@@ -1595,6 +1584,18 @@ __metadata:
   checksum: 0351adf14be54c51fa90a85b51135aa2eef23557026aea80cc74efd2a9b1eddb90d4b5e7f1e4c29e6815d1e0006852f4be0dca61ac69183771dfcfaa92ed200b
   languageName: node
   linkType: hard
+
+"@comunica/actor-rdf-metadata-accumulate-void-description@^0.0.0, @comunica/actor-rdf-metadata-accumulate-void-description@workspace:packages/actor-rdf-metadata-accumulate-void-description":
+  version: 0.0.0-use.local
+  resolution: "@comunica/actor-rdf-metadata-accumulate-void-description@workspace:packages/actor-rdf-metadata-accumulate-void-description"
+  dependencies:
+    "@comunica/actor-rdf-metadata-extract-void-description": ^0.0.0
+    "@comunica/bus-rdf-metadata-accumulate": ^2.0.0
+    "@comunica/context-entries": ^2.0.0
+    "@comunica/core": ^2.0.0
+    "@comunica/types": ^2.0.0
+  languageName: unknown
+  linkType: soft
 
 "@comunica/actor-rdf-metadata-all@npm:^2.5.1, @comunica/actor-rdf-metadata-all@npm:^2.8.2":
   version: 2.8.2
@@ -1724,16 +1725,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@comunica/actor-rdf-metadata-extract-void-count@^0.0.0, @comunica/actor-rdf-metadata-extract-void-count@workspace:packages/actor-rdf-metadata-extract-void-count":
+"@comunica/actor-rdf-metadata-extract-void-description@^0.0.0, @comunica/actor-rdf-metadata-extract-void-description@workspace:packages/actor-rdf-metadata-extract-void-description":
   version: 0.0.0-use.local
-  resolution: "@comunica/actor-rdf-metadata-extract-void-count@workspace:packages/actor-rdf-metadata-extract-void-count"
+  resolution: "@comunica/actor-rdf-metadata-extract-void-description@workspace:packages/actor-rdf-metadata-extract-void-description"
   dependencies:
-    "@comunica/actor-init-query": ^2.0.0
     "@comunica/bus-dereference-rdf": ^2.0.0
     "@comunica/bus-rdf-metadata-extract": ^2.0.0
     "@comunica/context-entries": ^2.0.0
     "@comunica/core": ^2.0.0
-    rdf-store-stream: ^2.0.0
   languageName: unknown
   linkType: soft
 
@@ -2769,8 +2768,8 @@ __metadata:
   dependencies:
     "@comunica/actor-init-query": ^2.0.0
     "@comunica/actor-rdf-join-inner-multi-adaptive-heuristics": ^0.0.0
-    "@comunica/actor-rdf-metadata-accumulate-predicate-count": ^0.0.0
-    "@comunica/actor-rdf-metadata-extract-void-count": ^0.0.0
+    "@comunica/actor-rdf-metadata-accumulate-void-description": ^0.0.0
+    "@comunica/actor-rdf-metadata-extract-void-description": ^0.0.0
     "@comunica/config-query-sparql-components": ^0.0.0
     "@comunica/query-sparql-link-traversal-solid": ^0.2.0
     "@comunica/runner-cli": ^2.0.0
@@ -3200,9 +3199,9 @@ __metadata:
   linkType: hard
 
 "@eslint-community/regexpp@npm:^4.4.0, @eslint-community/regexpp@npm:^4.6.1":
-  version: 4.8.2
-  resolution: "@eslint-community/regexpp@npm:4.8.2"
-  checksum: da1cb0b7b210d93b44950b0fe050dd9c6c475513d5d6dfccbb6a9502a2fe630fcb3f8becd4e284cbb293df3ac756b79c6a487b59c42b9aea510b108278ea84ee
+  version: 4.9.0
+  resolution: "@eslint-community/regexpp@npm:4.9.0"
+  checksum: 82411f0643ab9bfd271bf12c8c75031266b13595d9371585ee3b0d680d918d4abf37c7e94d0da22e45817c9bbc59b79dfcbd672050dfb00af88fb89c80fd420f
   languageName: node
   linkType: hard
 
@@ -3951,9 +3950,9 @@ __metadata:
   linkType: hard
 
 "@rushstack/eslint-patch@npm:^1.2.0":
-  version: 1.4.0
-  resolution: "@rushstack/eslint-patch@npm:1.4.0"
-  checksum: 29b216288deda3dee69dfb49adb1d809217d67331775a854de18771905268a65c11be5325313d47fb1c62ea0b477733e17310bc9708ccb7f3fb6f0a3816b82d9
+  version: 1.5.0
+  resolution: "@rushstack/eslint-patch@npm:1.5.0"
+  checksum: f21595f92ade631b5c5b2426962db727f79a7224a2c60e462779310bf1f2b592a6f59d280fa936001f564a4c7d40997ba80b5a32081fee061309ef2c56b7f4b5
   languageName: node
   linkType: hard
 
@@ -4155,9 +4154,9 @@ __metadata:
   linkType: hard
 
 "@types/minimist@npm:^1.2.0":
-  version: 1.2.2
-  resolution: "@types/minimist@npm:1.2.2"
-  checksum: b8da83c66eb4aac0440e64674b19564d9d86c80ae273144db9681e5eeff66f238ade9515f5006ffbfa955ceff8b89ad2bd8ec577d7caee74ba101431fb07045d
+  version: 1.2.3
+  resolution: "@types/minimist@npm:1.2.3"
+  checksum: 666ea4f8c39dcbdfbc3171fe6b3902157c845cc9cb8cee33c10deb706cda5e0cc80f98ace2d6d29f6774b0dc21180c96cd73c592a1cbefe04777247c7ba0e84b
   languageName: node
   linkType: hard
 
@@ -4172,9 +4171,9 @@ __metadata:
   linkType: hard
 
 "@types/node@npm:*":
-  version: 20.7.0
-  resolution: "@types/node@npm:20.7.0"
-  checksum: 1b2919925c213f4d2039ada7a8354c998e144f7291db8d719ef58ea9924ab636c113690073b0ec3b82ba62907385f7e0f51e9d1583c1a818776daa5156d3a590
+  version: 20.7.1
+  resolution: "@types/node@npm:20.7.1"
+  checksum: 3140bd6c9130f1ed73a78ce7a1765ee43e155c1eea50eea45e18faeb31d11d97a84fffdc5e3a97582101d2f57d2652a50f510ede6c702780267bad74c822d56c
   languageName: node
   linkType: hard
 
@@ -4799,13 +4798,13 @@ __metadata:
   linkType: hard
 
 "axios@npm:^1.0.0":
-  version: 1.5.0
-  resolution: "axios@npm:1.5.0"
+  version: 1.5.1
+  resolution: "axios@npm:1.5.1"
   dependencies:
     follow-redirects: ^1.15.0
     form-data: ^4.0.0
     proxy-from-env: ^1.1.0
-  checksum: e7405a5dbbea97760d0e6cd58fecba311b0401ddb4a8efbc4108f5537da9b3f278bde566deb777935a960beec4fa18e7b8353881f2f465e4f2c0e949fead35be
+  checksum: 4444f06601f4ede154183767863d2b8e472b4a6bfc5253597ed6d21899887e1fd0ee2b3de792ac4f8459fe2e359d2aa07c216e45fd8b9e4e0688a6ebf48a5a8d
   languageName: node
   linkType: hard
 
@@ -4877,16 +4876,16 @@ __metadata:
   linkType: hard
 
 "browserslist@npm:^4.21.9":
-  version: 4.21.11
-  resolution: "browserslist@npm:4.21.11"
+  version: 4.22.0
+  resolution: "browserslist@npm:4.22.0"
   dependencies:
-    caniuse-lite: ^1.0.30001538
-    electron-to-chromium: ^1.4.526
+    caniuse-lite: ^1.0.30001539
+    electron-to-chromium: ^1.4.530
     node-releases: ^2.0.13
     update-browserslist-db: ^1.0.13
   bin:
     browserslist: cli.js
-  checksum: 89377745428d32c7bbec37055bc4b9e48aa859418ea3886b13218d825f8ea3053640f90d8652844ae855941fec0bffd2d69cf933035d6f9224b427d48d31eddf
+  checksum: 14fc119bbfb85b65e2ee4a82205fabf9327520d010c4c586f1176ceaf9136cfdb391397045a4eafaa9defe52b6dbdf875916714695826c69091a936d5838f9ec
   languageName: node
   linkType: hard
 
@@ -5011,10 +5010,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"caniuse-lite@npm:^1.0.30001538":
-  version: 1.0.30001539
-  resolution: "caniuse-lite@npm:1.0.30001539"
-  checksum: 8595905d6c7234173a4915439fdd69fa2c06b0272d56af63aee0df6114e1ee4727758af160c0db9844055f778e0ea27ed4714facf2e472a2e74d9f567f111f41
+"caniuse-lite@npm:^1.0.30001539":
+  version: 1.0.30001541
+  resolution: "caniuse-lite@npm:1.0.30001541"
+  checksum: 972f6c223cf4ea2c6821b817b419249285006bbf67ebe415fe58097cf07551e3bae898586736d92f7c40b9f0ac28638dbf760631c23742b780affd0254f44d17
   languageName: node
   linkType: hard
 
@@ -5814,10 +5813,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"electron-to-chromium@npm:^1.4.526":
-  version: 1.4.529
-  resolution: "electron-to-chromium@npm:1.4.529"
-  checksum: 74425f73a96b96b00d2acb755905b26caf5c2858a4dd55f94cf97dc0102ab91a02a9ab67838a68de27400d50930ca8a5ae8c2ce0d5a72ef5eeb52b177d1737d3
+"electron-to-chromium@npm:^1.4.530":
+  version: 1.4.532
+  resolution: "electron-to-chromium@npm:1.4.532"
+  checksum: e9f77b5d6df84aa1f7598359ec2c988c3758e58106e63f2a0a6dc4756a6733b126316e61a79a2a6643aa2a0f9a1cf9ebe66c817dcb970a3fc9d8190342ef070a
   languageName: node
   linkType: hard
 
@@ -6970,8 +6969,8 @@ __metadata:
   linkType: hard
 
 "glob@npm:^10.2.2":
-  version: 10.3.8
-  resolution: "glob@npm:10.3.8"
+  version: 10.3.10
+  resolution: "glob@npm:10.3.10"
   dependencies:
     foreground-child: ^3.1.0
     jackspeak: ^2.3.5
@@ -6980,7 +6979,7 @@ __metadata:
     path-scurry: ^1.10.1
   bin:
     glob: dist/esm/bin.mjs
-  checksum: d8aec59ab56fc295104146c8a7d7f4268057d25e147e957bce0ddf1ebb3709459354b6f4a81fafca31c2a7ae42db0fa4c9b35c2bb795c78b4be3a8d7cc07b52b
+  checksum: 4f2fe2511e157b5a3f525a54092169a5f92405f24d2aed3142f4411df328baca13059f4182f1db1bf933e2c69c0bd89e57ae87edd8950cba8c7ccbe84f721cf3
   languageName: node
   linkType: hard
 
@@ -7849,15 +7848,15 @@ __metadata:
   linkType: hard
 
 "jackspeak@npm:^2.3.5":
-  version: 2.3.5
-  resolution: "jackspeak@npm:2.3.5"
+  version: 2.3.6
+  resolution: "jackspeak@npm:2.3.6"
   dependencies:
     "@isaacs/cliui": ^8.0.2
     "@pkgjs/parseargs": ^0.11.0
   dependenciesMeta:
     "@pkgjs/parseargs":
       optional: true
-  checksum: c2c211f13ceffa05f6c2a2fe82667303c81af6f9f53619b9e4fd403207ffe666428a017f61cd43b3478759188917eda14a81f8823b6dd40a8627e46d973a37df
+  checksum: 57d43ad11eadc98cdfe7496612f6bbb5255ea69fe51ea431162db302c2a11011642f50cfad57288bd0aea78384a0612b16e131944ad8ecd09d619041c8531b54
   languageName: node
   linkType: hard
 

@@ -20,8 +20,8 @@
   "dependencies": {
     "@comunica/actor-init-query": "^2.0.0",
     "@comunica/actor-rdf-join-inner-multi-adaptive-heuristics": "^0.0.0",
-    "@comunica/actor-rdf-metadata-accumulate-predicate-count": "^0.0.0",
-    "@comunica/actor-rdf-metadata-extract-void-count": "^0.0.0",
+    "@comunica/actor-rdf-metadata-accumulate-void-description": "^0.0.0",
+    "@comunica/actor-rdf-metadata-extract-void-description": "^0.0.0",
     "@comunica/config-query-sparql-components": "^0.0.0",
     "@comunica/query-sparql-link-traversal-solid": "^0.2.0",
     "@comunica/runner-cli": "^2.0.0"

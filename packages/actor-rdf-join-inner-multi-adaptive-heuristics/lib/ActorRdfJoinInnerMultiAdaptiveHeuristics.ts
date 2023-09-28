@@ -1,6 +1,5 @@
 import { ActorRdfJoinInnerMultiAdaptiveDestroy } from '@comunica/actor-rdf-join-inner-multi-adaptive-destroy';
 import type { IActorRdfJoinInnerMultiAdaptiveDestroyArgs } from '@comunica/actor-rdf-join-inner-multi-adaptive-destroy';
-import { ClosableTransformIterator } from '@comunica/bus-query-operation';
 import type { IActionRdfJoin, IActorRdfJoinOutputInner } from '@comunica/bus-rdf-join';
 import { KeysRdfJoin } from '@comunica/context-entries-link-traversal';
 import type { BindingsStream, IJoinEntry, MetadataBindings } from '@comunica/types';
@@ -30,47 +29,55 @@ export class ActorRdfJoinInnerMultiAdaptiveHeuristics extends ActorRdfJoinInnerM
 
     let bindingsStreamAdaptive: BindingsStreamAdaptiveHeuristics | undefined;
 
-    const handleMetadataInvalidation = (entries: IJoinEntry[]): IJoinEntry[] => entries.map((entry: IJoinEntry) => {
-      const handleInvalidationEvent = (old: MetadataBindings): void => {
-        old.state.addInvalidateListener(async() => {
-          const updated: MetadataBindings = await entry.output.metadata();
-          handleInvalidationEvent(updated);
-          if (
-            bindingsStreamAdaptive &&
-            (!this.allowOnlyOnce || !this.swapped) &&
-            (
-              updated.cardinality.value >= this.cardinalityThresholdMultiplier * old.cardinality.value ||
-              updated.cardinality.value >= this.cardinalityThreshold + old.cardinality.value
-            )
-          ) {
+    const cloneEntries = (): IJoinEntry[] => action.entries.map(entry => {
+      if (!this.swapped) {
+        const addInvalidationEventListener = (old: MetadataBindings): void => {
+          const handleInvalidationEvent = async(): Promise<void> => {
             if (!this.swapped) {
-              this.swapped = true;
+              const updated: MetadataBindings = await entry.output.metadata();
+              addInvalidationEventListener(updated);
+              if (
+                bindingsStreamAdaptive &&
+                Math.abs(updated.cardinality.value - old.cardinality.value) > this.cardinalityThreshold &&
+                Math.abs(updated.cardinality.value / (
+                  old.cardinality.value > 0 ? old.cardinality.value : 1
+                )) > this.cardinalityThresholdMultiplier
+              ) {
+                if (this.allowOnlyOnce && !this.swapped) {
+                  this.swapped = true;
+                }
+                const success = bindingsStreamAdaptive.swapSource();
+                console.log(`Swap: success ${success}, ${old.cardinality.value} -> ${updated.cardinality.value}`);
+              }
             }
-            const success = bindingsStreamAdaptive.swapSource();
-            // eslint-disable-next-line no-console
-            console.log(`Restart join (success ${success}), cardinality ${old.cardinality.value} -> ${updated.cardinality.value}`);
-          }
-        });
+          };
+          old.state.addInvalidateListener(() => setImmediate(handleInvalidationEvent));
+        };
+        entry.output.metadata()
+          .then((metadata: MetadataBindings) => addInvalidationEventListener(metadata))
+          .catch(error => new Error(error));
+      }
+      return {
+        operation: entry.operation,
+        output: {
+          ...entry.output,
+          // Clone stream, as we'll also need it later
+          bindingsStream: entry.output.bindingsStream.clone(),
+        },
       };
-      entry.output.metadata()
-        .then((metadata: MetadataBindings) => handleInvalidationEvent(metadata))
-        .catch(error => new Error(error));
-      return entry;
     });
 
     // Execute the join with the metadata we have now
     const firstOutput = await this.mediatorJoin.mediate({
       type: action.type,
-      entries: handleMetadataInvalidation(this.cloneEntries(action.entries, false)),
+      entries: cloneEntries(),
       context: subContext,
     });
 
     const createSource = async(): Promise<BindingsStream> => {
-      // eslint-disable-next-line no-console
-      console.log('Create new source');
       const joinResult = await this.mediatorJoin.mediate({
         type: action.type,
-        entries: handleMetadataInvalidation(this.cloneEntries(action.entries, false)),
+        entries: cloneEntries(),
         context: subContext,
       });
       return joinResult.bindingsStream;
@@ -92,30 +99,13 @@ export class ActorRdfJoinInnerMultiAdaptiveHeuristics extends ActorRdfJoinInnerM
   }
 
   protected cloneEntries(entries: IJoinEntry[], allowClosingOriginals: boolean): IJoinEntry[] {
-    return entries.map(entry => {
-      // Clone stream, as we'll also need it later
-      const cloneStream = new ClosableTransformIterator(entry.output.bindingsStream.clone(), {
-        autoStart: false,
-        onClose() {
-          if (allowClosingOriginals && !entry.output.bindingsStream.destroyed) {
-            entry.output.bindingsStream.destroy();
-          }
-        },
-      });
-      return {
-        operation: entry.operation,
-        output: {
-          ...entry.output,
-          bindingsStream: cloneStream,
-        },
-      };
-    });
+    throw new Error(`The cloneEntries method of ${this.name} should never be used`);
   }
 }
 
 export interface IActorRdfJoinInnerMultiAdaptiveHeuristicsArgs extends IActorRdfJoinInnerMultiAdaptiveDestroyArgs {
   /**
-   * @default {100}
+   * @default {10}
    */
   cardinalityThreshold: number;
   /**
