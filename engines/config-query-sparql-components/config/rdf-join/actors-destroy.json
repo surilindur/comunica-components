@@ -4,7 +4,7 @@
   ],
   "@graph": [
     {
-      "@id": "urn:comunica:default:rdf-join/actors#inner-multi-adaptive-destroy-timeout-test",
+      "@id": "urn:comunica:default:rdf-join/actors#inner-multi-adaptive-destroy-timeout",
       "@type": "Override",
       "overrideInstance": {
         "@id": "urn:comunica:default:rdf-join/actors#inner-multi-adaptive-destroy"
@@ -17,7 +17,7 @@
         "mediatorJoin": {
           "@id": "urn:comunica:default:rdf-join/mediators#main"
         },
-        "timeout": 10,
+        "timeout": 480000,
         "beforeActors": [
           {
             "@id": "urn:comunica:default:rdf-join/actors#inner-multi-bind"

@@ -18,7 +18,7 @@
         "mediatorJoin": {
           "@id": "urn:comunica:default:rdf-join/mediators#main"
         },
-        "timeout": 500,
+        "timeout": 480000,
         "beforeActors": [
           {
             "@id": "urn:comunica:default:rdf-join/actors#inner-multi-bind"
