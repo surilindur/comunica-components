@@ -47,6 +47,7 @@ export class ActorRdfJoinInnerMultiAdaptiveHeuristics extends ActorRdfJoinInnerM
                   this.swapped = true;
                 }
                 const success = bindingsStreamAdaptive.swapSource();
+                // eslint-disable-next-line no-console
                 console.log(`Swap: success ${success}, ${old.cardinality.value} -> ${updated.cardinality.value}`);
               }
             }
