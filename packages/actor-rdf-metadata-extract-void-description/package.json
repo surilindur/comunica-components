@@ -1,7 +1,7 @@
 {
-  "name": "@comunica/actor-rdf-metadata-extract-void-count",
+  "name": "@comunica/actor-rdf-metadata-extract-void-description",
   "version": "0.0.0",
-  "description": "A Comunica metadata extract actor",
+  "description": "Comunica metadata extract actor for VoID descriptions",
   "main": "lib/index.js",
   "types": "lib/index",
   "repository": "https://github.com/surilindur/comunica-components",
@@ -10,11 +10,9 @@
   "private": true,
   "lsd:module": true,
   "dependencies": {
-    "@comunica/actor-init-query": "^2.0.0",
     "@comunica/bus-dereference-rdf": "^2.0.0",
     "@comunica/bus-rdf-metadata-extract": "^2.0.0",
     "@comunica/context-entries": "^2.0.0",
-    "@comunica/core": "^2.0.0",
-    "rdf-store-stream": "^2.0.0"
+    "@comunica/core": "^2.0.0"
   }
 }
