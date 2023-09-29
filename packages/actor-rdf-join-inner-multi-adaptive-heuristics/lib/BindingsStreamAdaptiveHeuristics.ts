@@ -3,12 +3,11 @@ import type { TransformIteratorOptions } from 'asynciterator';
 import { TransformIterator } from 'asynciterator';
 
 /**
- * An iterator that starts by iterating over the first iterator,
- * and switches to a second iterator after a timeout.
+ * An iterator that starts by iterating over the first iterator, and switches to a second iterator
+ * either after a timeout or when the swapSource function is called.
  *
- * If the first iterator ends before the timout, the second iterator will not be started.
- *
- * This will ensure that results are not duplicated after switching.
+ * If the currently running iterator ends before a swap, the swap will not happen.
+ * The iterator tracks bindings that are output to avoid producing duplicates.
  */
 export class BindingsStreamAdaptiveHeuristics extends TransformIterator<Bindings> {
   private readonly timeout: number;
@@ -53,7 +52,7 @@ export class BindingsStreamAdaptiveHeuristics extends TransformIterator<Bindings
 
   protected _init(autoStart: boolean): void {
     super._init(autoStart);
-    // Switch to the second stream after a timeout
+    // Switch to a new stream after a timeout
     this.timeoutHandle = setTimeout(() => this.swapSource(), this.timeout);
   }
 
@@ -68,7 +67,11 @@ export class BindingsStreamAdaptiveHeuristics extends TransformIterator<Bindings
       // If we're in the second stream, only push the bindings that were not yet pushed in the first stream
       const pushedBefore = this.pushedBindings.size > 0 ? this.pushedBindings.get(bindingsKey) : undefined;
       if (pushedBefore) {
-        this.pushedBindings.set(bindingsKey, pushedBefore - 1);
+        if (pushedBefore > 1) {
+          this.pushedBindings.set(bindingsKey, pushedBefore - 1);
+        } else {
+          this.pushedBindings.delete(bindingsKey);
+        }
       } else {
         super._push(item);
       }

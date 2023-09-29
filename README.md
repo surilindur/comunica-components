@@ -12,22 +12,22 @@
 <a href="https://github.com/surilindur/comunica-components/actions?query=workflow%3ACI"><img src="https://github.com/surilindur/comunica-components/workflows/CI/badge.svg" alt="Build Status"></a>
 </p>
 
-This is a monorepo that contains various work-in-progress components for [Comunica](https://github.com/comunica/comunica) and is not intended for actual use. If you wish to learn more about Comunica or actually use it, please refer to [its website](https://comunica.dev/).
+This is a monorepository that contains various work-in-progress components for [Comunica](https://github.com/comunica/comunica) and is not intended for actual use. If you wish to learn more about Comunica or actually use it, please refer to [its website](https://comunica.dev/).
 
 The following components reside here:
 
-* [**VoID description RDF metadata extractor**](packages/actor-rdf-metadata-extract-void-count/), that extracts VoID description metadata from the metadata stream and stores it back in the metadata.
+* [**VoID description RDF metadata extractor**](packages/actor-rdf-metadata-extract-void-description/), that parses VoID descriptions from the metadata stream and stores them back in the metadata.
 * [**Simple "adaptive" inner join join actor**](packages/actor-rdf-join-inner-multi-adaptive-heuristics/), that keeps restarting joins every time there is a significance enough change in the estimated cardinalities.
-* [**Predicate count RDF metadata accumulator**](packages/actor-rdf-metadata-accumulate-predicate-count/), that ensures the predicate counts discovered via the metadat extractor are assigned correctly to different triple patterns.
+* [**VoID description RDF metadata accumulator**](packages/actor-rdf-metadata-accumulate-void-description/), that accumulates VoID descriptions from multiple metadata and performs simple cardinality estimation for triple patterns based on those descriptions.
 
 ## Development Setup
 
-The project can be cloned, after which the dependencies can be installed, with:
+The project can be cloned, after which the dependencies can be installed using Yarn with:
 
 ```bash
 git clone https://github.com/surilindur/comunica-components
 cd comunica-components
-yarn install
+yarn install --immutable
 yarn build
 ```
 

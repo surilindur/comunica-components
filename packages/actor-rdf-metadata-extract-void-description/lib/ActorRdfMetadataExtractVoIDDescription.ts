@@ -8,8 +8,7 @@ import {
 import { KeysQueryOperation, KeysInitQuery } from '@comunica/context-entries';
 import type { IActorTest } from '@comunica/core';
 import type * as RDF from '@rdfjs/types';
-import type { IVoIDDescriptionArgs, IVoIDDescription } from './VoIDDescription';
-import { VoIDDescription } from './VoIDDescription';
+import type { IVoIDDescription } from './VoIDDescription';
 
 const VOID = 'http://rdfs.org/ns/void#';
 const VOID_TRIPLES = `${VOID}triples`;
@@ -92,39 +91,39 @@ export class ActorRdfMetadataExtractVoIDDescription extends ActorRdfMetadataExtr
           data[quad.subject.value] = [ quad ];
         }
       }).on('end', () => {
-        const descriptionObjects: IVoIDDescription[] = links.map(url => new VoIDDescription({
+        const descriptionObjects: IVoIDDescription[] = links.map(url => ({
           dataset: url,
           propertyPartitions: new Map(),
         }));
         for (const [ dataset, quads ] of Object.entries(descriptions)) {
-          const voidArgs: IVoIDDescriptionArgs = {
+          const voidDescription: IVoIDDescription = {
             dataset,
             propertyPartitions: new Map(),
           };
           for (const quad of quads) {
             if (quad.predicate.value === VOID_DSUBJECTS) {
-              voidArgs.distinctSubjects = Number.parseInt(quad.object.value, 10);
+              voidDescription.distinctSubjects = Number.parseInt(quad.object.value, 10);
             } else if (quad.predicate.value === VOID_DOBJECTS) {
-              voidArgs.distinctObjects = Number.parseInt(quad.object.value, 10);
+              voidDescription.distinctObjects = Number.parseInt(quad.object.value, 10);
             } else if (quad.predicate.value === VOID_URISPACE) {
-              voidArgs.uriSpace = quad.object.value;
+              voidDescription.uriSpace = quad.object.value;
             } else if (quad.predicate.value === VOID_PROPERTIES) {
-              voidArgs.properties = Number.parseInt(quad.object.value, 10);
+              voidDescription.properties = Number.parseInt(quad.object.value, 10);
             } else if (quad.predicate.value === VOID_CLASSES) {
-              voidArgs.classes = Number.parseInt(quad.object.value, 10);
+              voidDescription.classes = Number.parseInt(quad.object.value, 10);
             } else if (quad.predicate.value === VOID_PPARTITION && quad.object.value in data) {
               const propertyPartitionQuads = data[quad.object.value];
               const propertyValue = propertyPartitionQuads.find(pq => pq.predicate.value === VOID_PROPERTY);
               const propertyCount = propertyPartitionQuads.find(pq => pq.predicate.value === VOID_TRIPLES);
               if (propertyValue && propertyCount) {
-                voidArgs.propertyPartitions.set(
+                voidDescription.propertyPartitions.set(
                   propertyValue.object.value,
                   Number.parseInt(propertyCount.object.value, 10),
                 );
               }
             }
           }
-          descriptionObjects.push(new VoIDDescription(voidArgs));
+          descriptionObjects.push(voidDescription);
         }
         resolve(descriptionObjects);
       }).on('error', reject);

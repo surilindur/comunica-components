@@ -84,7 +84,7 @@ export class ActorRdfMetadataAccumulateVoIDDescription extends ActorRdfMetadataA
         break;
       } else {
         const targetMatchLength = this.getMatchingLength(uri, matchTarget);
-        if (targetMatchLength > matchLength) {
+        if (targetMatchLength >= matchLength) {
           matchLength = targetMatchLength;
           match = description;
         }
@@ -96,7 +96,7 @@ export class ActorRdfMetadataAccumulateVoIDDescription extends ActorRdfMetadataA
   private getMatchingLength(sa: string, sb: string): number {
     let matchingChars = 0;
     const iterMax = Math.max(sa.length, sb.length);
-    for (let i = 0; i < Math.max(iterMax); i++) {
+    for (let i = 0; i < iterMax; i++) {
       matchingChars = i;
       if (sa[i] !== sb[i]) {
         break;
