@@ -17,7 +17,7 @@ This is a monorepository that contains various work-in-progress components for [
 The following components reside here:
 
 * [**VoID description RDF metadata extractor**](packages/actor-rdf-metadata-extract-void-description/), that parses VoID descriptions from the metadata stream and stores them back in the metadata.
-* [**Simple "adaptive" inner join join actor**](packages/actor-rdf-join-inner-multi-adaptive-heuristics/), that keeps restarting joins every time there is a significance enough change in the estimated cardinalities.
+* [**Simple "adaptive" inner join actor**](packages/actor-rdf-join-inner-multi-adaptive-heuristics/), that keeps restarting joins every time there is a significant enough change in the estimated cardinalities.
 * [**VoID description RDF metadata accumulator**](packages/actor-rdf-metadata-accumulate-void-description/), that accumulates VoID descriptions from multiple metadata and performs simple cardinality estimation for triple patterns based on those descriptions.
 
 ## Development Setup
