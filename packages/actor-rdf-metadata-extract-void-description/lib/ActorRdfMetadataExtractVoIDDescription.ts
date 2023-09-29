@@ -22,6 +22,7 @@ const VOID_DSUBJECTS = `${VOID}distinctSubjects`;
 const VOID_DOBJECTS = `${VOID}distinctObjects`;
 const VOID_PPARTITION = `${VOID}propertyPartition`;
 const RDF_TYPE = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type';
+const XSD_INTEGER = 'http://www.w3.org/2001/XMLSchema#integer';
 
 /**
  * An RDF Metadata Extract Actor that extracts dataset metadata from their VOID descriptions
@@ -113,8 +114,13 @@ export class ActorRdfMetadataExtractVoIDDescription extends ActorRdfMetadataExtr
               voidDescription.classes = Number.parseInt(quad.object.value, 10);
             } else if (quad.predicate.value === VOID_PPARTITION && quad.object.value in data) {
               const propertyPartitionQuads = data[quad.object.value];
-              const propertyValue = propertyPartitionQuads.find(pq => pq.predicate.value === VOID_PROPERTY);
-              const propertyCount = propertyPartitionQuads.find(pq => pq.predicate.value === VOID_TRIPLES);
+              const propertyValue = propertyPartitionQuads.find(pq =>
+                pq.predicate.value === VOID_PROPERTY &&
+                pq.object.termType === 'NamedNode');
+              const propertyCount = propertyPartitionQuads.find(pq =>
+                pq.predicate.value === VOID_TRIPLES &&
+                pq.object.termType === 'Literal' &&
+                pq.object.datatype.value === XSD_INTEGER);
               if (propertyValue && propertyCount) {
                 voidDescription.propertyPartitions.set(
                   propertyValue.object.value,
