@@ -36,13 +36,7 @@ export class ActorRdfJoinInnerMultiAdaptiveHeuristics extends ActorRdfJoinInnerM
             if (!this.swapped) {
               const updated: MetadataBindings = await entry.output.metadata();
               addInvalidationEventListener(updated);
-              if (
-                bindingsStreamAdaptive &&
-                Math.abs(updated.cardinality.value - old.cardinality.value) > this.cardinalityThreshold &&
-                Math.abs(updated.cardinality.value / (
-                  old.cardinality.value > 0 ? old.cardinality.value : 1
-                )) > this.cardinalityThresholdMultiplier
-              ) {
+              if (bindingsStreamAdaptive && this.cardinalityChangeMeetsThreshold(old, updated)) {
                 if (this.allowOnlyOnce && !this.swapped) {
                   this.swapped = true;
                 }
@@ -97,6 +91,18 @@ export class ActorRdfJoinInnerMultiAdaptiveHeuristics extends ActorRdfJoinInnerM
         metadata: firstOutput.metadata,
       },
     };
+  }
+
+  protected cardinalityChangeMeetsThreshold(old: MetadataBindings, updated: MetadataBindings): boolean {
+    if (
+      old.cardinality.value !== updated.cardinality.value &&
+      Math.abs(old.cardinality.value - updated.cardinality.value) > this.cardinalityThreshold
+    ) {
+      const smallerValue = Math.min(old.cardinality.value, updated.cardinality.value);
+      const largerValue = Math.max(old.cardinality.value, updated.cardinality.value);
+      return Math.abs(largerValue / (smallerValue === 0 ? 1 : smallerValue)) > this.cardinalityThresholdMultiplier;
+    }
+    return false;
   }
 
   protected cloneEntries(entries: IJoinEntry[], allowClosingOriginals: boolean): IJoinEntry[] {

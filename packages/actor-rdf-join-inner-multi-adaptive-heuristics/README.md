@@ -18,7 +18,7 @@ $ yarn add @comunica/actor-rdf-join-inner-multi-adaptive-heuristics
 ## Configure
 
 After installing, this package can be added to your engine's configuration as follows:
-```text
+```json
 {
   "@context": [
     ...
@@ -40,3 +40,6 @@ After installing, this package can be added to your engine's configuration as fo
 
 * `mediatorJoinSelectivity`: A mediator over the [RDF Join Selectivity bus](https://github.com/comunica/comunica/tree/master/packages/bus-rdf-join-selectivity).
 * `mediatorJoin`: A mediator over the [RDF Join bus](https://github.com/comunica/comunica/tree/master/packages/bus-rdf-join).
+* `cardinalityThreshold`: Absolute value threshold for metadata cardinality value change before restarting join.
+* `cardinalityThresholdMultiplier`: Multiplier/divisor threshold for metadata cardinality value change before restarting join.
+* `allowOnlyOnce`: Whether the join should only be restarted once, and not an unlimited number of times.
