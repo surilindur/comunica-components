@@ -2,9 +2,13 @@
   <a href="https://comunica.dev/">
     <img alt="Comunica" src="https://comunica.dev/img/comunica_red.svg" width="200">
   </a>
+</p>
 
+<p align="center">
   <strong>Work-in-Progress Components for Comunica</strong>
+</p>
 
+<p align="center">
   [![CI](https://github.com/surilindur/comunica-components/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/surilindur/comunica-components/actions/workflows/ci.yml)
 </p>
 
