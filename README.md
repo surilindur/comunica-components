@@ -9,7 +9,9 @@
 </p>
 
 <p align="center">
-  [![CI](https://github.com/surilindur/comunica-components/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/surilindur/comunica-components/actions/workflows/ci.yml)
+  <a href="https://github.com/surilindur/comunica-components/actions/workflows/ci.yml">
+    <img alt="CI" src=https://github.com/surilindur/comunica-components/actions/workflows/ci.yml/badge.svg?branch=main">
+  </a>
 </p>
 
 This is a monorepository that contains various work-in-progress components for [Comunica](https://github.com/comunica/comunica) and is not intended for actual use. If you wish to learn more about Comunica or actually use it, please refer to [its website](https://comunica.dev/).
