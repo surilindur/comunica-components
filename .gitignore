@@ -1,7 +1,7 @@
-node_modules/
-components/
-.yarn/
-.venv/
+node_modules
+components
+.yarn
+docs
 
 *.js
 *.js.map
@@ -12,5 +12,3 @@ components/
 componentsjs-error-state.json
 
 test*
-docs*
-plot*

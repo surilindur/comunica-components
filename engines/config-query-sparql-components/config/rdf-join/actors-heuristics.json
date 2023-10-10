@@ -12,6 +12,9 @@
       },
       "overrideParameters": {
         "@type": "ActorRdfJoinInnerMultiAdaptiveHeuristics",
+        "mediatorJoinEntriesSort": {
+          "@id": "urn:comunica:default:rdf-join-entries-sort/mediators#main"
+        },
         "mediatorJoinSelectivity": {
           "@id": "urn:comunica:default:rdf-join-selectivity/mediators#main"
         },

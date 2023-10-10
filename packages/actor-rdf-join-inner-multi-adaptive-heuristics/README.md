@@ -29,6 +29,7 @@ After installing, this package can be added to your engine's configuration as fo
     {
       "@id": "urn:comunica:default:rdf-join/actors#inner-multi-adaptive-heuristics",
       "@type": "ActorRdfJoinInnerMultiAdaptiveHeuristics",
+      "mediatorJoinEntriesSort": { "@id": "urn:comunica:default:rdf-join-entries-sort/mediators#main" },
       "mediatorJoinSelectivity": { "@id": "urn:comunica:default:rdf-join-selectivity/mediators#main" },
       "mediatorJoin": { "@id": "urn:comunica:default:rdf-join/mediators#main" }
     }
@@ -38,6 +39,7 @@ After installing, this package can be added to your engine's configuration as fo
 
 ### Config Parameters
 
+* `mediatorJoinEntriesSort`: A mediator over the [RDF Join Entries Sort bus](https://github.com/comunica/comunica/tree/master/packages/bus-rdf-join-entries-sort).
 * `mediatorJoinSelectivity`: A mediator over the [RDF Join Selectivity bus](https://github.com/comunica/comunica/tree/master/packages/bus-rdf-join-selectivity).
 * `mediatorJoin`: A mediator over the [RDF Join bus](https://github.com/comunica/comunica/tree/master/packages/bus-rdf-join).
 * `cardinalityThreshold`: Absolute value threshold for metadata cardinality value change before restarting join.

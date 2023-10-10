@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "description": "Various work-in-progress components for Comunica",
   "repository": "https://github.com/surilindur/comunica-components",
-  "packageManager": "yarn@3.6.3",
+  "packageManager": "yarn@3.6.4",
   "license": "MIT",
   "private": true,
   "workspaces": [
