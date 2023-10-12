@@ -8,14 +8,18 @@ import type {
 import { KeysQueryOperation, KeysRdfResolveQuadPattern } from '@comunica/context-entries';
 import type { IActorTest } from '@comunica/core';
 import type { QueryResultCardinality } from '@comunica/types';
-import type * as RDF from '@rdfjs/types';
+import type { Algebra } from 'sparqlalgebrajs';
+import type { ICardinalityEstimatorVoIDDescription } from './CardinalityEstimatorVoIDDescription';
 
 /**
   * A comunica Predicate Count RDF Metadata Accumulate Actor.
   */
 export class ActorRdfMetadataAccumulateVoIDDescription extends ActorRdfMetadataAccumulate {
+  protected readonly cardinalityEstimator: ICardinalityEstimatorVoIDDescription;
+
   public constructor(args: IActorRdfMetadataAccumulateVoIDDescriptionArgs) {
     super(args);
+    this.cardinalityEstimator = args.cardinalityEstimator;
   }
 
   public async test(action: IActionRdfMetadataAccumulate): Promise<IActorTest> {
@@ -36,33 +40,26 @@ export class ActorRdfMetadataAccumulateVoIDDescription extends ActorRdfMetadataA
     let cardinality: QueryResultCardinality | undefined;
 
     if (descriptions.length > 0) {
-      // This is an algebra pattern, but has some common members with Quad
-      const pattern: RDF.Quad = action.context.getSafe(KeysQueryOperation.operation);
+      const sources = action.context.get<Map<string, string> | undefined>(KeysRdfResolveQuadPattern.sourceIds);
 
-      if (pattern.predicate.termType === 'NamedNode') {
-        const sourceIds: Map<string, string> | undefined = action.context.get(KeysRdfResolveQuadPattern.sourceIds);
-        if (sourceIds && sourceIds.size > 0) {
-          let count = 0;
-          const datasets: string[] = [];
+      if (sources && sources.size > 0) {
+        let bestEstimate = 0;
+        let bestDataset: string | undefined;
+        const pattern: Algebra.Pattern = action.context.getSafe(KeysQueryOperation.operation);
 
-          for (const source of sourceIds.keys()) {
-            const matchingDescription = this.getDescriptionWithLongestMatch(source, descriptions);
-            if (matchingDescription) {
-              const predicateCount = matchingDescription.propertyPartitions.get(pattern.predicate.value);
-              if (predicateCount) {
-                count += predicateCount;
-                datasets.push(matchingDescription.dataset);
-              }
+        for (const source of sources.keys()) {
+          const matchingDescription = this.getDescriptionWithLongestMatch(source, descriptions);
+          if (matchingDescription) {
+            const estimatedCardinality = this.cardinalityEstimator.estimate(matchingDescription, pattern);
+            if (estimatedCardinality && (!bestDataset || matchingDescription.dataset.length > bestDataset.length)) {
+              bestEstimate = estimatedCardinality;
+              bestDataset = matchingDescription.dataset;
             }
           }
+        }
 
-          if (count > 0) {
-            cardinality = {
-              type: 'estimate',
-              value: count,
-              ...datasets.length === 1 ? { dataset: datasets[0] } : {},
-            };
-          }
+        if (bestDataset) {
+          cardinality = { type: 'estimate', value: bestEstimate, dataset: bestDataset };
         }
       }
     }
@@ -106,4 +103,9 @@ export class ActorRdfMetadataAccumulateVoIDDescription extends ActorRdfMetadataA
   }
 }
 
-export type IActorRdfMetadataAccumulateVoIDDescriptionArgs = IActorRdfMetadataAccumulateArgs;
+export interface IActorRdfMetadataAccumulateVoIDDescriptionArgs extends IActorRdfMetadataAccumulateArgs {
+  /**
+   * Instance of a triple pattern cardinality estimator for VoID descriptions.
+   */
+  cardinalityEstimator: ICardinalityEstimatorVoIDDescription;
+}

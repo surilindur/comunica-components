@@ -12,6 +12,8 @@ import type { IVoIDDescription } from './VoIDDescription';
 
 const VOID = 'http://rdfs.org/ns/void#';
 const VOID_TRIPLES = `${VOID}triples`;
+const VOID_ENTITIES = `${VOID}entities`;
+const VOID_CLASS = `${VOID}class`;
 const VOID_CLASSES = `${VOID}classes`;
 const VOID_PROPERTY = `${VOID}property`;
 const VOID_PROPERTIES = `${VOID}properties`;
@@ -21,6 +23,7 @@ const VOID_DATASET = `${VOID}Dataset`;
 const VOID_DSUBJECTS = `${VOID}distinctSubjects`;
 const VOID_DOBJECTS = `${VOID}distinctObjects`;
 const VOID_PPARTITION = `${VOID}propertyPartition`;
+const VOID_CPARTITION = `${VOID}classPartition`;
 const RDF_TYPE = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type';
 const XSD_INTEGER = 'http://www.w3.org/2001/XMLSchema#integer';
 
@@ -95,38 +98,86 @@ export class ActorRdfMetadataExtractVoIDDescription extends ActorRdfMetadataExtr
         const descriptionObjects: IVoIDDescription[] = links.map(url => ({
           dataset: url,
           propertyPartitions: new Map(),
+          classPartitions: new Map(),
         }));
         for (const [ dataset, quads ] of Object.entries(descriptions)) {
           const voidDescription: IVoIDDescription = {
             dataset,
             propertyPartitions: new Map(),
+            classPartitions: new Map(),
           };
           for (const quad of quads) {
-            if (quad.predicate.value === VOID_DSUBJECTS) {
-              voidDescription.distinctSubjects = Number.parseInt(quad.object.value, 10);
-            } else if (quad.predicate.value === VOID_DOBJECTS) {
-              voidDescription.distinctObjects = Number.parseInt(quad.object.value, 10);
-            } else if (quad.predicate.value === VOID_URISPACE) {
-              voidDescription.uriSpace = quad.object.value;
-            } else if (quad.predicate.value === VOID_PROPERTIES) {
-              voidDescription.properties = Number.parseInt(quad.object.value, 10);
-            } else if (quad.predicate.value === VOID_CLASSES) {
-              voidDescription.classes = Number.parseInt(quad.object.value, 10);
-            } else if (quad.predicate.value === VOID_PPARTITION && quad.object.value in data) {
-              const propertyPartitionQuads = data[quad.object.value];
-              const propertyValue = propertyPartitionQuads.find(pq =>
-                pq.predicate.value === VOID_PROPERTY &&
-                pq.object.termType === 'NamedNode');
-              const propertyCount = propertyPartitionQuads.find(pq =>
-                pq.predicate.value === VOID_TRIPLES &&
-                pq.object.termType === 'Literal' &&
-                pq.object.datatype.value === XSD_INTEGER);
-              if (propertyValue && propertyCount) {
-                voidDescription.propertyPartitions.set(
-                  propertyValue.object.value,
-                  Number.parseInt(propertyCount.object.value, 10),
-                );
-              }
+            switch (quad.predicate.value) {
+              case VOID_DSUBJECTS:
+                voidDescription.distinctSubjects = Number.parseInt(quad.object.value, 10);
+                break;
+              case VOID_DOBJECTS:
+                voidDescription.distinctObjects = Number.parseInt(quad.object.value, 10);
+                break;
+              case VOID_TRIPLES:
+                voidDescription.triples = Number.parseInt(quad.object.value, 10);
+                break;
+              case VOID_URISPACE:
+                voidDescription.uriSpace = quad.object.value;
+                break;
+              case VOID_PROPERTIES:
+                voidDescription.properties = Number.parseInt(quad.object.value, 10);
+                break;
+              case VOID_CLASSES:
+                voidDescription.classes = Number.parseInt(quad.object.value, 10);
+                break;
+              case VOID_CPARTITION:
+                if (quad.object.value in data) {
+                  let partitionClass: string | undefined;
+                  let partitionEntities: number | undefined;
+                  for (const pq of data[quad.object.value]) {
+                    if (pq.predicate.value === VOID_CLASS && pq.object.termType === 'NamedNode') {
+                      partitionClass = pq.object.value;
+                    } else if (
+                      pq.predicate.value === VOID_ENTITIES &&
+                      pq.object.termType === 'Literal' &&
+                      pq.object.datatype.value === XSD_INTEGER
+                    ) {
+                      partitionEntities = Number.parseInt(pq.object.value, 10);
+                    }
+                  }
+                  if (partitionClass) {
+                    voidDescription.classPartitions.set(partitionClass, { entities: partitionEntities });
+                  }
+                }
+                break;
+              case VOID_PPARTITION:
+                if (quad.object.value in data) {
+                  let partitionProperty: string | undefined;
+                  let partitionTriples: number | undefined;
+                  let partitionDistinctSubjects: number | undefined;
+                  let partitionDistinctObjects: number | undefined;
+                  for (const pq of data[quad.object.value]) {
+                    if (pq.object.termType === 'NamedNode' && pq.predicate.value === VOID_PROPERTY) {
+                      partitionProperty = pq.object.value;
+                    } else if (pq.object.termType === 'Literal' && pq.object.datatype.value === XSD_INTEGER) {
+                      switch (pq.predicate.value) {
+                        case VOID_TRIPLES:
+                          partitionTriples = Number.parseInt(pq.object.value, 10);
+                          break;
+                        case VOID_DSUBJECTS:
+                          partitionDistinctSubjects = Number.parseInt(pq.object.value, 10);
+                          break;
+                        case VOID_DOBJECTS:
+                          partitionDistinctObjects = Number.parseInt(pq.object.value, 10);
+                          break;
+                      }
+                    }
+                  }
+                  if (partitionProperty) {
+                    voidDescription.propertyPartitions.set(partitionProperty, {
+                      triples: partitionTriples,
+                      distinctSubjects: partitionDistinctSubjects,
+                      distinctObjects: partitionDistinctObjects,
+                    });
+                  }
+                }
+                break;
             }
           }
           descriptionObjects.push(voidDescription);

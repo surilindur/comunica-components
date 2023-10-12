@@ -1,14 +1,21 @@
 {
   "@context": [
     "https://linkedsoftwaredependencies.org/bundles/npm/@comunica/runner/^2.0.0/components/context.jsonld",
+    "https://linkedsoftwaredependencies.org/bundles/npm/@comunica/config-query-sparql-components/^0.0.0/components/context.jsonld",
     "https://linkedsoftwaredependencies.org/bundles/npm/@comunica/actor-rdf-metadata-accumulate-void-description/^0.0.0/components/context.jsonld"
+  ],
+  "import": [
+    "ccqsc:config/rdf-metadata-accumulate/cardinality-estimators.json"
   ],
   "@id": "urn:comunica:default:Runner",
   "@type": "Runner",
   "actors": [
     {
       "@id": "urn:comunica:default:rdf-metadata-accumulate/actors#void-description",
-      "@type": "ActorRdfMetadataAccumulateVoIDDescription"
+      "@type": "ActorRdfMetadataAccumulateVoIDDescription",
+      "cardinalityEstimator": {
+        "@id": "urn:comunica:default:rdf-metadata-accumulate/void-cardinality-estimators#predicate-count"
+      }
     }
   ]
 }

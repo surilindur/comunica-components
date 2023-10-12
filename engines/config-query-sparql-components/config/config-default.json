@@ -5,7 +5,7 @@
   "import": [
     "ccqsc:config/config-base-adaptive.json",
     "ccqsc:config/rdf-metadata-extract/actors.json",
-    "ccqsc:config/rdf-metadata-accumulate/actors.json",
+    "ccqsc:config/rdf-metadata-accumulate/actors-predicate-count.json",
     "ccqsc:config/rdf-join/actors-destroy.json"
   ]
 }

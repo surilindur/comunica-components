@@ -13,6 +13,7 @@
     "@comunica/actor-rdf-metadata-extract-void-description": "^0.0.0",
     "@comunica/bus-rdf-metadata-accumulate": "^2.0.0",
     "@comunica/context-entries": "^2.0.0",
-    "@comunica/core": "^2.0.0"
+    "@comunica/core": "^2.0.0",
+    "sparqlalgebrajs": "^4.0.0"
   }
 }
