@@ -32,10 +32,12 @@ const XSD_INTEGER = 'http://www.w3.org/2001/XMLSchema#integer';
  */
 export class ActorRdfMetadataExtractVoIDDescription extends ActorRdfMetadataExtract {
   public readonly mediatorDereferenceRdf: MediatorDereferenceRdf;
+  private readonly datasetSubjectRegex: RegExp;
 
   public constructor(args: IActorRdfMetadataExtractVoIDDescriptionArgs) {
     super(args);
     this.mediatorDereferenceRdf = args.mediatorDereferenceRdf;
+    this.datasetSubjectRegex = new RegExp(args.datasetSubjectRegex, 'u');
   }
 
   public async test(action: IActionRdfMetadataExtract): Promise<IActorTest> {
@@ -80,7 +82,11 @@ export class ActorRdfMetadataExtractVoIDDescription extends ActorRdfMetadataExtr
       stream.on('data', (quad: RDF.Quad) => {
         if (quad.subject.value in descriptions) {
           descriptions[quad.subject.value].push(quad);
-        } else if (quad.predicate.value === RDF_TYPE && quad.object.value === VOID_DATASET) {
+        } else if (
+          quad.predicate.value === RDF_TYPE &&
+          quad.object.value === VOID_DATASET &&
+          this.datasetSubjectRegex.test(quad.subject.value)
+        ) {
           if (quad.subject.value in data) {
             descriptions[quad.subject.value] = [ ...data[quad.subject.value], quad ];
             delete data[quad.subject.value];
@@ -194,4 +200,9 @@ export interface IActorRdfMetadataExtractVoIDDescriptionArgs extends IActorRdfMe
    * @default {<urn:comunica:default:dereference-rdf/mediators#main>}
    */
   mediatorDereferenceRdf: MediatorDereferenceRdf;
+  /**
+   * The regex used to identify datasets as opposed to predicate and class partitions
+   * that are also marked as datasets following the VoID specification.
+   */
+  datasetSubjectRegex: string;
 }
