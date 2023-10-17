@@ -49,7 +49,7 @@ export class ActorRdfJoinInnerMultiAdaptiveHeuristics extends ActorRdfJoinInnerM
       })).entries;
     };
 
-    let currentJoinOrder: IJoinEntryWithMetadata[] = await getUpdatedJoinOrder();
+    const currentJoinOrder: IJoinEntryWithMetadata[] = await getUpdatedJoinOrder();
 
     const entriesWithInvalidationListener = action.entries.map(entry => {
       const addMetadataInvalidationListener = (metadata: MetadataBindings): void => {
@@ -63,21 +63,8 @@ export class ActorRdfJoinInnerMultiAdaptiveHeuristics extends ActorRdfJoinInnerM
                   this.disableJoinRestart = true;
                 }
                 const updatedJoinOrder = await getUpdatedJoinOrder();
-                let joinOrderWouldChange = false;
-                for (let i = 0; i < updatedJoinOrder.length; i++) {
-                  if (updatedJoinOrder[i].operation !== currentJoinOrder[i].operation) {
-                    currentJoinOrder = updatedJoinOrder;
-                    joinOrderWouldChange = true;
-                    break;
-                  }
-                }
-                if (joinOrderWouldChange) {
-                  const success = bindingsStreamAdaptive.swapSource();
-                  // eslint-disable-next-line no-console
-                  console.log(`\nSwap: success ${success}, ${metadata.cardinality.value} -> ${updatedMetadata.cardinality.value}`);
-                } else {
-                  // eslint-disable-next-line no-console
-                  console.log(`\nSwap: skipped because order would not change, ${metadata.cardinality.value} -> ${updatedMetadata.cardinality.value}`);
+                if (updatedJoinOrder.some((ent, index) => currentJoinOrder[index].operation !== ent.operation)) {
+                  bindingsStreamAdaptive.swapSource();
                 }
               }
             }
