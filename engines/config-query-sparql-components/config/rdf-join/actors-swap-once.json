@@ -1,23 +1,27 @@
 {
   "@context": [
-    "https://linkedsoftwaredependencies.org/bundles/npm/@comunica/actor-rdf-join-inner-multi-adaptive-destroy/^0.0.0/components/context.jsonld"
+    "https://linkedsoftwaredependencies.org/bundles/npm/@comunica/actor-rdf-join-inner-multi-adaptive-heuristics/^0.0.0/components/context.jsonld"
   ],
   "@graph": [
     {
-      "@id": "urn:comunica:default:rdf-join/actors#inner-multi-adaptive-destroy-timeout",
+      "@id": "urn:comunica:default:rdf-join/actors#inner-multi-adaptive-heuristics",
       "@type": "Override",
       "overrideInstance": {
         "@id": "urn:comunica:default:rdf-join/actors#inner-multi-adaptive-destroy"
       },
       "overrideParameters": {
-        "@type": "ActorRdfJoinInnerMultiAdaptiveDestroy",
+        "@type": "ActorRdfJoinInnerMultiAdaptiveHeuristics",
+        "mediatorJoinEntriesSort": {
+          "@id": "urn:comunica:default:rdf-join-entries-sort/mediators#main"
+        },
         "mediatorJoinSelectivity": {
           "@id": "urn:comunica:default:rdf-join-selectivity/mediators#main"
         },
         "mediatorJoin": {
           "@id": "urn:comunica:default:rdf-join/mediators#main"
         },
-        "timeout": 480000,
+        "swap": true,
+        "swapOnce": true,
         "beforeActors": [
           {
             "@id": "urn:comunica:default:rdf-join/actors#inner-multi-bind"

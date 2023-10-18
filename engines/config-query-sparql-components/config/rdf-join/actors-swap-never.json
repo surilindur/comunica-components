@@ -1,0 +1,36 @@
+{
+  "@context": [
+    "https://linkedsoftwaredependencies.org/bundles/npm/@comunica/actor-rdf-join-inner-multi-adaptive-heuristics/^0.0.0/components/context.jsonld"
+  ],
+  "@graph": [
+    {
+      "@id": "urn:comunica:default:rdf-join/actors#inner-multi-adaptive-heuristics",
+      "@type": "Override",
+      "overrideInstance": {
+        "@id": "urn:comunica:default:rdf-join/actors#inner-multi-adaptive-destroy"
+      },
+      "overrideParameters": {
+        "@type": "ActorRdfJoinInnerMultiAdaptiveHeuristics",
+        "mediatorJoinEntriesSort": {
+          "@id": "urn:comunica:default:rdf-join-entries-sort/mediators#main"
+        },
+        "mediatorJoinSelectivity": {
+          "@id": "urn:comunica:default:rdf-join-selectivity/mediators#main"
+        },
+        "mediatorJoin": {
+          "@id": "urn:comunica:default:rdf-join/mediators#main"
+        },
+        "swap": false,
+        "swapOnce": false,
+        "beforeActors": [
+          {
+            "@id": "urn:comunica:default:rdf-join/actors#inner-multi-bind"
+          },
+          {
+            "@id": "urn:comunica:default:rdf-join/actors#inner-multi-smallest"
+          }
+        ]
+      }
+    }
+  ]
+}

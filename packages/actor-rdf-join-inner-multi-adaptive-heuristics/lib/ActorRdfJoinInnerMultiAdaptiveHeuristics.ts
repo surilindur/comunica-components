@@ -19,7 +19,7 @@ export class ActorRdfJoinInnerMultiAdaptiveHeuristics extends ActorRdfJoinInnerM
   protected disableJoinRestart: boolean;
 
   public constructor(args: IActorRdfJoinInnerMultiAdaptiveHeuristicsArgs) {
-    super(args);
+    super({ ...args, timeout: 0 });
     this.swapOnce = args.swapOnce;
     this.cardinalityThreshold = args.cardinalityThreshold;
     this.cardinalityThresholdMultiplier = args.cardinalityThresholdMultiplier;
@@ -126,7 +126,8 @@ export class ActorRdfJoinInnerMultiAdaptiveHeuristics extends ActorRdfJoinInnerM
   }
 }
 
-export interface IActorRdfJoinInnerMultiAdaptiveHeuristicsArgs extends IActorRdfJoinInnerMultiAdaptiveDestroyArgs {
+export interface IActorRdfJoinInnerMultiAdaptiveHeuristicsArgs
+  extends Omit<IActorRdfJoinInnerMultiAdaptiveDestroyArgs, 'timeout'> {
   /**
    * A mediator over the RDF Join Entries Sort bus
    */

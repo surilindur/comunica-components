@@ -1,6 +1,5 @@
 {
   "@context": [
-    "https://linkedsoftwaredependencies.org/bundles/npm/@comunica/actor-rdf-join-inner-multi-adaptive-destroy/^0.0.0/components/context.jsonld",
     "https://linkedsoftwaredependencies.org/bundles/npm/@comunica/actor-rdf-join-inner-multi-adaptive-heuristics/^0.0.0/components/context.jsonld"
   ],
   "@graph": [
@@ -21,7 +20,8 @@
         "mediatorJoin": {
           "@id": "urn:comunica:default:rdf-join/mediators#main"
         },
-        "timeout": 480000,
+        "swap": true,
+        "swapOnce": false,
         "beforeActors": [
           {
             "@id": "urn:comunica:default:rdf-join/actors#inner-multi-bind"
