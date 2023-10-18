@@ -64,7 +64,11 @@ export class ActorRdfJoinInnerMultiAdaptiveHeuristics extends ActorRdfJoinInnerM
                 }
                 const updatedJoinOrder = await getUpdatedJoinOrder();
                 if (updatedJoinOrder.some((ent, index) => currentJoinOrder[index].operation !== ent.operation)) {
-                  bindingsStreamAdaptive.swapSource();
+                  const success = bindingsStreamAdaptive.swapSource();
+                  if (success) {
+                    // eslint-disable-next-line no-console
+                    console.log(`Swapped source order due to cardinality estimate change ${metadata.cardinality.value} -> ${updatedMetadata.cardinality.value}`);
+                  }
                 }
               }
             }
