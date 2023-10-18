@@ -12,7 +12,7 @@ import { BindingsStreamAdaptiveHeuristics } from './BindingsStreamAdaptiveHeuris
 export class ActorRdfJoinInnerMultiAdaptiveHeuristics extends ActorRdfJoinInnerMultiAdaptiveDestroy {
   protected readonly cardinalityThreshold: number;
   protected readonly cardinalityThresholdMultiplier: number;
-  protected readonly allowOnlyOnce: boolean;
+  protected readonly swapOnce: boolean;
 
   protected readonly mediatorJoinEntriesSort: MediatorRdfJoinEntriesSort;
 
@@ -20,11 +20,11 @@ export class ActorRdfJoinInnerMultiAdaptiveHeuristics extends ActorRdfJoinInnerM
 
   public constructor(args: IActorRdfJoinInnerMultiAdaptiveHeuristicsArgs) {
     super(args);
-    this.allowOnlyOnce = args.allowOnlyOnce;
+    this.swapOnce = args.swapOnce;
     this.cardinalityThreshold = args.cardinalityThreshold;
     this.cardinalityThresholdMultiplier = args.cardinalityThresholdMultiplier;
     this.mediatorJoinEntriesSort = args.mediatorJoinEntriesSort;
-    this.disableJoinRestart = false;
+    this.disableJoinRestart = !args.swap;
   }
 
   protected async getOutput(action: IActionRdfJoin): Promise<IActorRdfJoinOutputInner> {
@@ -59,7 +59,7 @@ export class ActorRdfJoinInnerMultiAdaptiveHeuristics extends ActorRdfJoinInnerM
               const updatedMetadata: MetadataBindings = await entry.output.metadata();
               addMetadataInvalidationListener(updatedMetadata);
               if (bindingsStreamAdaptive && this.cardinalityChangeMeetsThreshold(metadata, updatedMetadata)) {
-                if (this.allowOnlyOnce && !this.disableJoinRestart) {
+                if (this.swapOnce && !this.disableJoinRestart) {
                   this.disableJoinRestart = true;
                 }
                 const updatedJoinOrder = await getUpdatedJoinOrder();
@@ -132,15 +132,26 @@ export interface IActorRdfJoinInnerMultiAdaptiveHeuristicsArgs extends IActorRdf
    */
   mediatorJoinEntriesSort: MediatorRdfJoinEntriesSort;
   /**
+   * The absolute change in cardinality required for the actor to consider changing join order.
    * @default {10}
    */
   cardinalityThreshold: number;
   /**
+   * The relative change in cardinality required for the actor to consider changing join order.
+   * This is compared against the result of dividing the higher value by the lower one between the old and new
+   * metadata cardinality values.
    * @default {10}
    */
   cardinalityThresholdMultiplier: number;
   /**
+   * Whether the actor should swap join order or not. When set to false, the order will never be changed.
+   * @default {true}
+   */
+  swap: boolean;
+  /**
+   * Whether the actor should swap join order only once. When set to false, the actor will change the join
+   * order every time the change makes sense after metadata update, an unlimited number of times.
    * @default {false}
    */
-  allowOnlyOnce: boolean;
+  swapOnce: boolean;
 }
