@@ -10,11 +10,10 @@ import { TransformIterator } from 'asynciterator';
  * The iterator tracks bindings that are output to avoid producing duplicates.
  */
 export class BindingsStreamAdaptiveHeuristics extends TransformIterator<Bindings> {
-  private readonly timeout: number;
   private readonly createSource: () => Promise<BindingsStream>;
-  private readonly pushedBindings: Map<string, number>;
 
-  private timeoutHandle: NodeJS.Timeout | undefined;
+  private currentSourceBindings: Map<string, number>;
+  private previousSourceBindings: Map<string, number> | undefined;
 
   public constructor(
     source: BindingsStream,
@@ -22,9 +21,8 @@ export class BindingsStreamAdaptiveHeuristics extends TransformIterator<Bindings
     createSource: () => Promise<BindingsStream>,
   ) {
     super(source, options);
-    this.timeout = options.timeout;
     this.createSource = createSource;
-    this.pushedBindings = new Map();
+    this.currentSourceBindings = new Map();
   }
 
   public swapSource(): boolean {
@@ -36,13 +34,22 @@ export class BindingsStreamAdaptiveHeuristics extends TransformIterator<Bindings
 
       // Stop current iterator
       this.source.destroy();
-
-      // Start a new iterator
-      if (this.timeoutHandle) {
-        clearTimeout(this.timeoutHandle);
-        this.timeoutHandle = undefined;
-      }
       this._source = undefined;
+
+      // When swapping the source, make sure not to lose any pushed binding information from
+      // the already previous bindings by migrating them to the current one before assigning
+      // the current bindings as previous ones.
+      if (this.previousSourceBindings) {
+        for (const [ key, value ] of this.previousSourceBindings) {
+          if (value > 0) {
+            this.currentSourceBindings.set(key, (this.currentSourceBindings.get(key) ?? 0) + value);
+          }
+        }
+      }
+
+      this.previousSourceBindings = this.currentSourceBindings;
+      this.currentSourceBindings = new Map();
+
       this._createSource = this.createSource;
       this._loadSourceAsync();
       return true;
@@ -50,38 +57,25 @@ export class BindingsStreamAdaptiveHeuristics extends TransformIterator<Bindings
     return false;
   }
 
-  protected _init(autoStart: boolean): void {
-    super._init(autoStart);
-    // Switch to a new stream after a timeout
-    this.timeoutHandle = setTimeout(() => this.swapSource(), this.timeout);
-  }
-
   protected _push(item: Bindings): void {
     // eslint-disable-next-line @typescript-eslint/no-base-to-string
     const bindingsKey = JSON.stringify(JSON.parse(item.toString()));
-    if (this.timeoutHandle) {
-      // If we're in the first stream, store the pushed bindings
-      this.pushedBindings.set(bindingsKey, (this.pushedBindings.get(bindingsKey) || 0) + 1);
-      super._push(item);
-    } else {
-      // If we're in the second stream, only push the bindings that were not yet pushed in the first stream
-      const pushedBefore = this.pushedBindings.size > 0 ? this.pushedBindings.get(bindingsKey) : undefined;
-      if (pushedBefore) {
-        if (pushedBefore > 1) {
-          this.pushedBindings.set(bindingsKey, pushedBefore - 1);
+    let shouldPushBinding = true;
+    if (this.previousSourceBindings) {
+      // If this binding has been pushed previously, do not push it again
+      const previouslyPushed = this.previousSourceBindings.get(bindingsKey);
+      if (previouslyPushed !== undefined) {
+        if (previouslyPushed > 1) {
+          this.previousSourceBindings.set(bindingsKey, previouslyPushed - 1);
         } else {
-          this.pushedBindings.delete(bindingsKey);
+          this.previousSourceBindings.delete(bindingsKey);
         }
-      } else {
-        super._push(item);
+        shouldPushBinding = false;
       }
     }
-  }
-
-  protected _end(destroy: boolean): void {
-    super._end(destroy);
-    if (this.timeoutHandle) {
-      clearTimeout(this.timeoutHandle);
+    if (shouldPushBinding) {
+      this.currentSourceBindings.set(bindingsKey, (this.currentSourceBindings.get(bindingsKey) ?? 0) + 1);
+      super._push(item);
     }
   }
 }
