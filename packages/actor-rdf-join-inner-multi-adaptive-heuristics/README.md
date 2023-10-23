@@ -29,6 +29,7 @@ After installing, this package can be added to your engine's configuration as fo
     {
       "@id": "urn:comunica:default:rdf-join/actors#inner-multi-adaptive-heuristics",
       "@type": "ActorRdfJoinInnerMultiAdaptiveHeuristics",
+      "mediatorHashBindings": { "@id": "urn:comunica:default:hash-bindings/mediators#main" },
       "mediatorJoinEntriesSort": { "@id": "urn:comunica:default:rdf-join-entries-sort/mediators#main" },
       "mediatorJoinSelectivity": { "@id": "urn:comunica:default:rdf-join-selectivity/mediators#main" },
       "mediatorJoin": { "@id": "urn:comunica:default:rdf-join/mediators#main" }
@@ -39,9 +40,13 @@ After installing, this package can be added to your engine's configuration as fo
 
 ### Config Parameters
 
+* `mediatorHashBindings`: A mediator over the [Hash Bindings bus](https://github.com/comunica/comunica/tree/master/packages/bus-hash-bindings).
 * `mediatorJoinEntriesSort`: A mediator over the [RDF Join Entries Sort bus](https://github.com/comunica/comunica/tree/master/packages/bus-rdf-join-entries-sort).
 * `mediatorJoinSelectivity`: A mediator over the [RDF Join Selectivity bus](https://github.com/comunica/comunica/tree/master/packages/bus-rdf-join-selectivity).
 * `mediatorJoin`: A mediator over the [RDF Join bus](https://github.com/comunica/comunica/tree/master/packages/bus-rdf-join).
 * `cardinalityThreshold`: Absolute value threshold for metadata cardinality value change before restarting join.
 * `cardinalityThresholdMultiplier`: Multiplier/divisor threshold for metadata cardinality value change before restarting join.
-* `allowOnlyOnce`: Whether the join should only be restarted once, and not an unlimited number of times.
+* `swapOnlyOnce`: Whether the join should only be restarted once, and not an unlimited number of times.
+* `swapOnCardinalityChange`: Whether the join should be restarted on cardinality changes.
+* `swapOnTimeout`: Whether the join should be restarted on a timeout.
+* `timeout`: The timeout value on milliseconds for restarting the join.

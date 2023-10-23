@@ -11,6 +11,9 @@
       },
       "overrideParameters": {
         "@type": "ActorRdfJoinInnerMultiAdaptiveHeuristics",
+        "mediatorHashBindings": {
+          "@id": "urn:comunica:default:hash-bindings/mediators#main"
+        },
         "mediatorJoinEntriesSort": {
           "@id": "urn:comunica:default:rdf-join-entries-sort/mediators#main"
         },
@@ -20,8 +23,6 @@
         "mediatorJoin": {
           "@id": "urn:comunica:default:rdf-join/mediators#main"
         },
-        "swap": true,
-        "swapOnce": false,
         "beforeActors": [
           {
             "@id": "urn:comunica:default:rdf-join/actors#inner-multi-bind"

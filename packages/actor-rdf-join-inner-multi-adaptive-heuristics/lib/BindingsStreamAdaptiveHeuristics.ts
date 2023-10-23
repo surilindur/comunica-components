@@ -11,21 +11,32 @@ import { TransformIterator } from 'asynciterator';
  */
 export class BindingsStreamAdaptiveHeuristics extends TransformIterator<Bindings> {
   private readonly createSource: () => Promise<BindingsStream>;
+  private readonly hashBindings: (item: Bindings) => string;
+  private readonly timeout: number | undefined;
+
+  private timeoutHandle: NodeJS.Timeout | undefined;
 
   private currentSourceBindings: Map<string, number>;
   private previousSourceBindings: Map<string, number> | undefined;
 
   public constructor(
     source: BindingsStream,
-    options: TransformIteratorOptions<Bindings> & { timeout: number },
+    options: TransformIteratorOptions<Bindings> & { timeout: number | undefined },
     createSource: () => Promise<BindingsStream>,
+    hashBindings: (item: Bindings) => string,
   ) {
     super(source, options);
+    this.timeout = options.timeout;
     this.createSource = createSource;
+    this.hashBindings = hashBindings;
     this.currentSourceBindings = new Map();
   }
 
-  public swapSource(): boolean {
+  public swapSource(): void {
+    const timeoutHandle = this.timeoutHandle;
+    if (timeoutHandle) {
+      this.timeoutHandle = undefined;
+    }
     if (this.source && !this.source.done) {
       // TODO: try without destroy first
       // When the source provided does not actually allow closing then
@@ -34,7 +45,6 @@ export class BindingsStreamAdaptiveHeuristics extends TransformIterator<Bindings
 
       // Stop current iterator
       this.source.destroy();
-      this._source = undefined;
 
       // When swapping the source, make sure not to lose any pushed binding information from
       // the already previous bindings by migrating them to the current one before assigning
@@ -50,16 +60,28 @@ export class BindingsStreamAdaptiveHeuristics extends TransformIterator<Bindings
       this.previousSourceBindings = this.currentSourceBindings;
       this.currentSourceBindings = new Map();
 
+      this._source = undefined;
       this._createSource = this.createSource;
       this._loadSourceAsync();
-      return true;
+
+      // eslint-disable-next-line no-console
+      console.log(`Swapped source`);
     }
-    return false;
+    if (timeoutHandle) {
+      clearTimeout(timeoutHandle);
+    }
+  }
+
+  protected _begin(done: () => void): void {
+    super._begin(done);
+    if (this.timeout) {
+      // Switch to a new stream after a timeout
+      this.timeoutHandle = setTimeout(() => this.swapSource(), this.timeout);
+    }
   }
 
   protected _push(item: Bindings): void {
-    // eslint-disable-next-line @typescript-eslint/no-base-to-string
-    const bindingsKey = JSON.stringify(JSON.parse(item.toString()));
+    const bindingsKey = this.hashBindings(item);
     let shouldPushBinding = true;
     if (this.previousSourceBindings) {
       // If this binding has been pushed previously, do not push it again
@@ -76,6 +98,13 @@ export class BindingsStreamAdaptiveHeuristics extends TransformIterator<Bindings
     if (shouldPushBinding) {
       this.currentSourceBindings.set(bindingsKey, (this.currentSourceBindings.get(bindingsKey) ?? 0) + 1);
       super._push(item);
+    }
+  }
+
+  protected _end(destroy: boolean): void {
+    super._end(destroy);
+    if (this.timeoutHandle) {
+      clearTimeout(this.timeoutHandle);
     }
   }
 }

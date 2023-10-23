@@ -1,5 +1,6 @@
 import { ActorRdfJoinInnerMultiAdaptiveDestroy } from '@comunica/actor-rdf-join-inner-multi-adaptive-destroy';
 import type { IActorRdfJoinInnerMultiAdaptiveDestroyArgs } from '@comunica/actor-rdf-join-inner-multi-adaptive-destroy';
+import type { MediatorHashBindings } from '@comunica/bus-hash-bindings';
 import type { IActionRdfJoin, IActorRdfJoinOutputInner } from '@comunica/bus-rdf-join';
 import type { MediatorRdfJoinEntriesSort } from '@comunica/bus-rdf-join-entries-sort';
 import { KeysRdfJoin } from '@comunica/context-entries-link-traversal';
@@ -12,19 +13,25 @@ import { BindingsStreamAdaptiveHeuristics } from './BindingsStreamAdaptiveHeuris
 export class ActorRdfJoinInnerMultiAdaptiveHeuristics extends ActorRdfJoinInnerMultiAdaptiveDestroy {
   protected readonly cardinalityThreshold: number;
   protected readonly cardinalityThresholdMultiplier: number;
-  protected readonly swapOnce: boolean;
+  protected readonly swapOnlyOnce: boolean;
+  protected readonly swapOnTimeout: boolean;
+  protected readonly swapOnCardinalityChange: boolean;
 
+  protected readonly mediatorHashBindings: MediatorHashBindings;
   protected readonly mediatorJoinEntriesSort: MediatorRdfJoinEntriesSort;
 
   protected disableJoinRestart: boolean;
 
   public constructor(args: IActorRdfJoinInnerMultiAdaptiveHeuristicsArgs) {
     super(args);
-    this.swapOnce = args.swapOnce;
+    this.swapOnlyOnce = args.swapOnlyOnce;
+    this.swapOnTimeout = args.swapOnTimeout;
+    this.swapOnCardinalityChange = args.swapOnCardinalityChange;
     this.cardinalityThreshold = args.cardinalityThreshold;
     this.cardinalityThresholdMultiplier = args.cardinalityThresholdMultiplier;
+    this.mediatorHashBindings = args.mediatorHashBindings;
     this.mediatorJoinEntriesSort = args.mediatorJoinEntriesSort;
-    this.disableJoinRestart = !args.swap;
+    this.disableJoinRestart = !args.swapOnTimeout && !args.swapOnCardinalityChange;
   }
 
   protected async getOutput(action: IActionRdfJoin): Promise<IActorRdfJoinOutputInner> {
@@ -49,50 +56,54 @@ export class ActorRdfJoinInnerMultiAdaptiveHeuristics extends ActorRdfJoinInnerM
       })).entries;
     };
 
+    const mediatorHashBindingsResult = await this.mediatorHashBindings.mediate({
+      context: action.context,
+      // Hash collisions should not happen at all, but there is no actor like that available
+      allowHashCollisions: true,
+    });
+
     const currentJoinOrder: IJoinEntryWithMetadata[] = await getUpdatedJoinOrder();
 
-    const entriesWithInvalidationListener = action.entries.map(entry => {
-      const addMetadataInvalidationListener = (metadata: MetadataBindings): void => {
-        if (!this.disableJoinRestart) {
-          const handleInvalidationEvent = async(): Promise<void> => {
-            if (!this.disableJoinRestart) {
-              const updatedMetadata: MetadataBindings = await entry.output.metadata();
-              addMetadataInvalidationListener(updatedMetadata);
-              if (bindingsStreamAdaptive && this.cardinalityChangeMeetsThreshold(metadata, updatedMetadata)) {
-                if (this.swapOnce && !this.disableJoinRestart) {
-                  this.disableJoinRestart = true;
-                }
-                const updatedJoinOrder = await getUpdatedJoinOrder();
-                if (updatedJoinOrder.some((ent, index) => currentJoinOrder[index].operation !== ent.operation)) {
-                  const success = bindingsStreamAdaptive.swapSource();
-                  if (success) {
-                    // eslint-disable-next-line no-console
-                    console.log(`Swapped source order due to cardinality estimate change ${metadata.cardinality.value} -> ${updatedMetadata.cardinality.value}`);
+    const entries = this.swapOnCardinalityChange ?
+      action.entries.map(entry => {
+        const addMetadataInvalidationListener = (metadata: MetadataBindings): void => {
+          if (!this.disableJoinRestart) {
+            const handleInvalidationEvent = async(): Promise<void> => {
+              if (!this.disableJoinRestart) {
+                const updatedMetadata: MetadataBindings = await entry.output.metadata();
+                addMetadataInvalidationListener(updatedMetadata);
+                if (bindingsStreamAdaptive && this.cardinalityChangeMeetsThreshold(metadata, updatedMetadata)) {
+                  if (this.swapOnlyOnce && !this.disableJoinRestart) {
+                    this.disableJoinRestart = true;
+                  }
+                  const updatedJoinOrder = await getUpdatedJoinOrder();
+                  if (updatedJoinOrder.some((ent, index) => currentJoinOrder[index].operation !== ent.operation)) {
+                    bindingsStreamAdaptive.swapSource();
                   }
                 }
               }
-            }
-          };
-          metadata.state.addInvalidateListener(() => setImmediate(handleInvalidationEvent));
-        }
-      };
-      entry.output.metadata().then(addMetadataInvalidationListener).catch(error => {
-        throw new Error(error);
-      });
-      return entry;
-    });
+            };
+            metadata.state.addInvalidateListener(() => setImmediate(handleInvalidationEvent));
+          }
+        };
+        entry.output.metadata().then(addMetadataInvalidationListener).catch(error => {
+          throw new Error(error);
+        });
+        return entry;
+      }) :
+      action.entries;
 
     // Execute the join with the metadata we have now
     const firstOutput = await this.mediatorJoin.mediate({
       type: action.type,
-      entries: this.cloneEntries(entriesWithInvalidationListener, false),
+      entries: this.cloneEntries(entries, false),
       context: subContext,
     });
 
     const createSource = async(): Promise<BindingsStream> => {
       const joinResult = await this.mediatorJoin.mediate({
         type: action.type,
-        entries: this.cloneEntries(entriesWithInvalidationListener, false),
+        entries: this.cloneEntries(entries, false),
         context: subContext,
       });
       return joinResult.bindingsStream;
@@ -100,8 +111,9 @@ export class ActorRdfJoinInnerMultiAdaptiveHeuristics extends ActorRdfJoinInnerM
 
     bindingsStreamAdaptive = new BindingsStreamAdaptiveHeuristics(
       firstOutput.bindingsStream,
-      { timeout: this.timeout, autoStart: false },
+      { timeout: this.swapOnTimeout ? this.timeout : undefined, autoStart: false },
       createSource,
+      mediatorHashBindingsResult.hashFunction,
     );
 
     return {
@@ -128,6 +140,10 @@ export class ActorRdfJoinInnerMultiAdaptiveHeuristics extends ActorRdfJoinInnerM
 
 export interface IActorRdfJoinInnerMultiAdaptiveHeuristicsArgs extends IActorRdfJoinInnerMultiAdaptiveDestroyArgs {
   /**
+   * A mediator over the RDF Bindings Hash bus
+   */
+  mediatorHashBindings: MediatorHashBindings;
+  /**
    * A mediator over the RDF Join Entries Sort bus
    */
   mediatorJoinEntriesSort: MediatorRdfJoinEntriesSort;
@@ -144,14 +160,24 @@ export interface IActorRdfJoinInnerMultiAdaptiveHeuristicsArgs extends IActorRdf
    */
   cardinalityThresholdMultiplier: number;
   /**
-   * Whether the actor should swap join order or not. When set to false, the order will never be changed.
-   * @default {true}
-   */
-  swap: boolean;
-  /**
    * Whether the actor should swap join order only once. When set to false, the actor will change the join
    * order every time the change makes sense after metadata update, an unlimited number of times.
    * @default {false}
    */
-  swapOnce: boolean;
+  swapOnlyOnce: boolean;
+  /**
+   * Whether to swap after the timeout is reached.
+   * @default {false}
+   */
+  swapOnTimeout: boolean;
+  /**
+   * Whether to swap when the cardinality change is significant enough.
+   * @default {true}
+   */
+  swapOnCardinalityChange: boolean;
+  /**
+   * The timeout, in milliseconds, to use for swapping join order.
+   * @default {1000}
+   */
+  timeout: number;
 }
