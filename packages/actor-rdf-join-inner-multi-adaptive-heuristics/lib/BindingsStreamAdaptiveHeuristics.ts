@@ -12,21 +12,23 @@ import { TransformIterator } from 'asynciterator';
 export class BindingsStreamAdaptiveHeuristics extends TransformIterator<Bindings> {
   private readonly createSource: () => Promise<BindingsStream>;
   private readonly hashBindings: (item: Bindings) => string;
-  private readonly timeout: number | undefined;
+  private readonly timeout?: number;
+  private readonly message?: string;
 
-  private timeoutHandle: NodeJS.Timeout | undefined;
-
+  private timeoutHandle?: NodeJS.Timeout;
   private currentSourceBindings: Map<string, number>;
-  private previousSourceBindings: Map<string, number> | undefined;
+  private previousSourceBindings?: Map<string, number>;
 
   public constructor(
     source: BindingsStream,
     options: TransformIteratorOptions<Bindings> & { timeout: number | undefined },
     createSource: () => Promise<BindingsStream>,
     hashBindings: (item: Bindings) => string,
+    swapMessage?: string,
   ) {
     super(source, options);
     this.timeout = options.timeout;
+    this.message = swapMessage;
     this.createSource = createSource;
     this.hashBindings = hashBindings;
     this.currentSourceBindings = new Map();
@@ -38,12 +40,10 @@ export class BindingsStreamAdaptiveHeuristics extends TransformIterator<Bindings
       this.timeoutHandle = undefined;
     }
     if (this.source && !this.source.done) {
-      // TODO: try without destroy first
-      // When the source provided does not actually allow closing then
-      // this workaround is not needed
-      // (<Record<any, any>>globalThis).blah = true;
-
-      // Stop current iterator
+      // This will stop the current iterator, however it might also propagate the destroy
+      // to all the other ones behind it, which has proven to be buggy. The source passed
+      // to this join should therefore take care not to destroy everything when it itself
+      // gets destroyed.
       this.source.destroy();
 
       // When swapping the source, make sure not to lose any pushed binding information from
@@ -64,8 +64,10 @@ export class BindingsStreamAdaptiveHeuristics extends TransformIterator<Bindings
       this._createSource = this.createSource;
       this._loadSourceAsync();
 
-      // eslint-disable-next-line no-console
-      console.log(`Swapped source`);
+      if (this.message) {
+        // eslint-disable-next-line no-console
+        console.log(this.message);
+      }
     }
     if (timeoutHandle) {
       clearTimeout(timeoutHandle);

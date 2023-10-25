@@ -16,6 +16,7 @@ export class ActorRdfJoinInnerMultiAdaptiveHeuristics extends ActorRdfJoinInnerM
   protected readonly swapOnlyOnce: boolean;
   protected readonly swapOnTimeout: boolean;
   protected readonly swapOnCardinalityChange: boolean;
+  protected readonly swapMessage: string | undefined;
 
   protected readonly mediatorHashBindings: MediatorHashBindings;
   protected readonly mediatorJoinEntriesSort: MediatorRdfJoinEntriesSort;
@@ -27,6 +28,7 @@ export class ActorRdfJoinInnerMultiAdaptiveHeuristics extends ActorRdfJoinInnerM
     this.swapOnlyOnce = args.swapOnlyOnce;
     this.swapOnTimeout = args.swapOnTimeout;
     this.swapOnCardinalityChange = args.swapOnCardinalityChange;
+    this.swapMessage = args.swapMessage;
     this.cardinalityThreshold = args.cardinalityThreshold;
     this.cardinalityThresholdMultiplier = args.cardinalityThresholdMultiplier;
     this.mediatorHashBindings = args.mediatorHashBindings;
@@ -114,6 +116,7 @@ export class ActorRdfJoinInnerMultiAdaptiveHeuristics extends ActorRdfJoinInnerM
       { timeout: this.swapOnTimeout ? this.timeout : undefined, autoStart: false },
       createSource,
       mediatorHashBindingsResult.hashFunction,
+      this.swapMessage,
     );
 
     return {
@@ -175,6 +178,11 @@ export interface IActorRdfJoinInnerMultiAdaptiveHeuristicsArgs extends IActorRdf
    * @default {true}
    */
   swapOnCardinalityChange: boolean;
+  /**
+   * Message to print to console when swapping the join order.
+   * @default {undefined}
+   */
+  swapMessage?: string;
   /**
    * The timeout, in milliseconds, to use for swapping join order.
    * @default {1000}
