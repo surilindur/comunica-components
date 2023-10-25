@@ -13,7 +13,6 @@ export class BindingsStreamAdaptiveHeuristics extends TransformIterator<Bindings
   private readonly createSource: () => Promise<BindingsStream>;
   private readonly hashBindings: (item: Bindings) => string;
   private readonly timeout?: number;
-  private readonly message?: string;
 
   private timeoutHandle?: NodeJS.Timeout;
   private currentSourceBindings: Map<string, number>;
@@ -21,22 +20,20 @@ export class BindingsStreamAdaptiveHeuristics extends TransformIterator<Bindings
 
   public constructor(
     source: BindingsStream,
-    options: TransformIteratorOptions<Bindings> & { timeout: number | undefined },
+    options: TransformIteratorOptions<Bindings> & { timeout?: number },
     createSource: () => Promise<BindingsStream>,
     hashBindings: (item: Bindings) => string,
-    swapMessage?: string,
   ) {
     super(source, options);
     this.timeout = options.timeout;
-    this.message = swapMessage;
     this.createSource = createSource;
     this.hashBindings = hashBindings;
     this.currentSourceBindings = new Map();
   }
 
   public swapSource(): void {
-    const timeoutHandle = this.timeoutHandle;
-    if (timeoutHandle) {
+    if (this.timeoutHandle) {
+      clearTimeout(this.timeoutHandle);
       this.timeoutHandle = undefined;
     }
     if (this.source && !this.source.done) {
@@ -63,14 +60,6 @@ export class BindingsStreamAdaptiveHeuristics extends TransformIterator<Bindings
       this._source = undefined;
       this._createSource = this.createSource;
       this._loadSourceAsync();
-
-      if (this.message) {
-        // eslint-disable-next-line no-console
-        console.log(this.message);
-      }
-    }
-    if (timeoutHandle) {
-      clearTimeout(timeoutHandle);
     }
   }
 

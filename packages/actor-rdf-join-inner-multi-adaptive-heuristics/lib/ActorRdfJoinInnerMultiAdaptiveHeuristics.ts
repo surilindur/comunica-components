@@ -4,59 +4,50 @@ import type { MediatorHashBindings } from '@comunica/bus-hash-bindings';
 import type { IActionRdfJoin, IActorRdfJoinOutputInner } from '@comunica/bus-rdf-join';
 import type { MediatorRdfJoinEntriesSort } from '@comunica/bus-rdf-join-entries-sort';
 import { KeysRdfJoin } from '@comunica/context-entries-link-traversal';
-import type { BindingsStream, IJoinEntryWithMetadata, MetadataBindings } from '@comunica/types';
+import type { IMediatorTypeJoinCoefficients } from '@comunica/mediatortype-join-coefficients';
+import type {
+  BindingsStream,
+  IActionContext,
+  IQueryOperationResultBindings,
+  IJoinEntryWithMetadata,
+  MetadataBindings,
+} from '@comunica/types';
 import { BindingsStreamAdaptiveHeuristics } from './BindingsStreamAdaptiveHeuristics';
 
 /**
  * A comunica Inner Multi Adaptive Heuristics RDF Join Actor.
  */
 export class ActorRdfJoinInnerMultiAdaptiveHeuristics extends ActorRdfJoinInnerMultiAdaptiveDestroy {
-  protected readonly cardinalityThreshold: number;
-  protected readonly cardinalityThresholdMultiplier: number;
-  protected readonly swapOnlyOnce: boolean;
-  protected readonly swapOnTimeout: boolean;
-  protected readonly swapOnCardinalityChange: boolean;
-  protected readonly swapMessage: string | undefined;
+  protected readonly useCardinality: boolean;
+  protected readonly useTimeout: boolean;
+  protected readonly allowUnlimitedRestarts: boolean;
+  protected readonly restartMessage?: string;
 
   protected readonly mediatorHashBindings: MediatorHashBindings;
   protected readonly mediatorJoinEntriesSort: MediatorRdfJoinEntriesSort;
 
-  protected disableJoinRestart: boolean;
-
   public constructor(args: IActorRdfJoinInnerMultiAdaptiveHeuristicsArgs) {
     super(args);
-    this.swapOnlyOnce = args.swapOnlyOnce;
-    this.swapOnTimeout = args.swapOnTimeout;
-    this.swapOnCardinalityChange = args.swapOnCardinalityChange;
-    this.swapMessage = args.swapMessage;
-    this.cardinalityThreshold = args.cardinalityThreshold;
-    this.cardinalityThresholdMultiplier = args.cardinalityThresholdMultiplier;
+    this.useCardinality = args.useCardinality;
+    this.useTimeout = args.useTimeout;
+    this.allowUnlimitedRestarts = args.allowUnlimitedRestarts;
+    this.restartMessage = args.restartMessage;
     this.mediatorHashBindings = args.mediatorHashBindings;
     this.mediatorJoinEntriesSort = args.mediatorJoinEntriesSort;
-    this.disableJoinRestart = !args.swapOnTimeout && !args.swapOnCardinalityChange;
+  }
+
+  public async test(action: IActionRdfJoin): Promise<IMediatorTypeJoinCoefficients> {
+    if (!this.useCardinality && !this.useTimeout) {
+      throw new Error(`${this.name} has been disabled via configuration`);
+    }
+    return super.test(action);
   }
 
   protected async getOutput(action: IActionRdfJoin): Promise<IActorRdfJoinOutputInner> {
     // Disable adaptive joins in recursive calls to this bus, to avoid infinite recursion on this actor.
-    const subContext = action.context.set(KeysRdfJoin.skipAdaptiveJoin, true);
+    const subContext: IActionContext = action.context.set(KeysRdfJoin.skipAdaptiveJoin, true);
 
     let bindingsStreamAdaptive: BindingsStreamAdaptiveHeuristics | undefined;
-
-    const getUpdatedJoinOrder = async(): Promise<IJoinEntryWithMetadata[]> => {
-      const entriesWithMetadata: IJoinEntryWithMetadata[] = [];
-
-      for (const entry of action.entries) {
-        entriesWithMetadata.push({
-          ...entry,
-          metadata: await entry.output.metadata(),
-        });
-      }
-
-      return (await this.mediatorJoinEntriesSort.mediate({
-        context: action.context,
-        entries: entriesWithMetadata,
-      })).entries;
-    };
 
     const mediatorHashBindingsResult = await this.mediatorHashBindings.mediate({
       context: action.context,
@@ -64,59 +55,62 @@ export class ActorRdfJoinInnerMultiAdaptiveHeuristics extends ActorRdfJoinInnerM
       allowHashCollisions: true,
     });
 
-    const currentJoinOrder: IJoinEntryWithMetadata[] = await getUpdatedJoinOrder();
+    let currentJoinOrder: IJoinEntryWithMetadata[] = await this.getSortedJoinEntries(action);
+    let allowRestarts = true;
 
-    const entries = this.swapOnCardinalityChange ?
+    const entries = !this.useCardinality ?
+      action.entries :
       action.entries.map(entry => {
         const addMetadataInvalidationListener = (metadata: MetadataBindings): void => {
-          if (!this.disableJoinRestart) {
-            const handleInvalidationEvent = async(): Promise<void> => {
-              if (!this.disableJoinRestart) {
-                const updatedMetadata: MetadataBindings = await entry.output.metadata();
-                addMetadataInvalidationListener(updatedMetadata);
-                if (bindingsStreamAdaptive && this.cardinalityChangeMeetsThreshold(metadata, updatedMetadata)) {
-                  if (this.swapOnlyOnce && !this.disableJoinRestart) {
-                    this.disableJoinRestart = true;
-                  }
-                  const updatedJoinOrder = await getUpdatedJoinOrder();
-                  if (updatedJoinOrder.some((ent, index) => currentJoinOrder[index].operation !== ent.operation)) {
-                    bindingsStreamAdaptive.swapSource();
-                  }
+          const handleInvalidationEvent = async(): Promise<void> => {
+            if (allowRestarts) {
+              const updatedMetadata: MetadataBindings = await entry.output.metadata();
+              addMetadataInvalidationListener(updatedMetadata);
+              if (bindingsStreamAdaptive && metadata.cardinality.value !== updatedMetadata.cardinality.value) {
+                const updatedJoinOrder = await this.getSortedJoinEntries(action);
+                if (updatedJoinOrder.some((ent, index) => currentJoinOrder[index].operation !== ent.operation)) {
+                  currentJoinOrder = updatedJoinOrder;
+                  bindingsStreamAdaptive.swapSource();
                 }
               }
-            };
-            metadata.state.addInvalidateListener(() => setImmediate(handleInvalidationEvent));
+            }
+          };
+          if (allowRestarts) {
+            metadata.state.addInvalidateListener(() => setTimeout(handleInvalidationEvent));
           }
         };
         entry.output.metadata().then(addMetadataInvalidationListener).catch(error => {
           throw new Error(error);
         });
         return entry;
-      }) :
-      action.entries;
+      });
 
-    // Execute the join with the metadata we have now
-    const firstOutput = await this.mediatorJoin.mediate({
+    const mediateJoin = (): Promise<IQueryOperationResultBindings> => this.mediatorJoin.mediate({
       type: action.type,
       entries: this.cloneEntries(entries, false),
       context: subContext,
     });
 
     const createSource = async(): Promise<BindingsStream> => {
-      const joinResult = await this.mediatorJoin.mediate({
-        type: action.type,
-        entries: this.cloneEntries(entries, false),
-        context: subContext,
-      });
+      if (allowRestarts && !this.allowUnlimitedRestarts) {
+        allowRestarts = false;
+      }
+      if (this.restartMessage) {
+        // eslint-disable-next-line no-console
+        console.log(this.restartMessage);
+      }
+      const joinResult = await mediateJoin();
       return joinResult.bindingsStream;
     };
 
+    // Execute the join with the metadata we have now
+    const firstOutput = await mediateJoin();
+
     bindingsStreamAdaptive = new BindingsStreamAdaptiveHeuristics(
       firstOutput.bindingsStream,
-      { timeout: this.swapOnTimeout ? this.timeout : undefined, autoStart: false },
+      { timeout: this.useTimeout ? this.timeout : undefined, autoStart: false },
       createSource,
       mediatorHashBindingsResult.hashFunction,
-      this.swapMessage,
     );
 
     return {
@@ -128,16 +122,22 @@ export class ActorRdfJoinInnerMultiAdaptiveHeuristics extends ActorRdfJoinInnerM
     };
   }
 
-  protected cardinalityChangeMeetsThreshold(old: MetadataBindings, updated: MetadataBindings): boolean {
-    if (
-      old.cardinality.value !== updated.cardinality.value &&
-      Math.abs(old.cardinality.value - updated.cardinality.value) > this.cardinalityThreshold
-    ) {
-      const smallerValue = Math.min(old.cardinality.value, updated.cardinality.value);
-      const largerValue = Math.max(old.cardinality.value, updated.cardinality.value);
-      return Math.abs(largerValue / (smallerValue === 0 ? 1 : smallerValue)) > this.cardinalityThresholdMultiplier;
+  protected async getSortedJoinEntries(action: IActionRdfJoin): Promise<IJoinEntryWithMetadata[]> {
+    const entriesWithMetadata: IJoinEntryWithMetadata[] = [];
+
+    for (const entry of action.entries) {
+      entriesWithMetadata.push({
+        ...entry,
+        metadata: await entry.output.metadata(),
+      });
     }
-    return false;
+
+    const sortResult = await this.mediatorJoinEntriesSort.mediate({
+      context: action.context,
+      entries: entriesWithMetadata,
+    });
+
+    return sortResult.entries;
   }
 }
 
@@ -151,41 +151,22 @@ export interface IActorRdfJoinInnerMultiAdaptiveHeuristicsArgs extends IActorRdf
    */
   mediatorJoinEntriesSort: MediatorRdfJoinEntriesSort;
   /**
-   * The absolute change in cardinality required for the actor to consider changing join order.
-   * @default {10}
-   */
-  cardinalityThreshold: number;
-  /**
-   * The relative change in cardinality required for the actor to consider changing join order.
-   * This is compared against the result of dividing the higher value by the lower one between the old and new
-   * metadata cardinality values.
-   * @default {10}
-   */
-  cardinalityThresholdMultiplier: number;
-  /**
-   * Whether the actor should swap join order only once. When set to false, the actor will change the join
-   * order every time the change makes sense after metadata update, an unlimited number of times.
+   * Whether the join should be restarted after metadata cardinality value changes.
    * @default {false}
    */
-  swapOnlyOnce: boolean;
+  useCardinality: boolean;
   /**
-   * Whether to swap after the timeout is reached.
+   * Whether the timeout value should be used to restart a join operation at a specific moment.
    * @default {false}
    */
-  swapOnTimeout: boolean;
+  useTimeout: boolean;
   /**
-   * Whether to swap when the cardinality change is significant enough.
+   * Whether the actor should swap join order an unlimited number of times.
    * @default {true}
    */
-  swapOnCardinalityChange: boolean;
+  allowUnlimitedRestarts: boolean;
   /**
-   * Message to print to console when swapping the join order.
-   * @default {undefined}
+   * Message to print to console when restarting the join.
    */
-  swapMessage?: string;
-  /**
-   * The timeout, in milliseconds, to use for swapping join order.
-   * @default {1000}
-   */
-  timeout: number;
+  restartMessage?: string;
 }
