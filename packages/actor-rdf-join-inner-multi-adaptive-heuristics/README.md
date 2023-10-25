@@ -44,9 +44,7 @@ After installing, this package can be added to your engine's configuration as fo
 * `mediatorJoinEntriesSort`: A mediator over the [RDF Join Entries Sort bus](https://github.com/comunica/comunica/tree/master/packages/bus-rdf-join-entries-sort).
 * `mediatorJoinSelectivity`: A mediator over the [RDF Join Selectivity bus](https://github.com/comunica/comunica/tree/master/packages/bus-rdf-join-selectivity).
 * `mediatorJoin`: A mediator over the [RDF Join bus](https://github.com/comunica/comunica/tree/master/packages/bus-rdf-join).
-* `cardinalityThreshold`: Absolute value threshold for metadata cardinality value change before restarting join.
-* `cardinalityThresholdMultiplier`: Multiplier/divisor threshold for metadata cardinality value change before restarting join.
-* `swapOnlyOnce`: Whether the join should only be restarted once, and not an unlimited number of times.
-* `swapOnCardinalityChange`: Whether the join should be restarted on cardinality changes.
-* `swapOnTimeout`: Whether the join should be restarted on a timeout.
+* `useCardinality`: Whether to restart join based on changes in metadata cardinality.
+* `useTimeout`: Whether to restart join using a timeout.
+* `allowUnlimitedRestarts`: Whether the restart should be allowed to take place more than once.
 * `timeout`: The timeout value on milliseconds for restarting the join.
