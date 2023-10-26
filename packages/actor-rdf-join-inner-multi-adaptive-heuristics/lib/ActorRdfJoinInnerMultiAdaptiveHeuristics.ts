@@ -152,7 +152,7 @@ export interface IActorRdfJoinInnerMultiAdaptiveHeuristicsArgs extends IActorRdf
   mediatorJoinEntriesSort: MediatorRdfJoinEntriesSort;
   /**
    * Whether the join should be restarted after metadata cardinality value changes.
-   * @default {false}
+   * @default {true}
    */
   useCardinality: boolean;
   /**

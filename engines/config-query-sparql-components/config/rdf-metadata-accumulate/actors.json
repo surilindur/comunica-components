@@ -6,8 +6,8 @@
   ],
   "@graph": [
     {
-      "@id": "urn:comunica:default:rdf-metadata-accumulate/triple-pattern-cardinality-estimator#void-description-predicate-count",
-      "@type": "TriplePatternCardinalityEstimatorVoIDDescriptionPredicateCount"
+      "@id": "urn:comunica:default:rdf-metadata-accumulate/triple-pattern-cardinality-estimator#void-description",
+      "@type": "TriplePatternCardinalityEstimatorVoIDDescription"
     },
     {
       "@id": "urn:comunica:default:Runner",
@@ -17,7 +17,7 @@
           "@id": "urn:comunica:default:rdf-metadata-accumulate/actors#void-description",
           "@type": "ActorRdfMetadataAccumulateVoIDDescription",
           "triplePatternCardinalityEstimator": {
-            "@id": "urn:comunica:default:rdf-metadata-accumulate/triple-pattern-cardinality-estimator#void-description-predicate-count"
+            "@id": "urn:comunica:default:rdf-metadata-accumulate/triple-pattern-cardinality-estimator#void-description"
           }
         }
       ]

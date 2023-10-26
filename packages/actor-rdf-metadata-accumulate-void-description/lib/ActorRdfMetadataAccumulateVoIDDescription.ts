@@ -9,17 +9,17 @@ import { KeysQueryOperation, KeysRdfResolveQuadPattern } from '@comunica/context
 import type { IActorTest } from '@comunica/core';
 import type { QueryResultCardinality } from '@comunica/types';
 import type { Algebra } from 'sparqlalgebrajs';
-import type { ICardinalityEstimatorVoIDDescription } from './CardinalityEstimatorVoIDDescription';
+import type { TriplePatternCardinalityEstimator } from './TriplePatternCardinalityEstimator';
 
 /**
   * A comunica Predicate Count RDF Metadata Accumulate Actor.
   */
 export class ActorRdfMetadataAccumulateVoIDDescription extends ActorRdfMetadataAccumulate {
-  protected readonly cardinalityEstimator: ICardinalityEstimatorVoIDDescription;
+  protected readonly triplePatternCardinalityEstimator: TriplePatternCardinalityEstimator;
 
   public constructor(args: IActorRdfMetadataAccumulateVoIDDescriptionArgs) {
     super(args);
-    this.cardinalityEstimator = args.cardinalityEstimator;
+    this.triplePatternCardinalityEstimator = args.triplePatternCardinalityEstimator;
   }
 
   public async test(action: IActionRdfMetadataAccumulate): Promise<IActorTest> {
@@ -50,7 +50,7 @@ export class ActorRdfMetadataAccumulateVoIDDescription extends ActorRdfMetadataA
         for (const source of sources.keys()) {
           const matchingDescription = this.getDescriptionWithLongestMatch(source, descriptions);
           if (matchingDescription) {
-            const estimatedCardinality = this.cardinalityEstimator.estimate(matchingDescription, pattern);
+            const estimatedCardinality = this.triplePatternCardinalityEstimator.estimate(matchingDescription, pattern);
             if (estimatedCardinality && (!bestDataset || matchingDescription.dataset.length > bestDataset.length)) {
               bestEstimate = estimatedCardinality;
               bestDataset = matchingDescription.dataset;
@@ -107,5 +107,5 @@ export interface IActorRdfMetadataAccumulateVoIDDescriptionArgs extends IActorRd
   /**
    * Instance of a triple pattern cardinality estimator for VoID descriptions.
    */
-  cardinalityEstimator: ICardinalityEstimatorVoIDDescription;
+  triplePatternCardinalityEstimator: TriplePatternCardinalityEstimator;
 }

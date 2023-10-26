@@ -47,4 +47,5 @@ After installing, this package can be added to your engine's configuration as fo
 * `useCardinality`: Whether to restart join based on changes in metadata cardinality.
 * `useTimeout`: Whether to restart join using a timeout.
 * `allowUnlimitedRestarts`: Whether the restart should be allowed to take place more than once.
+* `restartMessage`: The message to print to console when restarting a join.
 * `timeout`: The timeout value on milliseconds for restarting the join.

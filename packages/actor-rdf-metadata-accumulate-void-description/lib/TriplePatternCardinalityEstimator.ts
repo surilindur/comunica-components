@@ -3,15 +3,19 @@ import type { Algebra } from 'sparqlalgebrajs';
 
 const RDF_TYPE = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type';
 
-export interface ICardinalityEstimatorVoIDDescription {
+export interface ITriplePatternCardinalityEstimator {
   estimate: (description: IVoIDDescription, pattern: Algebra.Pattern) => number | undefined;
+}
+
+export abstract class TriplePatternCardinalityEstimator implements ITriplePatternCardinalityEstimator {
+  public abstract estimate(description: IVoIDDescription, pattern: Algebra.Pattern): number | undefined;
 }
 
 /**
  * Naïve triple pattern cardinality estimator that only checkes the predicate and used the total
  * number of triples with that predicate from the property partitions
  */
-export class CardinalityEstimatorVoIDDescriptionPredicateCount implements ICardinalityEstimatorVoIDDescription {
+export class TriplePatternCardinalityEstimatorVoIDDescriptionPredicateCount extends TriplePatternCardinalityEstimator {
   public estimate(description: IVoIDDescription, pattern: Algebra.Pattern): number | undefined {
     if (pattern.predicate.termType === 'NamedNode') {
       return description.propertyPartitions.get(pattern.predicate.value)?.triples;
@@ -26,7 +30,7 @@ export class CardinalityEstimatorVoIDDescriptionPredicateCount implements ICardi
  * The separately listed special cases from the table for when predicate is rdf:type are mostly covered
  * by the same code as the other cases. The corresponding cases are commented in the statements.
  */
-export class CardinalityEstimatorVoIDDescriptionFormulae implements ICardinalityEstimatorVoIDDescription {
+export class TriplePatternCardinalityEstimatorVoIDDescription extends TriplePatternCardinalityEstimator {
   public estimate(description: IVoIDDescription, pattern: Algebra.Pattern): number | undefined {
     if (pattern.predicate.termType === 'NamedNode') {
       const pp = description.propertyPartitions.get(pattern.predicate.value);

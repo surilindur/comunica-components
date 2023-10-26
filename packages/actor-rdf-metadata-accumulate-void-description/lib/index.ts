@@ -1,2 +1,2 @@
 export * from './ActorRdfMetadataAccumulateVoIDDescription';
-export * from './CardinalityEstimatorVoIDDescription';
+export * from './TriplePatternCardinalityEstimator';
