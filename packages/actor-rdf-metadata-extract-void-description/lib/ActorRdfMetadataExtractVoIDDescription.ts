@@ -51,22 +51,18 @@ export class ActorRdfMetadataExtractVoIDDescription extends ActorRdfMetadataExtr
   }
 
   public async run(action: IActionRdfMetadataExtract): Promise<IActorRdfMetadataExtractOutput> {
-    const operation: RDF.Quad = action.context.getSafe(KeysQueryOperation.operation);
     const descriptions: IVoIDDescription[] = [];
+    const preliminaryDescriptions = await this.extractDescriptions(action.metadata);
 
-    if (operation.predicate.termType === 'NamedNode') {
-      const preliminaryDescriptions = await this.extractDescriptions(action.metadata);
-
-      for (const description of preliminaryDescriptions) {
-        if (description.propertyPartitions.size > 0) {
-          descriptions.push(description);
-        } else {
-          const data = await this.mediatorDereferenceRdf.mediate({ url: description.dataset, context: action.context });
-          const newDescriptions = await this.extractDescriptions(data.data);
-          const filledDescription = newDescriptions.find(vd => vd.dataset === description.dataset);
-          if (filledDescription && filledDescription.propertyPartitions.size > 0) {
-            descriptions.push(filledDescription);
-          }
+    for (const description of preliminaryDescriptions) {
+      if (description.propertyPartitions.size > 0) {
+        descriptions.push(description);
+      } else {
+        const data = await this.mediatorDereferenceRdf.mediate({ url: description.dataset, context: action.context });
+        const newDescriptions = await this.extractDescriptions(data.data);
+        const filledDescription = newDescriptions.find(vd => vd.dataset === description.dataset);
+        if (filledDescription && filledDescription.propertyPartitions.size > 0) {
+          descriptions.push(filledDescription);
         }
       }
     }
