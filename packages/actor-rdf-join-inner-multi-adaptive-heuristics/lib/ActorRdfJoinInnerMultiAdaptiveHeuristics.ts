@@ -9,6 +9,7 @@ import type {
   BindingsStream,
   IActionContext,
   IQueryOperationResultBindings,
+  IJoinEntry,
   IJoinEntryWithMetadata,
   MetadataBindings,
 } from '@comunica/types';
@@ -87,7 +88,7 @@ export class ActorRdfJoinInnerMultiAdaptiveHeuristics extends ActorRdfJoinInnerM
 
     const mediateJoin = (): Promise<IQueryOperationResultBindings> => this.mediatorJoin.mediate({
       type: action.type,
-      entries: this.cloneEntries(entries, false),
+      entries: this.cloneEntries(entries),
       context: subContext,
     });
 
@@ -112,6 +113,9 @@ export class ActorRdfJoinInnerMultiAdaptiveHeuristics extends ActorRdfJoinInnerM
       createSource,
       mediatorHashBindingsResult.hashFunction,
     );
+
+    // This will hopefully make sure that the original streams are destroyed
+    bindingsStreamAdaptive.on('end', () => action.entries.forEach(je => je.output.bindingsStream.destroy()));
 
     return {
       result: {
@@ -138,6 +142,16 @@ export class ActorRdfJoinInnerMultiAdaptiveHeuristics extends ActorRdfJoinInnerM
     });
 
     return sortResult.entries;
+  }
+
+  protected cloneEntries(entries: IJoinEntry[]): IJoinEntry[] {
+    return entries.map(entry => ({
+      operation: entry.operation,
+      output: {
+        ...entry.output,
+        bindingsStream: entry.output.bindingsStream.clone(),
+      },
+    }));
   }
 }
 
