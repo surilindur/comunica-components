@@ -1,6 +1,7 @@
 import { ActorRdfJoinInnerMultiAdaptiveDestroy } from '@comunica/actor-rdf-join-inner-multi-adaptive-destroy';
 import type { IActorRdfJoinInnerMultiAdaptiveDestroyArgs } from '@comunica/actor-rdf-join-inner-multi-adaptive-destroy';
 import type { MediatorHashBindings } from '@comunica/bus-hash-bindings';
+import { ClosableTransformIterator } from '@comunica/bus-query-operation';
 import type { IActionRdfJoin, IActorRdfJoinOutputInner } from '@comunica/bus-rdf-join';
 import type { MediatorRdfJoinEntriesSort } from '@comunica/bus-rdf-join-entries-sort';
 import { KeysRdfJoin } from '@comunica/context-entries-link-traversal';
@@ -69,7 +70,7 @@ export class ActorRdfJoinInnerMultiAdaptiveHeuristics extends ActorRdfJoinInnerM
               addMetadataInvalidationListener(updatedMetadata);
               if (bindingsStreamAdaptive && metadata.cardinality.value !== updatedMetadata.cardinality.value) {
                 const updatedJoinOrder = await this.getSortedJoinEntries(action);
-                if (updatedJoinOrder.some((ent, index) => currentJoinOrder[index].operation !== ent.operation)) {
+                if (updatedJoinOrder.some((je, index) => currentJoinOrder[index].operation !== je.operation)) {
                   currentJoinOrder = updatedJoinOrder;
                   bindingsStreamAdaptive.swapSource();
                 }
@@ -145,13 +146,21 @@ export class ActorRdfJoinInnerMultiAdaptiveHeuristics extends ActorRdfJoinInnerM
   }
 
   protected cloneEntries(entries: IJoinEntry[]): IJoinEntry[] {
-    return entries.map(entry => ({
-      operation: entry.operation,
-      output: {
-        ...entry.output,
-        bindingsStream: entry.output.bindingsStream.clone(),
-      },
-    }));
+    return entries.map(entry => {
+      const clonedBindingsStream = entry.output.bindingsStream.clone();
+      return {
+        operation: entry.operation,
+        output: {
+          ...entry.output,
+          bindingsStream: new ClosableTransformIterator(clonedBindingsStream, {
+            autoStart: false,
+            onClose() {
+              clonedBindingsStream.destroy();
+            },
+          }),
+        },
+      };
+    });
   }
 }
 
@@ -166,7 +175,7 @@ export interface IActorRdfJoinInnerMultiAdaptiveHeuristicsArgs extends IActorRdf
   mediatorJoinEntriesSort: MediatorRdfJoinEntriesSort;
   /**
    * Whether the join should be restarted after metadata cardinality value changes.
-   * @default {true}
+   * @default {false}
    */
   useCardinality: boolean;
   /**
@@ -176,7 +185,7 @@ export interface IActorRdfJoinInnerMultiAdaptiveHeuristicsArgs extends IActorRdf
   useTimeout: boolean;
   /**
    * Whether the actor should swap join order an unlimited number of times.
-   * @default {true}
+   * @default {false}
    */
   allowUnlimitedRestarts: boolean;
   /**

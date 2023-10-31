@@ -11,6 +11,9 @@
       },
       "overrideParameters": {
         "@type": "ActorRdfJoinInnerMultiAdaptiveHeuristics",
+        "useTimeout": false,
+        "useCardinality": true,
+        "allowUnlimitedRestarts": true,
         "mediatorHashBindings": {
           "@id": "urn:comunica:default:hash-bindings/mediators#main"
         },
