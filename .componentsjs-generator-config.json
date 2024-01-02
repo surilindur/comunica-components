@@ -1,5 +1,4 @@
 {
-  "source": "lib",
   "ignorePackagePaths": [
     "engines/query-sparql-components"
   ],
