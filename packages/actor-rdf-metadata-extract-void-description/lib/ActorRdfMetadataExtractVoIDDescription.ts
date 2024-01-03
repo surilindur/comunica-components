@@ -33,9 +33,11 @@ const XSD_INTEGER = 'http://www.w3.org/2001/XMLSchema#integer';
 export class ActorRdfMetadataExtractVoIDDescription extends ActorRdfMetadataExtract {
   public readonly mediatorDereferenceRdf: MediatorDereferenceRdf;
   private readonly datasetSubjectRegex: RegExp;
+  private readonly shouldCompletePartialDescriptions: boolean;
 
   public constructor(args: IActorRdfMetadataExtractVoIDDescriptionArgs) {
     super(args);
+    this.shouldCompletePartialDescriptions = args.shouldCompletePartialDescriptions;
     this.mediatorDereferenceRdf = args.mediatorDereferenceRdf;
     this.datasetSubjectRegex = new RegExp(args.datasetSubjectRegex, 'u');
   }
@@ -55,9 +57,9 @@ export class ActorRdfMetadataExtractVoIDDescription extends ActorRdfMetadataExtr
     const preliminaryDescriptions = await this.extractDescriptions(action.metadata);
 
     for (const description of preliminaryDescriptions) {
-      if (description.propertyPartitions.size > 0) {
+      if (this.descriptionIsComplete(description)) {
         descriptions.push(description);
-      } else {
+      } else if (this.shouldCompletePartialDescriptions) {
         const data = await this.mediatorDereferenceRdf.mediate({ url: description.dataset, context: action.context });
         const newDescriptions = await this.extractDescriptions(data.data);
         const filledDescription = newDescriptions.find(vd => vd.dataset === description.dataset);
@@ -68,6 +70,18 @@ export class ActorRdfMetadataExtractVoIDDescription extends ActorRdfMetadataExtr
     }
 
     return { metadata: descriptions.length > 0 ? { voidDescriptions: descriptions } : {}};
+  }
+
+  private descriptionIsComplete(description: IVoIDDescription): boolean {
+    return description.classPartitions.size > 0 &&
+      description.propertyPartitions.size > 0 &&
+      description.uriSpace !== undefined &&
+      description.classes !== undefined &&
+      description.distinctObjects !== undefined &&
+      description.distinctSubjects !== undefined &&
+      description.properties !== undefined &&
+      description.triples !== undefined &&
+      description.uriSpace !== undefined;
   }
 
   private async extractDescriptions(stream: RDF.Stream): Promise<IVoIDDescription[]> {
@@ -201,4 +215,9 @@ export interface IActorRdfMetadataExtractVoIDDescriptionArgs extends IActorRdfMe
    * that are also marked as datasets following the VoID specification.
    */
   datasetSubjectRegex: string;
+  /**
+   * Whether incomplete descriptions should be completed by dereferencing their URIs.
+   * @default {false}
+   */
+  shouldCompletePartialDescriptions: boolean;
 }

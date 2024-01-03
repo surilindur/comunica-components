@@ -5,9 +5,10 @@ import type {
   IActorRdfMetadataAccumulateOutput,
   IActorRdfMetadataAccumulateArgs,
 } from '@comunica/bus-rdf-metadata-accumulate';
-import { KeysQueryOperation, KeysRdfResolveQuadPattern } from '@comunica/context-entries';
+import { getContextSources, getContextSourceUrl } from '@comunica/bus-rdf-resolve-quad-pattern';
+import { KeysQueryOperation } from '@comunica/context-entries';
 import type { IActorTest } from '@comunica/core';
-import type { QueryResultCardinality } from '@comunica/types';
+import type { QueryResultCardinality, IActionContext } from '@comunica/types';
 import type { Algebra } from 'sparqlalgebrajs';
 import type { TriplePatternCardinalityEstimator } from './TriplePatternCardinalityEstimator';
 
@@ -43,14 +44,14 @@ export class ActorRdfMetadataAccumulateVoIDDescription extends ActorRdfMetadataA
       ...action.appendingMetadata.voidDescriptions ? action.appendingMetadata.voidDescriptions : [],
     ];
 
-    const sources = action.context.get<Map<string, string> | undefined>(KeysRdfResolveQuadPattern.sourceIds);
+    const sources = this.getContextSourceUrls(action.context);
 
-    if (sources && sources.size > 0) {
+    if (sources) {
       let bestEstimate = 0;
       let bestDataset: string | undefined;
       const pattern: Algebra.Pattern = action.context.getSafe(KeysQueryOperation.operation);
 
-      for (const source of sources.keys()) {
+      for (const source of sources) {
         const matchingDescription = this.getDescriptionWithLongestMatch(source, descriptions);
         if (matchingDescription) {
           const estimatedCardinality = this.triplePatternCardinalityEstimator.estimate(matchingDescription, pattern);
@@ -70,6 +71,22 @@ export class ActorRdfMetadataAccumulateVoIDDescription extends ActorRdfMetadataA
       voidDescriptions: descriptions,
       ...cardinality ? { cardinality } : {},
     }};
+  }
+
+  private getContextSourceUrls(context: IActionContext): Set<string> | undefined {
+    const contextSources = getContextSources(context);
+    const sources: Set<string> = new Set();
+
+    if (contextSources) {
+      for (const source of contextSources) {
+        const url = getContextSourceUrl(source);
+        if (url) {
+          sources.add(url);
+        }
+      }
+    }
+
+    return sources.size > 0 ? sources : undefined;
   }
 
   private getDescriptionWithLongestMatch(uri: string, descriptions: IVoIDDescription[]): IVoIDDescription | undefined {
