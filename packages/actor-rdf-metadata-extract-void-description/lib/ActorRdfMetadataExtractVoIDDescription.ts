@@ -54,19 +54,25 @@ export class ActorRdfMetadataExtractVoIDDescription extends ActorRdfMetadataExtr
 
   public async run(action: IActionRdfMetadataExtract): Promise<IActorRdfMetadataExtractOutput> {
     const descriptions: IVoIDDescription[] = [];
-    const preliminaryDescriptions = await this.extractDescriptions(action.metadata);
 
-    for (const description of preliminaryDescriptions) {
-      if (this.descriptionIsComplete(description)) {
-        descriptions.push(description);
-      } else if (this.shouldCompletePartialDescriptions) {
-        const data = await this.mediatorDereferenceRdf.mediate({ url: description.dataset, context: action.context });
-        const newDescriptions = await this.extractDescriptions(data.data);
-        const filledDescription = newDescriptions.find(vd => vd.dataset === description.dataset);
-        if (filledDescription && filledDescription.propertyPartitions.size > 0) {
-          descriptions.push(filledDescription);
+    try {
+      const preliminaryDescriptions = await this.extractDescriptions(action.metadata);
+
+      for (const description of preliminaryDescriptions) {
+        if (this.descriptionIsComplete(description)) {
+          descriptions.push(description);
+        } else if (this.shouldCompletePartialDescriptions) {
+          const data = await this.mediatorDereferenceRdf.mediate({ url: description.dataset, context: action.context });
+          const newDescriptions = await this.extractDescriptions(data.data);
+          const filledDescription = newDescriptions.find(vd => vd.dataset === description.dataset);
+          if (filledDescription && filledDescription.propertyPartitions.size > 0) {
+            descriptions.push(filledDescription);
+          }
         }
       }
+    } catch (error: unknown) {
+      // eslint-disable-next-line no-console
+      console.log(`Error occurred in <${this.name}>`, error);
     }
 
     return { metadata: descriptions.length > 0 ? { voidDescriptions: descriptions } : {}};
