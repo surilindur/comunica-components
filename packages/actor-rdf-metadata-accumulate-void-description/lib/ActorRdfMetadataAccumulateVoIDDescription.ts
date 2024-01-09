@@ -34,46 +34,41 @@ export class ActorRdfMetadataAccumulateVoIDDescription extends ActorRdfMetadataA
     }
 
     if (action.accumulatedMetadata.voidDescriptions || action.appendingMetadata.voidDescriptions) {
-      try {
-        let cardinality: QueryResultCardinality | undefined;
+      let cardinality: QueryResultCardinality | undefined;
 
-        const descriptions: IVoIDDescription[] = [
-          ...action.accumulatedMetadata.voidDescriptions ? action.accumulatedMetadata.voidDescriptions : [],
-          ...action.appendingMetadata.voidDescriptions ? action.appendingMetadata.voidDescriptions : [],
-        ];
+      const descriptions: IVoIDDescription[] = [
+        ...action.accumulatedMetadata.voidDescriptions ? action.accumulatedMetadata.voidDescriptions : [],
+        ...action.appendingMetadata.voidDescriptions ? action.appendingMetadata.voidDescriptions : [],
+      ];
 
-        const sources = this.getContextSourceUrls(action.context);
+      const sources = this.getContextSourceUrls(action.context);
 
-        if (sources) {
-          let bestEstimate = 0;
-          let bestDataset: string | undefined;
-          const pattern: Algebra.Pattern = action.context.getSafe(KeysQueryOperation.operation);
+      if (sources) {
+        let bestEstimate = 0;
+        let bestDataset: string | undefined;
+        const pattern: Algebra.Pattern = action.context.getSafe(KeysQueryOperation.operation);
 
-          for (const source of sources) {
-            const matchingDescription = this.getDescriptionWithLongestMatch(source, descriptions);
-            if (matchingDescription) {
-              const estimatedCardinality = this.triplePatternCardinalityEstimator
-                .estimate(matchingDescription, pattern);
-              if (estimatedCardinality && (!bestDataset || matchingDescription.dataset.length > bestDataset.length)) {
-                bestEstimate = estimatedCardinality;
-                bestDataset = matchingDescription.dataset;
-              }
+        for (const source of sources) {
+          const matchingDescription = this.getDescriptionWithLongestMatch(source, descriptions);
+          if (matchingDescription) {
+            const estimatedCardinality = this.triplePatternCardinalityEstimator
+              .estimate(matchingDescription, pattern);
+            if (estimatedCardinality && (!bestDataset || matchingDescription.dataset.length > bestDataset.length)) {
+              bestEstimate = estimatedCardinality;
+              bestDataset = matchingDescription.dataset;
             }
-          }
-
-          if (bestDataset) {
-            cardinality = { type: 'estimate', value: bestEstimate, dataset: bestDataset };
           }
         }
 
-        return { metadata: {
-          voidDescriptions: descriptions,
-          ...cardinality ? { cardinality } : {},
-        }};
-      } catch (error: unknown) {
-        // eslint-disable-next-line no-console
-        console.log(`Error occurred in <${this.name}>`, error);
+        if (bestDataset) {
+          cardinality = { type: 'estimate', value: bestEstimate, dataset: bestDataset };
+        }
       }
+
+      return { metadata: {
+        voidDescriptions: descriptions,
+        ...cardinality ? { cardinality } : {},
+      }};
     }
 
     return { metadata: {}};

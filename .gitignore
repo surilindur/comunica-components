@@ -6,9 +6,12 @@ docs
 *.js
 *.js.map
 *.d.ts
-*.html
-*.png
 
 componentsjs-error-state.json
 
 test*
+
+catalogue*
+client*
+server*
+queries*
