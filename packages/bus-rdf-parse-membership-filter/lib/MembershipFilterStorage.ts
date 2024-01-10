@@ -1,3 +1,4 @@
+import { ActionContextKey } from '@comunica/core';
 import type { IMembershipFilter } from './MembershipFilter';
 
 export interface IMembershipFilterStorage {
@@ -8,6 +9,10 @@ export interface IMembershipFilterStorage {
   remove: (uri: string) => number;
   clear: () => number;
 }
+
+export const KeyMembershipFilterStorage = new ActionContextKey<IMembershipFilterStorage>(
+  '@comunica/bus-rdf-parse:membership-filter-storage',
+);
 
 export class MembershipFilterStorage implements IMembershipFilterStorage {
   private readonly filters: Map<RegExp, IMembershipFilter>;

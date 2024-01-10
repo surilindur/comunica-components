@@ -1,7 +1,9 @@
 import type { IActionRdfMetadataExtract, IActorRdfMetadataExtractArgs,
   IActorRdfMetadataExtractOutput } from '@comunica/bus-rdf-metadata-extract';
 import { ActorRdfMetadataExtract } from '@comunica/bus-rdf-metadata-extract';
-import type { MediatorRdfParseMembershipFilter, IMembershipFilter } from '@comunica/bus-rdf-parse-membership-filter';
+import { KeyMembershipFilterStorage } from '@comunica/bus-rdf-parse-membership-filter';
+import type { MediatorRdfParseMembershipFilter, IMembershipFilter,
+  IMembershipFilterStorage } from '@comunica/bus-rdf-parse-membership-filter';
 import type { IActorTest } from '@comunica/core';
 import type { IActionContext } from '@comunica/types';
 import type * as RDF from '@rdfjs/types';
@@ -25,12 +27,22 @@ export class ActorRdfMetadataExtractMembershipFilter extends ActorRdfMetadataExt
   }
 
   public async test(action: IActionRdfMetadataExtract): Promise<IActorTest> {
+    if (!action.context.has(KeyMembershipFilterStorage)) {
+      throw new Error(`${this.name} can only extract membership filters into a context storage`);
+    }
     return true;
   }
 
   public async run(action: IActionRdfMetadataExtract): Promise<IActorRdfMetadataExtractOutput> {
     const filterData = await this.extractFilters(action.metadata);
-    return { metadata: filterData ? { membershipFilters: await this.parseFilters(action.context, filterData) } : {}};
+    if (filterData.size > 0) {
+      const storage = action.context.getSafe<IMembershipFilterStorage>(KeyMembershipFilterStorage);
+      const filters = await this.parseFilters(action.context, filterData);
+      for (const [ regex, filter ] of filters) {
+        storage.add(regex, filter);
+      }
+    }
+    return { metadata: {}};
   }
 
   /**
@@ -38,7 +50,7 @@ export class ActorRdfMetadataExtractMembershipFilter extends ActorRdfMetadataExt
    * @param stream The RDF metadata stream to process
    * @returns The collected membership filter data
    */
-  private async extractFilters(stream: RDF.Stream): Promise<Record<string, RDF.Quad[]> | undefined> {
+  private async extractFilters(stream: RDF.Stream): Promise<Map<string, RDF.Quad[]>> {
     return new Promise((resolve, reject) => {
       const filters: Record<string, RDF.Quad[]> = {};
       const quads: Record<string, RDF.Quad[]> = {};
@@ -65,7 +77,7 @@ export class ActorRdfMetadataExtractMembershipFilter extends ActorRdfMetadataExt
             quads[subject] = [ quad ];
           }
         })
-        .on('end', () => resolve(Object.keys(filters).length > 0 ? filters : undefined))
+        .on('end', () => resolve(new Map(Object.entries(filters))))
         .on('error', reject);
     });
   }
@@ -78,10 +90,10 @@ export class ActorRdfMetadataExtractMembershipFilter extends ActorRdfMetadataExt
    */
   private async parseFilters(
     context: IActionContext,
-    filters: Record<string, RDF.Quad[]>,
+    filters: Map<string, RDF.Quad[]>,
   ): Promise<Map<RegExp, IMembershipFilter>> {
     const parsedFilters: Map<RegExp, IMembershipFilter> = new Map();
-    for (const [ uri, quads ] of Object.entries(filters)) {
+    for (const [ uri, quads ] of filters) {
       const types = quads
         .filter(quad => quad.predicate.value === ActorRdfMetadataExtractMembershipFilter.RDF_TYPE)
         .map(quad => quad.object.value);
