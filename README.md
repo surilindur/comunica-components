@@ -9,18 +9,27 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/surilindur/comunica-components/actions/workflows/ci.yml">
-    <img alt="CI" src=https://github.com/surilindur/comunica-components/actions/workflows/ci.yml/badge.svg?branch=main">
-  </a>
+  <a href="https://github.com/surilindur/comunica-components/actions/workflows/ci.yml"><img alt="CI" src=https://github.com/surilindur/comunica-components/actions/workflows/ci.yml/badge.svg?branch=main"></a>
+  <a href="https://www.typescriptlang.org/"><img alt="TypeScript" src="https://img.shields.io/badge/%3C%2F%3E-TypeScript-%230074c1.svg"></a>
+  <a href="https://opensource.org/licenses/MIT"><img alt="License: MIT" src="https://img.shields.io/badge/License-MIT-yellow.svg"></a>
 </p>
 
-This is a monorepository that contains various work-in-progress components for [Comunica](https://github.com/comunica/comunica) and is not intended for actual use. If you wish to learn more about Comunica or actually use it, please refer to [its website](https://comunica.dev/).
+This is a monorepository that contains various work-in-progress components for [Comunica](https://github.com/comunica/comunica) and is not intended for actual use. If you wish to learn more about Comunica or actually use it, please refer to [its website](https://comunica.dev/). The following components reside here.
 
-The following components reside here:
+Components for membership metadata handling:
 
-* [**VoID description RDF metadata extractor**](packages/actor-rdf-metadata-extract-void-description/), that parses VoID descriptions from the metadata stream and stores them back in the metadata.
-* [**Simple "adaptive" inner join actor**](packages/actor-rdf-join-inner-multi-adaptive-heuristics/), that keeps restarting joins every time there is a significant enough change in the estimated cardinalities.
-* [**VoID description RDF metadata accumulator**](packages/actor-rdf-metadata-accumulate-void-description/), that accumulates VoID descriptions from multiple metadata and performs simple cardinality estimation for triple patterns based on those descriptions.
+* [**Membership filter metadata extractor**](packages/actor-rdf-metadata-extract-membership-filter/), that parses membership filters from metadata streams and stores them back in the metadata.
+* [**Membership filter parse bus**](packages/bus-rdf-parse-membership-filter/), where membership filter parsers are listening.
+* [**Membership filter parser for Bloom filters**](packages/actor-rdf-parse-membership-filter-bloom/), that parses Bloom filters into membership filter objects.
+* [**Membership filter parser for Golomb Coded Sets**](packages/actor-rdf-parse-membership-filter-gcs/), that parses Golomb Coded Sets into membership filter objects.
+* [**Membership filter context preprocess actor**](packages/actor-context-preprocess-membership-filter/), that creates the metadata filter storage in quest context, used to hold the extracted filters. This is the result of the link queue not having access to RDF metadata streams, so the filters need to be stored in another query-specific location.
+* [**Membership filter-based link queue wrapper**](packages/actor-rdf-resolve-hypermedia-links-queue-wrapper-membership-filter/), that filters link queue output based on discovered membership filters.
+
+Components for triple pattern cardinality estimation and join operation restarts:
+
+* [**VoID description metadata extractor**](packages/actor-rdf-metadata-extract-void-description/), that parses VoID descriptions from metadata streams and stores them back in the metadata.
+* [**VoID description metadata accumulator**](packages/actor-rdf-metadata-accumulate-void-description/), that accumulates VoID descriptions from multiple metadata. This package also includes **triple pattern cardinality estimators** that use available metadata at accumulation time to update estimated triple pattern cardinalities.
+* [**Simple "adaptive" inner join actor**](packages/actor-rdf-join-inner-multi-adaptive-heuristics/), that allows restarting a join operation based on a set of conditions.
 
 ## Development Setup
 
