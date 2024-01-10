@@ -4,6 +4,7 @@
   ],
   "ignoreComponents": [
     "BindingsStreamAdaptiveHeuristics",
+    "Buffer",
     "Map"
   ]
 }
