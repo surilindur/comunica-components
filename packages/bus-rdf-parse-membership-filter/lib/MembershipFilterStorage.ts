@@ -10,14 +10,10 @@ export interface IMembershipFilterStorage {
   clear: () => number;
 }
 
-export const KeyMembershipFilterStorage = new ActionContextKey<IMembershipFilterStorage>(
-  '@comunica/bus-rdf-parse:membership-filter-storage',
-);
-
 export class MembershipFilterStorage implements IMembershipFilterStorage {
   private readonly filters: Map<RegExp, IMembershipFilter>;
 
-  public constructor(args: IMembershipFilterStorageArgs) {
+  public constructor() {
     this.filters = new Map();
   }
 
@@ -64,4 +60,6 @@ export class MembershipFilterStorage implements IMembershipFilterStorage {
   }
 }
 
-export interface IMembershipFilterStorageArgs {}
+export const KeyMembershipFilterStorage = new ActionContextKey<IMembershipFilterStorage>(
+  '@comunica/bus-rdf-parse:membership-filter-storage',
+);
