@@ -1,0 +1,18 @@
+{
+  "name": "@comunica/actor-rdf-parse-membership-filter-gcs",
+  "version": "0.0.0",
+  "description": "Comunica RDF membership filter parse actor for Golomb Coded Sets",
+  "main": "lib/index.js",
+  "types": "lib/index",
+  "repository": "https://github.com/surilindur/comunica-components",
+  "author": "surilindur",
+  "license": "MIT",
+  "private": true,
+  "lsd:module": true,
+  "dependencies": {
+    "@comunica/bus-rdf-parse-membership-filter": "^0.0.0",
+    "golombcodedsets": "^0.0.1",
+    "murmurhash": "^2.0.0",
+    "rdf-string": "^1.0.0"
+  }
+}
