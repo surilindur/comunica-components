@@ -12,18 +12,15 @@ import type * as RDF from '@rdfjs/types';
  * A comunica Membership RDF Metadata Extract Actor.
  */
 export class ActorRdfMetadataExtractMembershipFilter extends ActorRdfMetadataExtract {
+  protected readonly mediatorRdfParseMembershipFilter: MediatorRdfParseMembershipFilter;
+  protected readonly membershipFilterTypes: Set<string>;
+
   public static readonly RDF_TYPE = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type';
-
-  private readonly mediatorRdfParseMembershipFilter: MediatorRdfParseMembershipFilter;
-
-  private readonly membershipFilterTypes: Set<string>;
-  private readonly membershipFilterPredicates: Set<string>;
 
   public constructor(args: IActorRdfMetadataExtractMembershipFilterArgs) {
     super(args);
     this.mediatorRdfParseMembershipFilter = args.mediatorRdfParseMembershipFilter;
     this.membershipFilterTypes = new Set(args.membershipFilterTypes);
-    this.membershipFilterPredicates = new Set(args.membershipFilterPredicates);
   }
 
   public async test(action: IActionRdfMetadataExtract): Promise<IActorTest> {
@@ -50,34 +47,33 @@ export class ActorRdfMetadataExtractMembershipFilter extends ActorRdfMetadataExt
    * @param stream The RDF metadata stream to process
    * @returns The collected membership filter data
    */
-  private async extractFilters(stream: RDF.Stream): Promise<Map<string, RDF.Quad[]>> {
+  protected async extractFilters(stream: RDF.Stream): Promise<Map<string, RDF.Quad[]>> {
     return new Promise((resolve, reject) => {
-      const filters: Record<string, RDF.Quad[]> = {};
-      const quads: Record<string, RDF.Quad[]> = {};
+      const filters = new Map<string, RDF.Quad[]>();
+      const quads = new Map<string, RDF.Quad[]>();
       stream
         .on('data', (quad: RDF.Quad) => {
-          const subject = quad.subject.value;
-          if (filters[subject]) {
-            filters[subject].push(quad);
+          if (filters.has(quad.subject.value)) {
+            filters.get(quad.subject.value)!.push(quad);
           } else if (
             quad.predicate.value === ActorRdfMetadataExtractMembershipFilter.RDF_TYPE &&
+            quad.object.termType === 'NamedNode' &&
             this.membershipFilterTypes.has(quad.object.value)
           ) {
-            filters[subject] = quads[subject] ?? [];
-            filters[subject].push(quad);
-            delete quads[subject];
-          } else if (this.membershipFilterPredicates.has(quad.predicate.value)) {
-            const filterUri = quad.object.value;
-            filters[filterUri] = quads[filterUri] ?? [];
-            filters[filterUri].push(quad);
-            delete quads[filterUri];
-          } else if (quads[subject]) {
-            quads[subject].push(quad);
+            const data = quads.get(quad.subject.value) ?? [];
+            data.push(quad);
+            filters.set(quad.subject.value, data);
+            quads.delete(quad.subject.value);
           } else {
-            quads[subject] = [ quad ];
+            const data = quads.get(quad.subject.value);
+            if (data) {
+              data.push(quad);
+            } else {
+              quads.set(quad.subject.value, [ quad ]);
+            }
           }
         })
-        .on('end', () => resolve(new Map(Object.entries(filters))))
+        .on('end', () => resolve(filters))
         .on('error', reject);
     });
   }
@@ -88,7 +84,7 @@ export class ActorRdfMetadataExtractMembershipFilter extends ActorRdfMetadataExt
    * @param filters Membership filter data.
    * @returns The parsed membership filters.
    */
-  private async parseFilters(
+  protected async parseFilters(
     context: IActionContext,
     filters: Map<string, RDF.Quad[]>,
   ): Promise<Map<RegExp, IMembershipFilter>> {
@@ -115,10 +111,6 @@ export interface IActorRdfMetadataExtractMembershipFilterArgs extends IActorRdfM
    * RDF type IRIs of membership filters for detection from metadata stream
    */
   membershipFilterTypes: string[];
-  /**
-   * Predicate IRIs that should point as membership filters
-   */
-  membershipFilterPredicates: string[];
   /**
    * Mediator on the membership filter parse bus
    */

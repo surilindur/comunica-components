@@ -8,11 +8,11 @@ import { termToString } from 'rdf-string';
  */
 export class MembershipFilterBloom implements IMembershipFilter {
   private readonly bloomFilter: Bloem;
-  public readonly member: string;
+  public readonly members: string[];
 
-  public constructor(bits: number, hashes: number, filter: Buffer, member: string) {
+  public constructor(bits: number, hashes: number, filter: Buffer, members: string[]) {
     this.bloomFilter = new Bloem(bits, hashes, filter);
-    this.member = member;
+    this.members = members;
   }
 
   public test(term: RDF.Term): boolean {

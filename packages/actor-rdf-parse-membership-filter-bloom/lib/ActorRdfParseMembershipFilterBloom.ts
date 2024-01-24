@@ -15,7 +15,7 @@ export class ActorRdfParseMembershipFilterBloom extends ActorRdfParseMembershipF
   public static readonly MEM_REPRESENTATION: string = `${ActorRdfParseMembershipFilterBloom.MEM}binaryRepresentation`;
   public static readonly MEM_BITSIZE: string = `${ActorRdfParseMembershipFilterBloom.MEM}bitSize`;
   public static readonly MEM_HASHSIZE: string = `${ActorRdfParseMembershipFilterBloom.MEM}hashSize`;
-  public static readonly MEM_PROPERTY: string = `${ActorRdfParseMembershipFilterBloom.MEM}projectedProperty`;
+  public static readonly MEM_PROJECTED_PROPERTY: string = `${ActorRdfParseMembershipFilterBloom.MEM}projectedProperty`;
 
   public constructor(args: IActorRdfParseMembershipFilterArgs) {
     super(args);
@@ -37,8 +37,8 @@ export class ActorRdfParseMembershipFilterBloom extends ActorRdfParseMembershipF
     if (!action.data.some(quad => quad.predicate.value === ActorRdfParseMembershipFilterBloom.MEM_HASHSIZE)) {
       throw new Error(`Missing membership filter hash count param in a bloom filter action: ${JSON.stringify(action)}`);
     }
-    if (!action.data.some(quad => quad.predicate.value === ActorRdfParseMembershipFilterBloom.MEM_PROPERTY)) {
-      throw new Error(`Missing membership filter property param in a bloom filter action: ${JSON.stringify(action)}`);
+    if (!action.data.some(quad => quad.predicate.value === ActorRdfParseMembershipFilterBloom.MEM_PROJECTED_PROPERTY)) {
+      throw new Error(`Missing membership filter projectedProperty param in a bloom filter action: ${JSON.stringify(action)}`);
     }
     return true;
   }
@@ -66,11 +66,11 @@ export class ActorRdfParseMembershipFilterBloom extends ActorRdfParseMembershipF
       )!.object.value,
       'base64',
     );
-    const member = action.data.find(
-      quad => quad.predicate.value === ActorRdfParseMembershipFilterBloom.MEM_PROPERTY,
-    )!.object.value;
+    const members = action.data.filter(
+      quad => quad.predicate.value === ActorRdfParseMembershipFilterBloom.MEM_PROJECTED_PROPERTY,
+    ).map(quad => quad.object.value);
     return {
-      filter: new MembershipFilterBloom(bits, hashes, filter, member),
+      filter: new MembershipFilterBloom(bits, hashes, filter, members),
       uriPattern: new RegExp(`^(${sourceCollection}.*)$`, 'u'),
     };
   }

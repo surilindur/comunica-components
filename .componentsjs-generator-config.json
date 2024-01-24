@@ -5,6 +5,8 @@
   "ignoreComponents": [
     "BindingsStreamAdaptiveHeuristics",
     "Buffer",
-    "Map"
+    "RegExp",
+    "Map",
+    "Set"
   ]
 }

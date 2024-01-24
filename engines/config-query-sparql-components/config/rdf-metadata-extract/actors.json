@@ -1,7 +1,8 @@
 {
   "@context": [
     "https://linkedsoftwaredependencies.org/bundles/npm/@comunica/runner/^2.0.0/components/context.jsonld",
-    "https://linkedsoftwaredependencies.org/bundles/npm/@comunica/actor-rdf-metadata-extract-void-description/^0.0.0/components/context.jsonld"
+    "https://linkedsoftwaredependencies.org/bundles/npm/@comunica/actor-rdf-metadata-extract-void-description/^0.0.0/components/context.jsonld",
+    "https://linkedsoftwaredependencies.org/bundles/npm/@comunica/actor-rdf-metadata-extract-membership-filter/^0.0.0/components/context.jsonld"
   ],
   "@id": "urn:comunica:default:Runner",
   "@type": "Runner",
@@ -13,6 +14,16 @@
         "@id": "urn:comunica:default:dereference-rdf/mediators#main"
       },
       "datasetSubjectRegex": "^(https?:\\/\\/.*\\/)$"
+    },
+    {
+      "@id": "urn:comunica:default:rdf-metadata-extract/actors#membership-filter",
+      "@type": "ActorRdfMetadataExtractMembershipFilter",
+      "mediatorRdfParseMembershipFilter": {
+        "@id": "urn:comunica:default:rdf-parse-membership-filter/mediators#parse"
+      },
+      "membershipFilterTypes": [
+        "http://semweb.mmlab.be/ns/membership#BloomFilter"
+      ]
     }
   ]
 }

@@ -4,9 +4,12 @@
   ],
   "import": [
     "ccqsc:config/config-base-adaptive.json",
-    "ccqsc:config/override/disable-aggregate-store.json",
+    "ccqsc:config/context-preprocess/actors.json",
     "ccqsc:config/rdf-metadata-extract/actors.json",
     "ccqsc:config/rdf-metadata-accumulate/actors.json",
-    "ccqsc:config/rdf-join/actors.json"
+    "ccqsc:config/rdf-join/actors.json",
+    "ccqsc:config/rdf-parse/mediators.json",
+    "ccqsc:config/rdf-parse/actors.json",
+    "ccqsc:config/rdf-resolve-hypermedia-links-queue/actors.json"
   ]
 }

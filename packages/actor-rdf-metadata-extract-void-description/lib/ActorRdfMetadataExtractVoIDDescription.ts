@@ -10,30 +10,30 @@ import type { IActorTest } from '@comunica/core';
 import type * as RDF from '@rdfjs/types';
 import type { IVoIDDescription } from './VoIDDescription';
 
-const VOID = 'http://rdfs.org/ns/void#';
-const VOID_TRIPLES = `${VOID}triples`;
-const VOID_ENTITIES = `${VOID}entities`;
-const VOID_CLASS = `${VOID}class`;
-const VOID_CLASSES = `${VOID}classes`;
-const VOID_PROPERTY = `${VOID}property`;
-const VOID_PROPERTIES = `${VOID}properties`;
-const VOID_INDATASET = `${VOID}inDataset`;
-const VOID_URISPACE = `${VOID}uriSpace`;
-const VOID_DATASET = `${VOID}Dataset`;
-const VOID_DSUBJECTS = `${VOID}distinctSubjects`;
-const VOID_DOBJECTS = `${VOID}distinctObjects`;
-const VOID_PPARTITION = `${VOID}propertyPartition`;
-const VOID_CPARTITION = `${VOID}classPartition`;
-const RDF_TYPE = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type';
-const XSD_INTEGER = 'http://www.w3.org/2001/XMLSchema#integer';
-
 /**
  * An RDF Metadata Extract Actor that extracts dataset metadata from their VOID descriptions
  */
 export class ActorRdfMetadataExtractVoIDDescription extends ActorRdfMetadataExtract {
-  public readonly mediatorDereferenceRdf: MediatorDereferenceRdf;
-  private readonly datasetSubjectRegex: RegExp;
-  private readonly shouldCompletePartialDescriptions: boolean;
+  protected readonly mediatorDereferenceRdf: MediatorDereferenceRdf;
+  protected readonly datasetSubjectRegex: RegExp;
+  protected readonly shouldCompletePartialDescriptions: boolean;
+
+  public static readonly VOID_PREFIX = 'http://rdfs.org/ns/void#';
+  public static readonly VOID_TRIPLES = `${ActorRdfMetadataExtractVoIDDescription.VOID_PREFIX}triples`;
+  public static readonly VOID_ENTITIES = `${ActorRdfMetadataExtractVoIDDescription.VOID_PREFIX}entities`;
+  public static readonly VOID_CLASS = `${ActorRdfMetadataExtractVoIDDescription.VOID_PREFIX}class`;
+  public static readonly VOID_CLASSES = `${ActorRdfMetadataExtractVoIDDescription.VOID_PREFIX}classes`;
+  public static readonly VOID_PROPERTY = `${ActorRdfMetadataExtractVoIDDescription.VOID_PREFIX}property`;
+  public static readonly VOID_PROPERTIES = `${ActorRdfMetadataExtractVoIDDescription.VOID_PREFIX}properties`;
+  public static readonly VOID_INDATASET = `${ActorRdfMetadataExtractVoIDDescription.VOID_PREFIX}inDataset`;
+  public static readonly VOID_URISPACE = `${ActorRdfMetadataExtractVoIDDescription.VOID_PREFIX}uriSpace`;
+  public static readonly VOID_DATASET = `${ActorRdfMetadataExtractVoIDDescription.VOID_PREFIX}Dataset`;
+  public static readonly VOID_DSUBJECTS = `${ActorRdfMetadataExtractVoIDDescription.VOID_PREFIX}distinctSubjects`;
+  public static readonly VOID_DOBJECTS = `${ActorRdfMetadataExtractVoIDDescription.VOID_PREFIX}distinctObjects`;
+  public static readonly VOID_PPARTITION = `${ActorRdfMetadataExtractVoIDDescription.VOID_PREFIX}propertyPartition`;
+  public static readonly VOID_CPARTITION = `${ActorRdfMetadataExtractVoIDDescription.VOID_PREFIX}classPartition`;
+  public static readonly RDF_TYPE = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type';
+  public static readonly XSD_INTEGER = 'http://www.w3.org/2001/XMLSchema#integer';
 
   public constructor(args: IActorRdfMetadataExtractVoIDDescriptionArgs) {
     super(args);
@@ -91,8 +91,8 @@ export class ActorRdfMetadataExtractVoIDDescription extends ActorRdfMetadataExtr
         if (quad.subject.value in descriptions) {
           descriptions[quad.subject.value].push(quad);
         } else if (
-          quad.predicate.value === RDF_TYPE &&
-          quad.object.value === VOID_DATASET &&
+          quad.predicate.value === ActorRdfMetadataExtractVoIDDescription.RDF_TYPE &&
+          quad.object.value === ActorRdfMetadataExtractVoIDDescription.VOID_DATASET &&
           this.datasetSubjectRegex.test(quad.subject.value)
         ) {
           if (quad.subject.value in data) {
@@ -101,7 +101,7 @@ export class ActorRdfMetadataExtractVoIDDescription extends ActorRdfMetadataExtr
           } else {
             descriptions[quad.subject.value] = [ quad ];
           }
-        } else if (quad.predicate.value === VOID_INDATASET) {
+        } else if (quad.predicate.value === ActorRdfMetadataExtractVoIDDescription.VOID_INDATASET) {
           links.push(quad.object.value);
         } else if (quad.subject.value in data) {
           data[quad.subject.value].push(quad);
@@ -122,35 +122,38 @@ export class ActorRdfMetadataExtractVoIDDescription extends ActorRdfMetadataExtr
           };
           for (const quad of quads) {
             switch (quad.predicate.value) {
-              case VOID_DSUBJECTS:
+              case ActorRdfMetadataExtractVoIDDescription.VOID_DSUBJECTS:
                 voidDescription.distinctSubjects = Number.parseInt(quad.object.value, 10);
                 break;
-              case VOID_DOBJECTS:
+              case ActorRdfMetadataExtractVoIDDescription.VOID_DOBJECTS:
                 voidDescription.distinctObjects = Number.parseInt(quad.object.value, 10);
                 break;
-              case VOID_TRIPLES:
+              case ActorRdfMetadataExtractVoIDDescription.VOID_TRIPLES:
                 voidDescription.triples = Number.parseInt(quad.object.value, 10);
                 break;
-              case VOID_URISPACE:
+              case ActorRdfMetadataExtractVoIDDescription.VOID_URISPACE:
                 voidDescription.uriSpace = quad.object.value;
                 break;
-              case VOID_PROPERTIES:
+              case ActorRdfMetadataExtractVoIDDescription.VOID_PROPERTIES:
                 voidDescription.properties = Number.parseInt(quad.object.value, 10);
                 break;
-              case VOID_CLASSES:
+              case ActorRdfMetadataExtractVoIDDescription.VOID_CLASSES:
                 voidDescription.classes = Number.parseInt(quad.object.value, 10);
                 break;
-              case VOID_CPARTITION:
+              case ActorRdfMetadataExtractVoIDDescription.VOID_CPARTITION:
                 if (quad.object.value in data) {
                   let partitionClass: string | undefined;
                   let partitionEntities: number | undefined;
                   for (const pq of data[quad.object.value]) {
-                    if (pq.predicate.value === VOID_CLASS && pq.object.termType === 'NamedNode') {
+                    if (
+                      pq.predicate.value === ActorRdfMetadataExtractVoIDDescription.VOID_CLASS &&
+                      pq.object.termType === 'NamedNode'
+                    ) {
                       partitionClass = pq.object.value;
                     } else if (
-                      pq.predicate.value === VOID_ENTITIES &&
+                      pq.predicate.value === ActorRdfMetadataExtractVoIDDescription.VOID_ENTITIES &&
                       pq.object.termType === 'Literal' &&
-                      pq.object.datatype.value === XSD_INTEGER
+                      pq.object.datatype.value === ActorRdfMetadataExtractVoIDDescription.XSD_INTEGER
                     ) {
                       partitionEntities = Number.parseInt(pq.object.value, 10);
                     }
@@ -160,24 +163,30 @@ export class ActorRdfMetadataExtractVoIDDescription extends ActorRdfMetadataExtr
                   }
                 }
                 break;
-              case VOID_PPARTITION:
+              case ActorRdfMetadataExtractVoIDDescription.VOID_PPARTITION:
                 if (quad.object.value in data) {
                   let partitionProperty: string | undefined;
                   let partitionTriples: number | undefined;
                   let partitionDistinctSubjects: number | undefined;
                   let partitionDistinctObjects: number | undefined;
                   for (const pq of data[quad.object.value]) {
-                    if (pq.object.termType === 'NamedNode' && pq.predicate.value === VOID_PROPERTY) {
+                    if (
+                      pq.object.termType === 'NamedNode' &&
+                      pq.predicate.value === ActorRdfMetadataExtractVoIDDescription.VOID_PROPERTY
+                    ) {
                       partitionProperty = pq.object.value;
-                    } else if (pq.object.termType === 'Literal' && pq.object.datatype.value === XSD_INTEGER) {
+                    } else if (
+                      pq.object.termType === 'Literal' &&
+                      pq.object.datatype.value === ActorRdfMetadataExtractVoIDDescription.XSD_INTEGER
+                    ) {
                       switch (pq.predicate.value) {
-                        case VOID_TRIPLES:
+                        case ActorRdfMetadataExtractVoIDDescription.VOID_TRIPLES:
                           partitionTriples = Number.parseInt(pq.object.value, 10);
                           break;
-                        case VOID_DSUBJECTS:
+                        case ActorRdfMetadataExtractVoIDDescription.VOID_DSUBJECTS:
                           partitionDistinctSubjects = Number.parseInt(pq.object.value, 10);
                           break;
-                        case VOID_DOBJECTS:
+                        case ActorRdfMetadataExtractVoIDDescription.VOID_DOBJECTS:
                           partitionDistinctObjects = Number.parseInt(pq.object.value, 10);
                           break;
                       }
