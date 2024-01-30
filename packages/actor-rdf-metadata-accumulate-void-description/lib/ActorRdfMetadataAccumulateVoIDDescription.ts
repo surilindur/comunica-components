@@ -8,7 +8,7 @@ import type {
 import { getContextSources, getContextSourceUrl } from '@comunica/bus-rdf-resolve-quad-pattern';
 import { KeysQueryOperation } from '@comunica/context-entries';
 import type { IActorTest } from '@comunica/core';
-import type { QueryResultCardinality, IActionContext } from '@comunica/types';
+import type { QueryResultCardinality, IActionContext, MetadataBindings } from '@comunica/types';
 import type { Algebra } from 'sparqlalgebrajs';
 import type { TriplePatternCardinalityEstimator } from './TriplePatternCardinalityEstimator';
 
@@ -41,7 +41,7 @@ export class ActorRdfMetadataAccumulateVoIDDescription extends ActorRdfMetadataA
         ...action.appendingMetadata.voidDescriptions ? action.appendingMetadata.voidDescriptions : [],
       ];
 
-      const sources = this.getContextSourceUrls(action.context);
+      const sources = this.estimateCurrentSourceUrls(action.context);
 
       if (sources) {
         let bestEstimate = 0;
@@ -74,20 +74,26 @@ export class ActorRdfMetadataAccumulateVoIDDescription extends ActorRdfMetadataA
     return { metadata: {}};
   }
 
-  private getContextSourceUrls(context: IActionContext): Set<string> | undefined {
+  private estimateCurrentSourceUrls(context: IActionContext): Set<string> | undefined {
     const contextSources = getContextSources(context);
-    const sources: Set<string> = new Set();
-
     if (contextSources) {
-      for (const source of contextSources) {
-        const url = getContextSourceUrl(source);
+      const sources = new Set<string>();
+      for (const url of contextSources.map(src => getContextSourceUrl(src))) {
         if (url) {
           sources.add(url);
         }
       }
+      if (sources.size > 0) {
+        return sources;
+      }
     }
-
-    return sources.size > 0 ? sources : undefined;
+    const leftJoinMetadata = context.get<MetadataBindings>(KeysQueryOperation.joinLeftMetadata);
+    if (leftJoinMetadata && 'traverse' in leftJoinMetadata) {
+      const traverse = <{ url: string }[]>leftJoinMetadata.traverse;
+      if (traverse.length > 0) {
+        return new Set(traverse.map(trv => trv.url));
+      }
+    }
   }
 
   private getDescriptionWithLongestMatch(uri: string, descriptions: IVoIDDescription[]): IVoIDDescription | undefined {
