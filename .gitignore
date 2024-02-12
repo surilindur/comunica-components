@@ -1,17 +1,10 @@
+.yarn
 node_modules
 components
-.yarn
-docs
+testing
 
 *.js
 *.js.map
 *.d.ts
 
 componentsjs-error-state.json
-
-test*
-
-catalogue*
-client*
-server*
-queries*
