@@ -21,7 +21,12 @@
     "@comunica/actor-init-query": "^2.0.0",
     "@comunica/actor-rdf-join-inner-multi-adaptive-heuristics": "^0.0.0",
     "@comunica/actor-rdf-metadata-accumulate-void-description": "^0.0.0",
+    "@comunica/actor-rdf-metadata-extract-membership-filter": "^0.0.0",
     "@comunica/actor-rdf-metadata-extract-void-description": "^0.0.0",
+    "@comunica/actor-rdf-parse-membership-filter-bloom": "^0.0.0",
+    "@comunica/actor-rdf-parse-membership-filter-gcs": "^0.0.0",
+    "@comunica/actor-rdf-resolve-hypermedia-links-queue-wrapper-membership-filter": "^0.0.0",
+    "@comunica/bus-rdf-parse-membership-filter": "^0.0.0",
     "@comunica/config-query-sparql-components": "^0.0.0",
     "@comunica/query-sparql-link-traversal-solid": "^0.2.0",
     "@comunica/runner-cli": "^2.0.0"
