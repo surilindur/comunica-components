@@ -39,7 +39,7 @@ export class ActorRdfResolveHypermediaLinksQueueWrapperMembershipFilter extends 
     if (action.context.get(KEY_CONTEXT_WRAPPED)) {
       throw new Error(`${this.name} can only wrap a link queue once`);
     }
-    if (action.context.has(KeyMembershipFilterStorage)) {
+    if (!action.context.has(KeyMembershipFilterStorage)) {
       throw new Error(`${this.name} requires ${KeyMembershipFilterStorage.name} in context`);
     }
     if (this.members.size === 0) {
