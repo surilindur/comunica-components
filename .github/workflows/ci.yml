@@ -18,8 +18,9 @@ jobs:
         os:
           - ubuntu-latest
         node-version:
-          - 18.x
-          - 20.x
+          - lts/-2
+          - lts/-1
+          - lts/*
           - latest
     steps:
       - uses: actions/setup-node@v4
@@ -40,7 +41,7 @@ jobs:
     steps:
       - uses: actions/setup-node@v4
         with:
-          node-version: latest
+          node-version: lts/*
       - run: corepack enable
       - uses: actions/checkout@v4
       - uses: actions/cache@v4
