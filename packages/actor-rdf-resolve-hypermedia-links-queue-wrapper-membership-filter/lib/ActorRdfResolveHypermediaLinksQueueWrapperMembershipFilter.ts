@@ -8,7 +8,7 @@ import {
 import { KeysInitQuery } from '@comunica/context-entries';
 import { ActionContextKey, type IActorArgs, type IActorTest } from '@comunica/core';
 import type * as RDF from '@rdfjs/types';
-import { Util, type Algebra } from 'sparqlalgebrajs';
+import { Util } from 'sparqlalgebrajs';
 import { LinkQueueMembershipFilter } from './LinkQueueMembershipFilter';
 
 /**
@@ -58,45 +58,48 @@ export class ActorRdfResolveHypermediaLinksQueueWrapperMembershipFilter extends 
         linkQueue,
         queryTerms,
         filterStorage: membershipFilterStorage,
-        members: this.members,
         ignorePatterns: this.ignorePatterns,
       }),
     };
   }
 
-  protected extractQueryTermsFromContext(action: IActionRdfResolveHypermediaLinksQueue): Set<RDF.Term> {
-    const queryPatterns: Algebra.Pattern[] = [];
-    const queryTerms = new Set<RDF.Term>();
+  protected extractQueryTermsFromContext(action: IActionRdfResolveHypermediaLinksQueue): Map<string, RDF.Term[]> {
+    const terms: Map<string, RDF.Term[]> = new Map();
 
+    const registerNode = (member: string, term: RDF.Term): void => {
+      if (this.members.has(member)) {
+        let members = terms.get(member);
+        if (!members) {
+          members = [];
+          terms.set(member, members);
+        }
+        if (!members.some(mem => mem.equals(term))) {
+          members.push(term);
+        }
+      }
+    };
+
+    // TODO: Check if there are any other elements in the parsed query that should be extracted
     Util.recurseOperation(action.context.getSafe(KeysInitQuery.query), {
       pattern(pattern) {
-        queryPatterns.push(pattern);
-        return true;
+        if (pattern.subject.termType === 'NamedNode') {
+          registerNode(ActorRdfResolveHypermediaLinksQueueWrapperMembershipFilter.RDF_SUBJECT, pattern.subject);
+        }
+        if (pattern.predicate.termType === 'NamedNode') {
+          registerNode(ActorRdfResolveHypermediaLinksQueueWrapperMembershipFilter.RDF_PREDICATE, pattern.predicate);
+        }
+        if (pattern.object.termType === 'NamedNode') {
+          registerNode(ActorRdfResolveHypermediaLinksQueueWrapperMembershipFilter.RDF_OBJECT, pattern.object);
+        }
+        return false;
+      },
+      link(link) {
+        registerNode(ActorRdfResolveHypermediaLinksQueueWrapperMembershipFilter.RDF_PREDICATE, link.iri);
+        return false;
       },
     });
 
-    for (const pattern of queryPatterns) {
-      if (
-        pattern.subject.termType === 'NamedNode' &&
-        this.members.has(ActorRdfResolveHypermediaLinksQueueWrapperMembershipFilter.RDF_SUBJECT)
-      ) {
-        queryTerms.add(pattern.subject);
-      }
-      if (
-        pattern.predicate.termType === 'NamedNode' &&
-        this.members.has(ActorRdfResolveHypermediaLinksQueueWrapperMembershipFilter.RDF_SUBJECT)
-      ) {
-        queryTerms.add(pattern.predicate);
-      }
-      if (
-        pattern.object.termType === 'NamedNode' &&
-        this.members.has(ActorRdfResolveHypermediaLinksQueueWrapperMembershipFilter.RDF_OBJECT)
-      ) {
-        queryTerms.add(pattern.object);
-      }
-    }
-
-    return queryTerms;
+    return terms;
   }
 }
 
@@ -111,7 +114,7 @@ export interface IActorRdfResolveHypermediaLinksQueueWrapperMembershipFilterArgs
    */
   ignorePatterns?: string[];
   /**
-   * The exact set of triple members a filter needs to cover to be used for pruning of links.
+   * The link queue filter will only consider filters for these triple members.
    */
   members: string[];
 }

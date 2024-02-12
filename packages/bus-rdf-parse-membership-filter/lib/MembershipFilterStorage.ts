@@ -2,7 +2,7 @@ import { ActionContextKey } from '@comunica/core';
 import type { IMembershipFilter } from './MembershipFilter';
 
 export interface IMembershipFilterStorage {
-  get: (uri: string, members?: string[]) => IMembershipFilter | undefined;
+  get: (uri: string, member: string) => IMembershipFilter | undefined;
   add: (uriPattern: RegExp, filter: IMembershipFilter) => void;
 }
 
@@ -13,9 +13,9 @@ export class MembershipFilterStorage implements IMembershipFilterStorage {
     this.filters = new Map();
   }
 
-  public get(uri: string, members?: string[]): IMembershipFilter | undefined {
+  public get(uri: string, member?: string): IMembershipFilter | undefined {
     for (const [ exp, filter ] of this.filters) {
-      if (exp.test(uri) && (!members || filter.members.every(mem => members.includes(mem)))) {
+      if (exp.test(uri) && (!member || filter.members.every(mem => member === mem))) {
         return filter;
       }
     }

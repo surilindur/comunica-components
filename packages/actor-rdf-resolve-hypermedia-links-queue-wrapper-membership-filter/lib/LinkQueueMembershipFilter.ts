@@ -7,17 +7,16 @@ import type * as RDF from '@rdfjs/types';
  * A link queue that filters out links based on known membership filters.
  */
 export class LinkQueueMembershipFilter extends LinkQueueWrapper {
-  private readonly queryTerms: RDF.Term[];
+  private readonly queryTerms: Map<string, RDF.Term[]>;
   private readonly filterStorage: IMembershipFilterStorage;
   private readonly ignorePatterns: RegExp[] | undefined;
-  private readonly members: string[];
 
   public constructor(args: ILinkQueueMembershipFilterArgs) {
     super(args.linkQueue);
     this.filterStorage = args.filterStorage;
     this.ignorePatterns = args.ignorePatterns;
-    this.queryTerms = [ ...args.queryTerms.values() ];
-    this.members = [ ...args.members.values() ];
+    this.queryTerms = args.queryTerms;
+    // Console.log(this.queryTerms);
   }
 
   /**
@@ -26,11 +25,24 @@ export class LinkQueueMembershipFilter extends LinkQueueWrapper {
    * @returns Whether the link should be accepted
    */
   private acceptable(link: ILink): boolean {
-    if (!this.ignorePatterns?.some(pattern => pattern.test(link.url))) {
-      const filter = this.filterStorage.get(link.url, this.members);
-      return !filter || this.queryTerms.some(term => filter.test(term));
+    if (this.ignorePatterns?.some(pattern => pattern.test(link.url))) {
+      return true;
     }
-    return true;
+    for (const [ member, terms ] of this.queryTerms) {
+      const filter = this.filterStorage.get(link.url, member);
+      if (!filter) {
+        // Console.log(`ACCEPT: <${link.url}> has no filter for <${member}`);
+        return true;
+      }
+      for (const term of terms) {
+        if (filter.test(term)) {
+          // Console.log(`ACCEPT: <${link.url}> includes <${term.value}>`);
+          return true;
+        }
+      }
+    }
+    // Console.log(`REJECT: <${link.url}>`);
+    return false;
   }
 
   public pop(): ILink | undefined {
@@ -48,8 +60,7 @@ export class LinkQueueMembershipFilter extends LinkQueueWrapper {
 
 export interface ILinkQueueMembershipFilterArgs {
   linkQueue: ILinkQueue;
-  queryTerms: Set<RDF.Term>;
+  queryTerms: Map<string, RDF.Term[]>;
   filterStorage: IMembershipFilterStorage;
   ignorePatterns?: RegExp[];
-  members: Set<string>;
 }
