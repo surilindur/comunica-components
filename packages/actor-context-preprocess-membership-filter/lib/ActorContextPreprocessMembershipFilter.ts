@@ -12,13 +12,13 @@ export class ActorContextPreprocessMembershipFilter extends ActorContextPreproce
   }
 
   public async test(action: IAction): Promise<IActorTest> {
+    if (action.context.has(KeyMembershipFilterStorage)) {
+      throw new Error(`${this.name} should only add filter storage to context once`);
+    }
     return true;
   }
 
   public async run(action: IAction): Promise<IActorContextPreprocessOutput> {
-    if (!action.context.has(KeyMembershipFilterStorage)) {
-      return { ...action, context: action.context.set(KeyMembershipFilterStorage, new MembershipFilterStorage()) };
-    }
-    return action;
+    return { ...action, context: action.context.set(KeyMembershipFilterStorage, new MembershipFilterStorage()) };
   }
 }
