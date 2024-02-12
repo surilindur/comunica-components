@@ -8,6 +8,7 @@
     "module": "CommonJS",
     "sourceMap": true,
     "declaration": true,
+    "alwaysStrict": true,
     "allowJs": false,
     "forceConsistentCasingInFileNames": true,
     "strict": true,
@@ -15,9 +16,8 @@
     "strictPropertyInitialization": true
   },
   "include": [
-    "engines/*/lib/*.ts",
-    "engines/*/bin/*.ts",
-    "packages/*/lib/*.ts"
+    "engines/**/*.ts",
+    "packages/**/*.ts"
   ],
   "exclude": [
     "**/node_modules"
