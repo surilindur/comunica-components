@@ -21,7 +21,6 @@ Components for membership metadata handling:
 * [**Membership filter metadata extractor**](packages/actor-rdf-metadata-extract-membership-filter/), that parses membership filters from metadata streams and stores them back in the metadata.
 * [**Membership filter parse bus**](packages/bus-rdf-parse-membership-filter/), where membership filter parsers are listening.
 * [**Membership filter parser for Bloom filters**](packages/actor-rdf-parse-membership-filter-bloom/), that parses Bloom filters into membership filter objects.
-* [**Membership filter parser for Golomb Coded Sets**](packages/actor-rdf-parse-membership-filter-gcs/), that parses Golomb Coded Sets into membership filter objects.
 * [**Membership filter context preprocess actor**](packages/actor-context-preprocess-membership-filter/), that creates the metadata filter storage in quest context, used to hold the extracted filters. This is the result of the link queue not having access to RDF metadata streams, so the filters need to be stored in another query-specific location.
 * [**Membership filter-based link queue wrapper**](packages/actor-rdf-resolve-hypermedia-links-queue-wrapper-membership-filter/), that filters link queue output based on discovered membership filters.
 
