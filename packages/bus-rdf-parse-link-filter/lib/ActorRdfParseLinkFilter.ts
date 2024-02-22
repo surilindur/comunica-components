@@ -1,7 +1,7 @@
 import { Actor } from '@comunica/core';
 import type { IActorTest, IAction, IActorOutput, IActorArgs, Mediator } from '@comunica/core';
 import type * as RDF from '@rdfjs/types';
-import type { IMembershipFilter } from './MembershipFilter';
+import type { ILinkFilter } from './LinkFilter';
 
 /**
    * A base actor for listening to RDF parse events.
@@ -29,18 +29,13 @@ IActorTest, IActorRdfParseMembershipFilterOutput> {
    */
 export interface IActionRdfParseMembershipFilter extends IAction {
   /**
-   * The URIs identifying the types assigned to the filter that needs to be parsed.
-   */
-  types: string[];
-  /**
    * The data associated with the filter.
    */
   data: RDF.Quad[];
 }
 
 export interface IActorRdfParseMembershipFilterOutput extends IActorOutput {
-  uriPattern: RegExp;
-  filter: IMembershipFilter;
+  filter: ILinkFilter;
 }
 
 export type IActorRdfParseMembershipFilterArgs = IActorArgs<IActionRdfParseMembershipFilter,
