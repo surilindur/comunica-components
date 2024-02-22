@@ -82,9 +82,10 @@ export class ActorRdfParseLinkFilterBloom extends ActorRdfParseLinkFilter {
     const dataset = action.data.find(
       quad => quad.predicate.value === ActorRdfParseLinkFilterBloom.MEM_SOURCECOLLECTION,
     )!.object.value;
-    const property = action.data.find(
-      quad => quad.predicate.value === ActorRdfParseLinkFilterBloom.MEM_PROJECTEDPROPERTY,
-    )!.object.value;
+    const property = action.data.find(quad => (
+      quad.predicate.value === ActorRdfParseLinkFilterBloom.MEM_PROJECTEDPROPERTY ||
+      quad.predicate.value === ActorRdfParseLinkFilterBloom.MEM_PROJECTEDRESOURCE
+    ))!.object.value;
     const buffer = Buffer.from(action.data.find(
       quad => quad.predicate.value === ActorRdfParseLinkFilterBloom.MEM_BINARYREPRESENTATION,
     )!.object.value, 'base64');
