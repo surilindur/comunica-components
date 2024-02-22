@@ -4,9 +4,9 @@ import { KeyLinkFilters } from '@comunica/bus-rdf-parse-link-filter';
 import type { IActorTest, IAction } from '@comunica/core';
 
 /**
- * A comunica Source To Destination Context Preprocess Actor.
+ * A comunica Link Filter Context Preprocess Actor.
  */
-export class ActorContextPreprocessMembershipFilter extends ActorContextPreprocess {
+export class ActorContextPreprocessLinkFilter extends ActorContextPreprocess {
   public constructor(args: IActorContextPreprocessArgs) {
     super(args);
   }

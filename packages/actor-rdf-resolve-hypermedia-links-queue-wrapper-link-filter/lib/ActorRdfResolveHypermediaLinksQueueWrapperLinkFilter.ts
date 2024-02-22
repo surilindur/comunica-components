@@ -18,7 +18,7 @@ export class ActorRdfResolveHypermediaLinksQueueWrapperLinkFilter extends ActorR
   protected readonly mediatorRdfResolveHypermediaLinksQueue: MediatorRdfResolveHypermediaLinksQueue;
   protected readonly ignorePatterns: RegExp[] | undefined;
 
-  public constructor(args: IActorRdfResolveHypermediaLinksQueueWrapperMembershipFilterArgs) {
+  public constructor(args: IActorRdfResolveHypermediaLinksQueueWrapperLinkFilterArgs) {
     super(args);
     this.mediatorRdfResolveHypermediaLinksQueue = args.mediatorRdfResolveHypermediaLinksQueue;
     this.ignorePatterns = args.ignorePatterns?.map(pattern => new RegExp(pattern, 'u'));
@@ -62,7 +62,7 @@ export class ActorRdfResolveHypermediaLinksQueueWrapperLinkFilter extends ActorR
   }
 }
 
-export interface IActorRdfResolveHypermediaLinksQueueWrapperMembershipFilterArgs
+export interface IActorRdfResolveHypermediaLinksQueueWrapperLinkFilterArgs
   extends IActorArgs<IActionRdfResolveHypermediaLinksQueue, IActorTest, IActorRdfResolveHypermediaLinksQueueOutput> {
   /**
    * The hypermedia links queue mediator
