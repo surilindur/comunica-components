@@ -1,7 +1,7 @@
 {
-  "name": "@comunica/actor-context-preprocess-membership-filter",
+  "name": "@comunica/actor-context-preprocess-link-filter",
   "version": "0.0.0",
-  "description": "Comunica context preprocess actor for membership filters",
+  "description": "Comunica context preprocess actor for link filters",
   "main": "lib/index.js",
   "types": "lib/index",
   "repository": "https://github.com/surilindur/comunica-components",
@@ -11,6 +11,6 @@
   "lsd:module": true,
   "dependencies": {
     "@comunica/bus-context-preprocess": "^2.0.0",
-    "@comunica/bus-rdf-parse-membership-filter": "^0.0.0"
+    "@comunica/bus-rdf-parse-link-filter": "^0.0.0"
   }
 }

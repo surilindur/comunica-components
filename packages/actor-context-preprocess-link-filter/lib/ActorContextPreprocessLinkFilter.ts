@@ -1,6 +1,6 @@
 import type { IActorContextPreprocessOutput, IActorContextPreprocessArgs } from '@comunica/bus-context-preprocess';
 import { ActorContextPreprocess } from '@comunica/bus-context-preprocess';
-import { KeyMembershipFilterStorage, MembershipFilterStorage } from '@comunica/bus-rdf-parse-membership-filter';
+import { KeyLinkFilters } from '@comunica/bus-rdf-parse-link-filter';
 import type { IActorTest, IAction } from '@comunica/core';
 
 /**
@@ -12,13 +12,13 @@ export class ActorContextPreprocessMembershipFilter extends ActorContextPreproce
   }
 
   public async test(action: IAction): Promise<IActorTest> {
-    if (action.context.has(KeyMembershipFilterStorage)) {
+    if (action.context.has(KeyLinkFilters)) {
       throw new Error(`${this.name} should only add filter storage to context once`);
     }
     return true;
   }
 
   public async run(action: IAction): Promise<IActorContextPreprocessOutput> {
-    return { ...action, context: action.context.set(KeyMembershipFilterStorage, new MembershipFilterStorage()) };
+    return { ...action, context: action.context.set(KeyLinkFilters, []) };
   }
 }
