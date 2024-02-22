@@ -1,7 +1,7 @@
 {
-  "name": "@comunica/actor-rdf-parse-membership-filter-bloom",
+  "name": "@comunica/actor-rdf-parse-link-filter-bloom",
   "version": "0.0.0",
-  "description": "Comunica RDF membership filter parse actor for Bloom filters",
+  "description": "Comunica RDF link filter parse actor for Bloom filters",
   "main": "lib/index.js",
   "types": "lib/index",
   "repository": "https://github.com/surilindur/comunica-components",
