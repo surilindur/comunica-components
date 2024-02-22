@@ -14,14 +14,14 @@ import type * as RDF from '@rdfjs/types';
  */
 export class ActorRdfMetadataExtractLinkFilter extends ActorRdfMetadataExtract {
   protected readonly mediatorRdfParseLinkFilter: MediatorRdfParseLinkFilter;
-  protected readonly membershipFilterTypes: Set<string>;
+  protected readonly linkFilterTypes: Set<string>;
 
   public static readonly RDF_TYPE = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type';
 
   public constructor(args: IActorRdfMetadataExtractLinkFilterArgs) {
     super(args);
     this.mediatorRdfParseLinkFilter = args.mediatorRdfParseLinkFilter;
-    this.membershipFilterTypes = new Set(args.membershipFilterTypes);
+    this.linkFilterTypes = new Set(args.linkFilterTypes);
   }
 
   public async test(action: IActionRdfMetadataExtract): Promise<IActorTest> {
@@ -68,7 +68,7 @@ export class ActorRdfMetadataExtractLinkFilter extends ActorRdfMetadataExtract {
           } else if (
             quad.predicate.value === ActorRdfMetadataExtractLinkFilter.RDF_TYPE &&
             quad.object.termType === 'NamedNode' &&
-            this.membershipFilterTypes.has(quad.object.value)
+            this.linkFilterTypes.has(quad.object.value)
           ) {
             const data = quads.get(quad.subject.value) ?? [];
             data.push(quad);
@@ -106,7 +106,7 @@ export interface IActorRdfMetadataExtractLinkFilterArgs extends IActorRdfMetadat
   /**
    * RDF type IRIs of link filters for detection from metadata stream
    */
-  membershipFilterTypes: string[];
+  linkFilterTypes: string[];
   /**
    * Mediator on the link filter parse bus
    */

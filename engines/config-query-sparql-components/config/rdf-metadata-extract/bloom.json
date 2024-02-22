@@ -9,10 +9,10 @@
     {
       "@id": "urn:comunica:default:rdf-metadata-extract/actors#link-filter",
       "@type": "ActorRdfMetadataExtractLinkFilter",
-      "mediatorRdfParseMembershipFilter": {
+      "mediatorRdfParseLinkFilter": {
         "@id": "urn:comunica:default:rdf-parse-link-filter/mediators#parse"
       },
-      "membershipFilterTypes": [
+      "linkFilterTypes": [
         "http://semweb.mmlab.be/ns/membership#BloomFilter"
       ]
     }
