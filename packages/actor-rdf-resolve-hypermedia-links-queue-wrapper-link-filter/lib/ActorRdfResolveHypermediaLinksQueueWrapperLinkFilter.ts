@@ -25,7 +25,7 @@ export class ActorRdfResolveHypermediaLinksQueueWrapperLinkFilter extends ActorR
   }
 
   public async test(action: IActionRdfResolveHypermediaLinksQueue): Promise<IActorTest> {
-    if (action.context.get(KeyLinkFilters)) {
+    if (!action.context.get(KeyLinkFilters)) {
       throw new Error(`${this.name} requires link filters to be stored in the context`);
     }
     if (action.context.get(KEY_CONTEXT_WRAPPED)) {
@@ -43,7 +43,9 @@ export class ActorRdfResolveHypermediaLinksQueueWrapperLinkFilter extends ActorR
     const accept = (link: ILink): boolean => {
       if (!this.ignorePatterns?.some(pattern => pattern.test(link.url))) {
         const applicableFilters = filters.filter(filter => filter.test({ link, patterns }));
-        return applicableFilters.some(filter => filter.test({ link, patterns }));
+        if (applicableFilters.length > 0) {
+          return applicableFilters.some(filter => filter.test({ link, patterns }));
+        }
       }
       return true;
     };
