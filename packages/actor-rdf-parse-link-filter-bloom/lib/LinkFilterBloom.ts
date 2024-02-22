@@ -6,13 +6,13 @@ import type { Algebra } from 'sparqlalgebrajs';
 /**
  * An approximate membership filter that is backed by a Bloom filter.
  */
-export class MembershipFilterBloom implements ILinkFilter {
+export class LinkFilterBloom implements ILinkFilter {
   private readonly filter: Bloem;
   private readonly dataset: string;
   private readonly property?: string;
   private readonly resource?: string;
 
-  public constructor(args: IMembershipFilterBloomArgs) {
+  public constructor(args: ILinkFilterBloomArgs) {
     this.filter = new Bloem(args.hashBits, args.hashCount, args.buffer);
     this.dataset = args.dataset;
     if (!args.property && !args.resource) {
@@ -54,7 +54,7 @@ export class MembershipFilterBloom implements ILinkFilter {
   }
 }
 
-export interface IMembershipFilterBloomArgs {
+export interface ILinkFilterBloomArgs {
   dataset: string;
   property?: string;
   resource?: string;
