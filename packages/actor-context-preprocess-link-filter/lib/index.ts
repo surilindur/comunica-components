@@ -1,1 +1,1 @@
-export * from './ActorContextPreprocessMembershipFilter';
+export * from './ActorContextPreprocessLinkFilter';

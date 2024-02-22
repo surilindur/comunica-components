@@ -1,2 +1,2 @@
-export * from './ActorRdfParseMembershipFilterBloom';
-export * from './MembershipFilterBloom';
+export * from './ActorRdfParseLinkFilterBloom';
+export * from './LinkFilterBloom';
