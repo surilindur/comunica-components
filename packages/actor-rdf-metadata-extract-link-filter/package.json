@@ -1,7 +1,7 @@
 {
-  "name": "@comunica/actor-rdf-metadata-extract-membership-filter",
+  "name": "@comunica/actor-rdf-metadata-extract-link-filter",
   "version": "0.0.0",
-  "description": "Comunica metadata extract actor for membership filters",
+  "description": "Comunica metadata extract actor for link filters",
   "main": "lib/index.js",
   "types": "lib/index",
   "repository": "https://github.com/surilindur/comunica-components",
@@ -11,7 +11,7 @@
   "lsd:module": true,
   "dependencies": {
     "@comunica/bus-rdf-metadata-extract": "^2.0.0",
-    "@comunica/bus-rdf-parse-membership-filter": "^0.0.0",
+    "@comunica/bus-rdf-parse-link-filter": "^0.0.0",
     "@comunica/core": "^2.0.0"
   }
 }
