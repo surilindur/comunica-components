@@ -16,10 +16,12 @@ import { LinkQueueWrapperFilter } from './LinkQueueWrapperLinkFilter';
    */
 export class ActorRdfResolveHypermediaLinksQueueWrapperLinkFilter extends ActorRdfResolveHypermediaLinksQueue {
   protected readonly mediatorRdfResolveHypermediaLinksQueue: MediatorRdfResolveHypermediaLinksQueue;
+  protected readonly ignorePatterns: RegExp[] | undefined;
 
   public constructor(args: IActorRdfResolveHypermediaLinksQueueWrapperMembershipFilterArgs) {
     super(args);
     this.mediatorRdfResolveHypermediaLinksQueue = args.mediatorRdfResolveHypermediaLinksQueue;
+    this.ignorePatterns = args.ignorePatterns?.map(pattern => new RegExp(pattern, 'u'));
   }
 
   public async test(action: IActionRdfResolveHypermediaLinksQueue): Promise<IActorTest> {
@@ -35,15 +37,17 @@ export class ActorRdfResolveHypermediaLinksQueueWrapperLinkFilter extends ActorR
   public async run(action: IActionRdfResolveHypermediaLinksQueue): Promise<IActorRdfResolveHypermediaLinksQueueOutput> {
     const subContext = action.context.set(KEY_CONTEXT_WRAPPED, true);
     const { linkQueue } = await this.mediatorRdfResolveHypermediaLinksQueue.mediate({ ...action, context: subContext });
-    const queryOperation = action.context.getSafe<Algebra.Operation>(KeysInitQuery.query);
-    const queryPatterns = this.extractAlgebraPatternsFromQuery(queryOperation);
-    const linkFilters = action.context.getSafe<ILinkFilter[]>(KeyLinkFilters);
-    return {
-      linkQueue: new LinkQueueWrapperFilter(
-        linkQueue,
-        (link: ILink): boolean => linkFilters.some(filter => filter.test(link, queryPatterns)),
-      ),
+    const operation = action.context.getSafe<Algebra.Operation>(KeysInitQuery.query);
+    const patterns = this.extractAlgebraPatternsFromQuery(operation);
+    const filters = action.context.getSafe<ILinkFilter[]>(KeyLinkFilters);
+    const accept = (link: ILink): boolean => {
+      if (!this.ignorePatterns?.some(pattern => pattern.test(link.url))) {
+        const applicableFilters = filters.filter(filter => filter.test({ link, patterns }));
+        return applicableFilters.some(filter => filter.test({ link, patterns }));
+      }
+      return true;
     };
+    return { linkQueue: new LinkQueueWrapperFilter(linkQueue, accept) };
   }
 
   protected extractAlgebraPatternsFromQuery(operation: Algebra.Operation): Algebra.Pattern[] {
@@ -64,6 +68,10 @@ export interface IActorRdfResolveHypermediaLinksQueueWrapperMembershipFilterArgs
    * The hypermedia links queue mediator
    */
   mediatorRdfResolveHypermediaLinksQueue: MediatorRdfResolveHypermediaLinksQueue;
+  /**
+   * Regular expression used to ignore links when filtering.
+   */
+  ignorePatterns?: string[];
 }
 
 const KEY_CONTEXT_WRAPPED = new ActionContextKey<boolean>(

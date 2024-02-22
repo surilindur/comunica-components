@@ -16,7 +16,8 @@
         "@id": "urn:comunica:default:rdf-resolve-hypermedia-links-queue/mediators#main"
       },
       "ignorePatterns": [
-        "(public|private)TypeIndex$"
+        "publicTypeIndex$",
+        "privateTypeIndex$"
       ]
     }
   ]

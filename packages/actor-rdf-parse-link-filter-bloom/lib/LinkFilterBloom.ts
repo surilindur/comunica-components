@@ -1,7 +1,5 @@
-import type { ILinkFilter } from '@comunica/bus-rdf-parse-link-filter';
-import type { ILink } from '@comunica/bus-rdf-resolve-hypermedia-links';
+import type { ILinkFilter, ILinkFilterAction } from '@comunica/bus-rdf-parse-link-filter';
 import { Bloem } from 'bloem';
-import type { Algebra } from 'sparqlalgebrajs';
 
 /**
  * An approximate membership filter that is backed by a Bloom filter.
@@ -22,10 +20,14 @@ export class LinkFilterBloom implements ILinkFilter {
     this.resource = args.resource;
   }
 
-  public test(link: ILink, patterns: Algebra.Pattern[]): boolean {
+  public test(action: ILinkFilterAction): boolean {
+    return action.link.url.startsWith(this.dataset);
+  }
+
+  public run(action: ILinkFilterAction): boolean {
     let acceptLink = false;
-    if (link.url.startsWith(this.dataset)) {
-      for (const pattern of patterns) {
+    if (action.link.url.startsWith(this.dataset)) {
+      for (const pattern of action.patterns) {
         if (this.property) {
           acceptLink = pattern.predicate.termType === 'NamedNode' && pattern.predicate.value === this.property && (
             (pattern.subject.termType === 'NamedNode' && this.filter.has(Buffer.from(pattern.subject.value))) ||

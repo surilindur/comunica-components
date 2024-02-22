@@ -12,8 +12,7 @@
   "dependencies": {
     "@comunica/bus-rdf-parse-link-filter": "^0.0.0",
     "@comunica/bus-rdf-resolve-hypermedia-links": "^2.0.0",
-    "bloem": "^0.2.0",
-    "rdf-string": "^1.0.0"
+    "bloem": "^0.2.0"
   },
   "devDependencies": {
     "@types/bloem": "^0.2.0"
