@@ -13,12 +13,12 @@ import type { ILinkFilter } from './LinkFilter';
    *
    * @see IActionInit
    */
-export abstract class ActorRdfParseMembershipFilter extends Actor<IActionRdfParseMembershipFilter,
-IActorTest, IActorRdfParseMembershipFilterOutput> {
+export abstract class ActorRdfParseLinkFilter extends Actor<IActionRdfParseLinkFilter,
+IActorTest, IActorRdfParseLinkFilterOutput> {
   /**
    * @param args - @defaultNested {<default_bus> a <cc:components/Bus.jsonld#Bus>} bus
    */
-  public constructor(args: IActorRdfParseMembershipFilterArgs) {
+  public constructor(args: IActorRdfParseLinkFilterArgs) {
     super(args);
   }
 }
@@ -27,19 +27,19 @@ IActorTest, IActorRdfParseMembershipFilterOutput> {
    * The RDF parse input, which contains the input stream in the given media type.
    * One of the fields MUST be truthy.
    */
-export interface IActionRdfParseMembershipFilter extends IAction {
+export interface IActionRdfParseLinkFilter extends IAction {
   /**
    * The data associated with the filter.
    */
   data: RDF.Quad[];
 }
 
-export interface IActorRdfParseMembershipFilterOutput extends IActorOutput {
+export interface IActorRdfParseLinkFilterOutput extends IActorOutput {
   filter: ILinkFilter;
 }
 
-export type IActorRdfParseMembershipFilterArgs = IActorArgs<IActionRdfParseMembershipFilter,
-IActorTest, IActorRdfParseMembershipFilterOutput>;
+export type IActorRdfParseLinkFilterArgs = IActorArgs<IActionRdfParseLinkFilter,
+IActorTest, IActorRdfParseLinkFilterOutput>;
 
-export type MediatorRdfParseMembershipFilter = Mediator<ActorRdfParseMembershipFilter,
-IActionRdfParseMembershipFilter, IActorTest, IActorRdfParseMembershipFilterOutput>;
+export type MediatorRdfParseLinkFilter = Mediator<ActorRdfParseLinkFilter,
+IActionRdfParseLinkFilter, IActorTest, IActorRdfParseLinkFilterOutput>;
