@@ -1,14 +1,14 @@
 {
   "@context": [
     "https://linkedsoftwaredependencies.org/bundles/npm/@comunica/runner/^2.0.0/components/context.jsonld",
-    "https://linkedsoftwaredependencies.org/bundles/npm/@comunica/actor-rdf-resolve-hypermedia-links-queue-wrapper-membership-filter/^0.0.0/components/context.jsonld"
+    "https://linkedsoftwaredependencies.org/bundles/npm/@comunica/actor-rdf-resolve-hypermedia-links-queue-wrapper-link-filter/^0.0.0/components/context.jsonld"
   ],
   "@id": "urn:comunica:default:Runner",
   "@type": "Runner",
   "actors": [
     {
-      "@id": "urn:comunica:default:rdf-resolve-hypermedia-links-queue/actors#wrapper-membership-filter",
-      "@type": "ActorRdfResolveHypermediaLinksQueueWrapperMembershipFilter",
+      "@id": "urn:comunica:default:rdf-resolve-hypermedia-links-queue/actors#wrapper-link-filter",
+      "@type": "ActorRdfResolveHypermediaLinksQueueWrapperLinkFilter",
       "beforeActors": {
         "@id": "urn:comunica:default:rdf-resolve-hypermedia-links-queue/actors#fifo"
       },
@@ -16,12 +16,7 @@
         "@id": "urn:comunica:default:rdf-resolve-hypermedia-links-queue/mediators#main"
       },
       "ignorePatterns": [
-        "^(.*\\/(public|private)TypeIndex)$"
-      ],
-      "members": [
-        "http://www.w3.org/1999/02/22-rdf-syntax-ns#subject",
-        "http://www.w3.org/1999/02/22-rdf-syntax-ns#predicate",
-        "http://www.w3.org/1999/02/22-rdf-syntax-ns#object"
+        "(public|private)TypeIndex$"
       ]
     }
   ]
