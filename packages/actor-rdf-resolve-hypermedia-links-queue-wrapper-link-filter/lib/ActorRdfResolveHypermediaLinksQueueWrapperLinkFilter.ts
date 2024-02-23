@@ -41,13 +41,14 @@ export class ActorRdfResolveHypermediaLinksQueueWrapperLinkFilter extends ActorR
     const patterns = this.extractAlgebraPatternsFromQuery(operation);
     const filters = action.context.getSafe<ILinkFilter[]>(KeyLinkFilters);
     const accept = (link: ILink): boolean => {
+      let acceptLink = true;
       if (!this.ignorePatterns?.some(pattern => pattern.test(link.url))) {
         const applicableFilters = filters.filter(filter => filter.test({ link, patterns }));
-        if (applicableFilters.length > 0) {
-          return applicableFilters.some(filter => filter.test({ link, patterns }));
-        }
+        acceptLink = applicableFilters.length === 0 ||
+          applicableFilters.some(filter => filter.run({ link, patterns }));
       }
-      return true;
+      console.log(`${acceptLink ? 'Accept' : 'Reject'} <${link.url}>`);
+      return acceptLink;
     };
     return { linkQueue: new LinkQueueWrapperFilter(linkQueue, accept) };
   }

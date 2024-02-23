@@ -1,4 +1,5 @@
 import type { ILinkFilter, ILinkFilterAction } from '@comunica/bus-rdf-parse-link-filter';
+import type * as RDF from '@rdfjs/types';
 import { Bloem } from 'bloem';
 
 /**
@@ -25,34 +26,57 @@ export class LinkFilterBloom implements ILinkFilter {
   }
 
   public run(action: ILinkFilterAction): boolean {
-    let acceptLink = false;
-    if (action.link.url.startsWith(this.dataset)) {
-      for (const pattern of action.patterns) {
-        if (this.property) {
-          acceptLink = pattern.predicate.termType === 'NamedNode' && pattern.predicate.value === this.property && (
-            (pattern.subject.termType === 'NamedNode' && this.filter.has(Buffer.from(pattern.subject.value))) ||
-            (pattern.object.termType === 'NamedNode' && this.filter.has(Buffer.from(pattern.object.value)))
-          );
+    for (const pattern of action.patterns) {
+      if (this.property &&
+        pattern.predicate.termType === 'NamedNode' &&
+        pattern.predicate.value === this.property &&
+        (this.filterHasTerm(pattern.subject) || this.filterHasTerm(pattern.object))
+      ) {
+        /*
+        console.log(`Accept <${action.link.url}>`);
+        console.log(`\tFilter for <${this.dataset}>`);
+        console.log(`\tContains one of: ${pattern.subject.value}, ${pattern.object.value}`);
+        */
+        return true;
+      }
+      if (this.resource) {
+        if (pattern.subject.termType === 'NamedNode' &&
+          pattern.subject.value === this.resource &&
+          (this.filterHasTerm(pattern.predicate) || this.filterHasTerm(pattern.object))
+        ) {
+          /*
+          console.log(`Accept <${action.link.url}>`);
+          console.log(`\tFilter for <${this.dataset}>`);
+          console.log(`\tContains one of: ${pattern.predicate.value}, ${pattern.object.value}`);
+          */
+          return true;
         }
-        if (this.resource) {
-          acceptLink = (
-            pattern.subject.termType === 'NamedNode' && pattern.subject.value === this.resource && (
-              (pattern.predicate.termType === 'NamedNode' && this.filter.has(Buffer.from(pattern.predicate.value))) ||
-              (pattern.object.termType === 'NamedNode' && this.filter.has(Buffer.from(pattern.object.value)))
-            )
-          ) || (
-            pattern.object.termType === 'NamedNode' && pattern.object.value === this.resource && (
-              (pattern.predicate.termType === 'NamedNode' && this.filter.has(Buffer.from(pattern.predicate.value))) ||
-              (pattern.subject.termType === 'NamedNode' && this.filter.has(Buffer.from(pattern.subject.value)))
-            )
-          );
-        }
-        if (acceptLink) {
-          break;
+        if (pattern.object.termType === 'NamedNode' &&
+          pattern.object.value === this.resource &&
+          (this.filterHasTerm(pattern.predicate) || this.filterHasTerm(pattern.subject))
+        ) {
+          /*
+          console.log(`Accept <${action.link.url}>`);
+          console.log(`\tFilter for <${this.dataset}>`);
+          console.log(`\tContains one of: ${pattern.predicate.value}, ${pattern.subject.value}`);
+          */
+          return true;
         }
       }
     }
-    return acceptLink;
+    /*
+    console.log(`Reject <${action.link.url}>`);
+    */
+    return false;
+  }
+
+  /**
+   * Test whether the filter includes the term or cannot include it at all.
+   * @param term The RDF term to test for.
+   * @returns Whether the term is contained in the filter OR the term is of type that cannot be in it.
+   */
+  protected filterHasTerm(term: RDF.Term): boolean {
+    return term.termType === 'NamedNode' && this.filter.has(Buffer.from(term.value));
   }
 }
 
