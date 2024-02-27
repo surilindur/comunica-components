@@ -8,20 +8,27 @@ import {
 } from '@comunica/bus-rdf-resolve-hypermedia-links-queue';
 import { KeysInitQuery } from '@comunica/context-entries';
 import { ActionContextKey, type IActorArgs, type IActorTest } from '@comunica/core';
-import { type Algebra, Util } from 'sparqlalgebrajs';
+import { DataFactory } from 'rdf-data-factory';
+import { type Algebra, Util, Factory } from 'sparqlalgebrajs';
 import { LinkQueueWrapperFilter } from './LinkQueueWrapperLinkFilter';
 
+const AF = new Factory();
+const DF = new DataFactory();
+const VAR = DF.variable('__comunica:pp_var');
+
 /**
-   * A comunica Wrapper Limit Count RDF Resolve Hypermedia Links Queue Actor.
-   */
+  * A comunica Wrapper Limit Count RDF Resolve Hypermedia Links Queue Actor.
+  */
 export class ActorRdfResolveHypermediaLinksQueueWrapperLinkFilter extends ActorRdfResolveHypermediaLinksQueue {
   protected readonly mediatorRdfResolveHypermediaLinksQueue: MediatorRdfResolveHypermediaLinksQueue;
-  protected readonly ignorePatterns: RegExp[] | undefined;
+  protected readonly ignorePattern: RegExp | undefined;
+  protected readonly alwaysReject: RegExp | undefined;
 
   public constructor(args: IActorRdfResolveHypermediaLinksQueueWrapperLinkFilterArgs) {
     super(args);
     this.mediatorRdfResolveHypermediaLinksQueue = args.mediatorRdfResolveHypermediaLinksQueue;
-    this.ignorePatterns = args.ignorePatterns?.map(pattern => new RegExp(pattern, 'u'));
+    this.ignorePattern = args.ignorePattern ? new RegExp(args.ignorePattern, 'u') : undefined;
+    this.alwaysReject = args.alwaysReject ? new RegExp(args.alwaysReject, 'u') : undefined;
   }
 
   public async test(action: IActionRdfResolveHypermediaLinksQueue): Promise<IActorTest> {
@@ -38,26 +45,52 @@ export class ActorRdfResolveHypermediaLinksQueueWrapperLinkFilter extends ActorR
     const subContext = action.context.set(KEY_CONTEXT_WRAPPED, true);
     const { linkQueue } = await this.mediatorRdfResolveHypermediaLinksQueue.mediate({ ...action, context: subContext });
     const operation = action.context.getSafe<Algebra.Operation>(KeysInitQuery.query);
-    const patterns = this.extractAlgebraPatternsFromQuery(operation);
+    const patterns = ActorRdfResolveHypermediaLinksQueueWrapperLinkFilter.extractOperationPatterns(operation);
     const filters = action.context.getSafe<ILinkFilter[]>(KeyLinkFilters);
     const accept = (link: ILink): boolean => {
       let acceptLink = true;
-      if (!this.ignorePatterns?.some(pattern => pattern.test(link.url))) {
-        const applicableFilters = filters.filter(filter => filter.test({ link, patterns }));
-        acceptLink = applicableFilters.length === 0 ||
-          applicableFilters.some(filter => filter.run({ link, patterns }));
+      let acceptingFilter: ILinkFilter | undefined;
+      if (!this.ignorePattern?.test(link.url)) {
+        if (this.alwaysReject?.test(link.url)) {
+          acceptLink = false;
+        } else {
+          const applicableFilters = filters.filter(filter => filter.test({ link, patterns }));
+          acceptingFilter = applicableFilters.find(filter => filter.run({ link, patterns }));
+          acceptLink = applicableFilters.length === 0 || acceptingFilter !== undefined;
+        }
       }
-      console.log(`${acceptLink ? 'Accept' : 'Reject'} <${link.url}>`);
+      console.log(`${acceptLink ? 'Accept' : 'Reject'} <${link.url}>`, acceptingFilter);
       return acceptLink;
     };
     return { linkQueue: new LinkQueueWrapperFilter(linkQueue, accept) };
   }
 
-  protected extractAlgebraPatternsFromQuery(operation: Algebra.Operation): Algebra.Pattern[] {
+  /**
+   * Extracts patterns from the parsed SPARQL query.
+   * Adapted from a similar method in @comunica/actor-extract-links-quad-pattern-query
+   * @param operation The parsed SPARQL query
+   * @returns The list of triple patterns contained within the query
+   */
+  public static extractOperationPatterns(operation: Algebra.Operation): Algebra.Pattern[] {
     const patterns: Algebra.Pattern[] = [];
     Util.recurseOperation(operation, {
-      pattern(pattern) {
+      pattern(pattern: Algebra.Pattern) {
         patterns.push(pattern);
+        return false;
+      },
+      path(path: Algebra.Path) {
+        Util.recurseOperation(path, {
+          link(link: Algebra.Link) {
+            patterns.push(AF.createPattern(VAR, link.iri, VAR, path.graph));
+            return false;
+          },
+          nps(nps: Algebra.Nps) {
+            for (const iri of nps.iris) {
+              patterns.push(AF.createPattern(VAR, iri, VAR, path.graph));
+            }
+            return false;
+          },
+        });
         return false;
       },
     });
@@ -72,9 +105,13 @@ export interface IActorRdfResolveHypermediaLinksQueueWrapperLinkFilterArgs
    */
   mediatorRdfResolveHypermediaLinksQueue: MediatorRdfResolveHypermediaLinksQueue;
   /**
-   * Regular expression used to ignore links when filtering.
+   * Regular expressions used to ignore links when filtering.
    */
-  ignorePatterns?: string[];
+  ignorePattern?: string;
+  /**
+   * Regular expressions used to always reject links.
+   */
+  alwaysReject?: string;
 }
 
 const KEY_CONTEXT_WRAPPED = new ActionContextKey<boolean>(

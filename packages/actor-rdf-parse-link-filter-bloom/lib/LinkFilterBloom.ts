@@ -22,7 +22,12 @@ export class LinkFilterBloom implements ILinkFilter {
   }
 
   public test(action: ILinkFilterAction): boolean {
-    return action.link.url.startsWith(this.dataset);
+    return action.link.url.startsWith(this.dataset) && action.patterns.some(pattern =>
+      (this.property && pattern.predicate.termType === 'NamedNode' && pattern.predicate.value === this.property) ||
+      (this.resource && (
+        (pattern.subject.termType === 'NamedNode' && pattern.subject.value === this.resource) ||
+        (pattern.object.termType === 'NamedNode' && pattern.object.value === this.resource)
+      )));
   }
 
   public run(action: ILinkFilterAction): boolean {
@@ -76,7 +81,7 @@ export class LinkFilterBloom implements ILinkFilter {
    * @returns Whether the term is contained in the filter OR the term is of type that cannot be in it.
    */
   protected filterHasTerm(term: RDF.Term): boolean {
-    return term.termType === 'NamedNode' && this.filter.has(Buffer.from(term.value));
+    return term.termType === 'Variable' || (term.termType === 'NamedNode' && this.filter.has(Buffer.from(term.value)));
   }
 }
 

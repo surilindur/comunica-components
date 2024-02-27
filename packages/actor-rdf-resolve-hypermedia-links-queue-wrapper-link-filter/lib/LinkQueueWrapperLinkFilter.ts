@@ -22,7 +22,10 @@ export class LinkQueueWrapperFilter extends LinkQueueWrapper {
     return link;
   }
 
+  /*
   public push(link: ILink, parent: ILink): boolean {
-    return this.acceptable(link) ? super.push(link, parent) : false;
+    console.log(`Push: <${link.url}> parent <${parent.url}>`);
+    return super.push(link, parent);
   }
+  */
 }
