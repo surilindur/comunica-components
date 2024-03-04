@@ -73,17 +73,30 @@ export class ActorRdfParseLinkFilterBloom extends ActorRdfParseLinkFilter {
   }
 
   public async run(action: IActionRdfParseLinkFilter): Promise<IActorRdfParseLinkFilterOutput> {
+    const uri = action.data.find(quad =>
+      quad.subject.termType === 'NamedNode' &&
+      quad.predicate.value === ActorRdfParseLinkFilterBloom.RDF_TYPE &&
+      quad.object.value === ActorRdfParseLinkFilterBloom.MEM_BLOOMFILTER)!.subject.value;
     const hashBits = Number.parseInt(action.data.find(quad =>
       quad.predicate.value === ActorRdfParseLinkFilterBloom.MEM_BITSIZE)!.object.value, 10);
     const hashCount = Number.parseInt(action.data.find(quad =>
       quad.predicate.value === ActorRdfParseLinkFilterBloom.MEM_HASHSIZE)!.object.value, 10);
     const dataset = action.data.find(quad =>
       quad.predicate.value === ActorRdfParseLinkFilterBloom.MEM_SOURCECOLLECTION)!.object.value;
-    const property = action.data.find(quad =>
-      quad.predicate.value === ActorRdfParseLinkFilterBloom.MEM_PROJECTEDPROPERTY ||
-      quad.predicate.value === ActorRdfParseLinkFilterBloom.MEM_PROJECTEDRESOURCE)!.object.value;
+    const projectedProperty = action.data.find(quad =>
+      quad.predicate.value === ActorRdfParseLinkFilterBloom.MEM_PROJECTEDPROPERTY)?.object.value;
+    const projectedResource = action.data.find(quad =>
+      quad.predicate.value === ActorRdfParseLinkFilterBloom.MEM_PROJECTEDRESOURCE)?.object.value;
     const buffer = Buffer.from(action.data.find(quad =>
       quad.predicate.value === ActorRdfParseLinkFilterBloom.MEM_BINARYREPRESENTATION)!.object.value, 'base64');
-    return { filter: new LinkFilterBloom({ dataset, hashBits, hashCount, buffer, property }) };
+    return { filter: new LinkFilterBloom({
+      uri,
+      dataset,
+      hashBits,
+      hashCount,
+      buffer,
+      projectedProperty,
+      projectedResource,
+    }) };
   }
 }

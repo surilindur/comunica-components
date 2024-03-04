@@ -15,10 +15,8 @@
       "mediatorRdfResolveHypermediaLinksQueue": {
         "@id": "urn:comunica:default:rdf-resolve-hypermedia-links-queue/mediators#main"
       },
-      "ignorePatterns": [
-        "publicTypeIndex$",
-        "privateTypeIndex$"
-      ]
+      "ignorePattern": "(public|private)TypeIndex$",
+      "alwaysReject": "^https?:\/\/www.w3.org\/"
     }
   ]
 }

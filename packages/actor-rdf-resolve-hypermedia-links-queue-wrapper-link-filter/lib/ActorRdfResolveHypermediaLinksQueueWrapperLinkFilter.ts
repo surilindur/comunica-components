@@ -46,7 +46,7 @@ export class ActorRdfResolveHypermediaLinksQueueWrapperLinkFilter extends ActorR
     const { linkQueue } = await this.mediatorRdfResolveHypermediaLinksQueue.mediate({ ...action, context: subContext });
     const operation = action.context.getSafe<Algebra.Operation>(KeysInitQuery.query);
     const patterns = ActorRdfResolveHypermediaLinksQueueWrapperLinkFilter.extractOperationPatterns(operation);
-    const filters = action.context.getSafe<ILinkFilter[]>(KeyLinkFilters);
+    const filters = action.context.getSafe<Map<string, ILinkFilter>>(KeyLinkFilters);
     const accept = (link: ILink): boolean => {
       let acceptLink = true;
       let acceptingFilter: ILinkFilter | undefined;
@@ -54,12 +54,20 @@ export class ActorRdfResolveHypermediaLinksQueueWrapperLinkFilter extends ActorR
         if (this.alwaysReject?.test(link.url)) {
           acceptLink = false;
         } else {
-          const applicableFilters = filters.filter(filter => filter.test({ link, patterns }));
-          acceptingFilter = applicableFilters.find(filter => filter.run({ link, patterns }));
-          acceptLink = applicableFilters.length === 0 || acceptingFilter !== undefined;
+          let foundApplicableFilters = false;
+          for (const filter of filters.values()) {
+            if (link.url.startsWith(filter.dataset)) {
+              foundApplicableFilters = true;
+              if (filter.answers(patterns)) {
+                acceptingFilter = filter;
+                break;
+              }
+            }
+          }
+          acceptLink = !foundApplicableFilters || acceptingFilter !== undefined;
         }
       }
-      console.log(`${acceptLink ? 'Accept' : 'Reject'} <${link.url}>`, acceptingFilter);
+      // Debug: console.log(`${acceptLink ? 'Accept' : 'Reject'} <${link.url}> filter ${acceptingFilter?.uri}`);
       return acceptLink;
     };
     return { linkQueue: new LinkQueueWrapperFilter(linkQueue, accept) };

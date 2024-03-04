@@ -1,77 +1,50 @@
-import type { ILinkFilter, ILinkFilterAction } from '@comunica/bus-rdf-parse-link-filter';
+import { LinkFilter, type ILinkFilterArgs } from '@comunica/bus-rdf-parse-link-filter';
 import type * as RDF from '@rdfjs/types';
 import { Bloem } from 'bloem';
+import type { Algebra } from 'sparqlalgebrajs';
 
 /**
  * An approximate membership filter that is backed by a Bloom filter.
  */
-export class LinkFilterBloom implements ILinkFilter {
+export class LinkFilterBloom extends LinkFilter {
   private readonly filter: Bloem;
-  private readonly dataset: string;
-  private readonly property?: string;
-  private readonly resource?: string;
+  private readonly projectedProperty?: string;
+  private readonly projectedResource?: string;
 
   public constructor(args: ILinkFilterBloomArgs) {
+    super(args);
     this.filter = new Bloem(args.hashBits, args.hashCount, args.buffer);
-    this.dataset = args.dataset;
-    if (!args.property && !args.resource) {
+    this.projectedProperty = args.projectedProperty;
+    this.projectedResource = args.projectedResource;
+    if (!this.projectedProperty && !this.projectedResource) {
       throw new Error('Bloom link filter requires a property or resource to filter by');
     }
-    this.property = args.property;
-    this.resource = args.resource;
   }
 
-  public test(action: ILinkFilterAction): boolean {
-    return action.link.url.startsWith(this.dataset) && action.patterns.some(pattern =>
-      (this.property && pattern.predicate.termType === 'NamedNode' && pattern.predicate.value === this.property) ||
-      (this.resource && (
-        (pattern.subject.termType === 'NamedNode' && pattern.subject.value === this.resource) ||
-        (pattern.object.termType === 'NamedNode' && pattern.object.value === this.resource)
-      )));
-  }
-
-  public run(action: ILinkFilterAction): boolean {
-    for (const pattern of action.patterns) {
-      if (this.property &&
+  public answers(patterns: Algebra.Pattern[]): boolean {
+    for (const pattern of patterns) {
+      if (this.projectedProperty &&
         pattern.predicate.termType === 'NamedNode' &&
-        pattern.predicate.value === this.property &&
+        pattern.predicate.value === this.projectedProperty &&
         (this.filterHasTerm(pattern.subject) || this.filterHasTerm(pattern.object))
       ) {
-        /*
-        console.log(`Accept <${action.link.url}>`);
-        console.log(`\tFilter for <${this.dataset}>`);
-        console.log(`\tContains one of: ${pattern.subject.value}, ${pattern.object.value}`);
-        */
         return true;
       }
-      if (this.resource) {
+      if (this.projectedResource) {
         if (pattern.subject.termType === 'NamedNode' &&
-          pattern.subject.value === this.resource &&
+          pattern.subject.value === this.projectedResource &&
           (this.filterHasTerm(pattern.predicate) || this.filterHasTerm(pattern.object))
         ) {
-          /*
-          console.log(`Accept <${action.link.url}>`);
-          console.log(`\tFilter for <${this.dataset}>`);
-          console.log(`\tContains one of: ${pattern.predicate.value}, ${pattern.object.value}`);
-          */
           return true;
         }
         if (pattern.object.termType === 'NamedNode' &&
-          pattern.object.value === this.resource &&
+          pattern.object.value === this.projectedResource &&
           (this.filterHasTerm(pattern.predicate) || this.filterHasTerm(pattern.subject))
         ) {
-          /*
-          console.log(`Accept <${action.link.url}>`);
-          console.log(`\tFilter for <${this.dataset}>`);
-          console.log(`\tContains one of: ${pattern.predicate.value}, ${pattern.subject.value}`);
-          */
           return true;
         }
       }
     }
-    /*
-    console.log(`Reject <${action.link.url}>`);
-    */
     return false;
   }
 
@@ -81,15 +54,14 @@ export class LinkFilterBloom implements ILinkFilter {
    * @returns Whether the term is contained in the filter OR the term is of type that cannot be in it.
    */
   protected filterHasTerm(term: RDF.Term): boolean {
-    return term.termType === 'Variable' || (term.termType === 'NamedNode' && this.filter.has(Buffer.from(term.value)));
+    return term.termType !== 'NamedNode' || this.filter.has(Buffer.from(term.value));
   }
 }
 
-export interface ILinkFilterBloomArgs {
-  dataset: string;
-  property?: string;
-  resource?: string;
+export interface ILinkFilterBloomArgs extends ILinkFilterArgs {
+  buffer: Buffer;
   hashBits: number;
   hashCount: number;
-  buffer: Buffer;
+  projectedProperty?: string;
+  projectedResource?: string;
 }

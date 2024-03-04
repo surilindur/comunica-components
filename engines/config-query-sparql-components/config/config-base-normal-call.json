@@ -1,0 +1,10 @@
+{
+  "@context": [
+    "https://linkedsoftwaredependencies.org/bundles/npm/@comunica/config-query-sparql-link-traversal/^0.0.0/components/context.jsonld"
+  ],
+  "comment": "Non-adaptive configuration using cAll for link extraction",
+  "import": [
+    "ccqslt:config/config-solid-base.json",
+    "ccqslt:config/extract-links/actors/all.json"
+  ]
+}

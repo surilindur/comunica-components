@@ -32,12 +32,17 @@ export class ActorRdfMetadataExtractLinkFilter extends ActorRdfMetadataExtract {
   }
 
   public async run(action: IActionRdfMetadataExtract): Promise<IActorRdfMetadataExtractOutput> {
-    const filterData = await this.extractFilters(action.metadata);
+    const filterData = await this.collectFilterData(action.metadata);
     if (filterData.size > 0) {
-      const filters = action.context.getSafe<ILinkFilter[]>(KeyLinkFilters);
-      for (const data of filterData.values()) {
-        const parseResult = await this.mediatorRdfParseLinkFilter.mediate({ data, context: action.context });
-        filters.push(parseResult.filter);
+      const filters = action.context.getSafe<Map<string, ILinkFilter>>(KeyLinkFilters);
+      for (const [ filterUri, filterQuads ] of filterData) {
+        if (!filters.has(filterUri)) {
+          const parseResult = await this.mediatorRdfParseLinkFilter.mediate({
+            data: filterQuads,
+            context: action.context,
+          });
+          filters.set(parseResult.filter.uri, parseResult.filter);
+        }
       }
     }
     return { metadata: {}};
@@ -48,7 +53,7 @@ export class ActorRdfMetadataExtractLinkFilter extends ActorRdfMetadataExtract {
    * @param stream The RDF metadata stream to process
    * @returns The collected membership filter data
    */
-  protected async extractFilters(stream: RDF.Stream): Promise<Map<string, RDF.Quad[]>> {
+  protected async collectFilterData(stream: RDF.Stream): Promise<Map<string, RDF.Quad[]>> {
     return new Promise((resolve, reject) => {
       const filters = new Map<string, RDF.Quad[]>();
       const quads = new Map<string, RDF.Quad[]>();

@@ -19,6 +19,6 @@ export class ActorContextPreprocessLinkFilter extends ActorContextPreprocess {
   }
 
   public async run(action: IAction): Promise<IActorContextPreprocessOutput> {
-    return { ...action, context: action.context.set(KeyLinkFilters, []) };
+    return { ...action, context: action.context.set(KeyLinkFilters, new Map()) };
   }
 }
