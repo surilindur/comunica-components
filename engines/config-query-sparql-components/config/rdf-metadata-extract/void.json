@@ -11,8 +11,7 @@
       "@type": "ActorRdfMetadataExtractVoIDDescription",
       "mediatorDereferenceRdf": {
         "@id": "urn:comunica:default:dereference-rdf/mediators#main"
-      },
-      "datasetSubjectRegex": "^(https?:\\/\\/.*\\/)$"
+      }
     }
   ]
 }
