@@ -57,7 +57,6 @@ export class ActorRdfMetadataExtractVoIDDescription extends ActorRdfMetadataExtr
   public async run(action: IActionRdfMetadataExtract): Promise<IActorRdfMetadataExtractOutput> {
     const descriptions: IVoIDDescription[] = [];
     for (const description of await this.extractDescriptions(action.metadata)) {
-      console.log(description);
       descriptions.push(description);
     }
     return { metadata: descriptions.length > 0 ? { voidDescriptions: descriptions } : {}};
