@@ -12,6 +12,16 @@ This is a collection of experimental components for [Comunica](https://github.co
 created only for various experiments, not for actual use.
 If you wish to learn more about Comunica or actually use it, please refer to [its website](https://comunica.dev/).
 
+Simplified and updated base component replacements:
+
+* [**Universal fetch actor**](packages/actor-http-fetch/), that has been reduced to the bare minimum required for it to function both in browser and in Node.
+* [**Simplified initialisation actor**](packages/actor-init-query/), with improvements to the SPARQL endpoint behaviour.
+
+Components for better HTTP request process:
+
+* [**HTTP retry actor**](packages/actor-http-retry/), that handles request retries while taking into account the `Retry-After` headers from servers.
+* [**HTTP rate limit actor**](packages/actor-http-limit-rate/), that automatically adjusts the number of concurrent and new requests on a per-host basis.
+
 Components for membership metadata handling:
 
 * [**Membership filter metadata extractor**](packages/actor-rdf-metadata-extract-membership-filter/), that parses membership filters from metadata streams and stores them back in the metadata.
