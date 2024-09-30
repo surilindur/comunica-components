@@ -1,11 +1,5 @@
 <p align="center">
-  <a href="https://comunica.dev/">
-    <img alt="Comunica" src="https://comunica.dev/img/comunica_red.svg" width="200">
-  </a>
-</p>
-
-<p align="center">
-  <strong>Work-in-Progress Components for Comunica</strong>
+  <img src="./.github/assets/comunica.svg" width="500">
 </p>
 
 <p align="center">
@@ -14,7 +8,9 @@
   <a href="https://opensource.org/licenses/MIT"><img alt="License: MIT" src="https://img.shields.io/badge/License-MIT-yellow.svg"></a>
 </p>
 
-This is a monorepository that contains various work-in-progress components for [Comunica](https://github.com/comunica/comunica) and is not intended for actual use. If you wish to learn more about Comunica or actually use it, please refer to [its website](https://comunica.dev/). The following components reside here.
+This is a collection of experimental components for [Comunica](https://github.com/comunica/comunica),
+created only for various experiments, not for actual use.
+If you wish to learn more about Comunica or actually use it, please refer to [its website](https://comunica.dev/).
 
 Components for membership metadata handling:
 
@@ -51,7 +47,9 @@ There are no unit tests and nothing is guaranteed to function as one would expec
 
 ## Using Local Comunica
 
-This project can be set to use local [Comunica](https://github.com/comunica/comunica), [Comunica Solid](https://github.com/comunica/comunica-feature-solid) and [Comunica Link Traversal](https://github.com/comunica/comunica-feature-link-traversal):
+This project can be set to use local [Comunica](https://github.com/comunica/comunica),
+[Comunica Solid](https://github.com/comunica/comunica-feature-solid) and
+[Comunica Link Traversal](https://github.com/comunica/comunica-feature-link-traversal):
 
 ```
 .../comunica
@@ -78,8 +76,10 @@ Afterwards, all the projects should be set up using `yarn install`.
 
 ## Issues
 
-Please feel free to report any issues on the GitHub issue tracker, but do note that none of these components are intended for real use at this stage and are therefore not tested properly.
+Please feel free to report any issues on the GitHub issue tracker,
+but do note that none of these components are intended for real use.
 
 ## License
 
-This code is copyrighted by [Ghent University – imec](http://idlab.ugent.be/) and released under the [MIT license](http://opensource.org/licenses/MIT).
+This code is copyrighted by [Ghent University – imec](http://idlab.ugent.be/) and
+released under the [MIT license](http://opensource.org/licenses/MIT).

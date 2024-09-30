@@ -1,9 +1,8 @@
 {
   "name": "comunica-components",
-  "version": "0.0.0",
-  "description": "Various work-in-progress components for Comunica",
+  "description": "Experimental components for Comunica",
   "repository": "https://github.com/surilindur/comunica-components",
-  "packageManager": "yarn@4.1.1",
+  "packageManager": "yarn@4.5.0",
   "license": "MIT",
   "private": true,
   "workspaces": [
@@ -16,15 +15,16 @@
     "build": "yarn build:ts && yarn build:components && yarn build:bundles",
     "build:ts": "tsc",
     "build:components": "componentsjs-generator engines/* packages/*",
-    "build:bundles": "lerna run prepare"
+    "build:engines": "yarn workspaces foreach --all --filter 'engines/*' run prepare"
   },
   "devDependencies": {
     "@rdfjs/types": "*",
-    "@rubensworks/eslint-config": "^2.0.0",
+    "@rubensworks/eslint-config": "^3.0.0",
     "componentsjs-generator": "^3.0.0",
-    "eslint": "8.48.0",
-    "lerna": "^7.0.0",
-    "rdf-js": "^4.0.0",
+    "eslint": "8.0.0",
     "typescript": "^5.0.0"
+  },
+  "resolutions": {
+    "@rdfjs/types": "1.1.2"
   }
 }
