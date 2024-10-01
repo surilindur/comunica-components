@@ -8,6 +8,7 @@
   "lsd:module": true,
   "dependencies": {
     "@comunica/actor-rdf-join-inner-multi-adaptive-destroy": "^0.5.0",
+    "@comunica/bus-hash-bindings": "^3.0.0",
     "@comunica/bus-query-operation": "^3.0.0",
     "@comunica/bus-rdf-join": "^3.0.0",
     "@comunica/bus-rdf-join-entries-sort": "^3.0.0",

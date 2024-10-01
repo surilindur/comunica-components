@@ -22,7 +22,6 @@
     "./packages/*/lib/*.ts"
   ],
   "exclude": [
-    "**/node_modules",
-    "**/*.d.ts"
+    "**/node_modules"
   ]
 }

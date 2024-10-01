@@ -5,6 +5,7 @@
   "ignoreComponents": [
     "BindingsStreamAdaptiveHeuristics",
     "Buffer",
+    "IQueryEngine",
     "RegExp",
     "Map",
     "Set"
