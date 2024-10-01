@@ -1,30 +1,25 @@
 import type { IActionHttp, IActorHttpOutput, IActorHttpArgs } from '@comunica/bus-http';
 import { ActorHttp } from '@comunica/bus-http';
 import { KeysHttp } from '@comunica/context-entries';
-import type { TestResult } from '@comunica/core';
-import { passTest } from '@comunica/core';
 import type { IMediatorTypeTime } from '@comunica/mediatortype-time';
 
 // eslint-disable-next-line import/extensions
 import { version as actorVersion } from '../package.json';
 
-import { FetchInitPreprocessor } from './FetchInitPreprocessor';
-import type { IFetchInitPreprocessor } from './IFetchInitPreprocessor';
-
 type Fetch = (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
 
 export class ActorHttpFetch extends ActorHttp {
-  private readonly fetchInitPreprocessor: IFetchInitPreprocessor;
-
   private static readonly userAgent = ActorHttpFetch.createUserAgent('ActorHttpFetch', actorVersion);
 
   public constructor(args: IActorHttpFetchArgs) {
     super(args);
-    this.fetchInitPreprocessor = new FetchInitPreprocessor(args.agentOptions);
   }
 
-  public async test(_action: IActionHttp): Promise<TestResult<IMediatorTypeTime>> {
-    return passTest({ time: Number.POSITIVE_INFINITY });
+  public async test(action: IActionHttp): Promise<IMediatorTypeTime> {
+    if (!ActorHttpFetch.getInputUrl(action.input).protocol.startsWith('http')) {
+      throw new Error(`${this.name} can only handle HTTP protocol`);
+    }
+    return { time: Number.POSITIVE_INFINITY };
   }
 
   public async run(action: IActionHttp): Promise<IActorHttpOutput> {
@@ -46,22 +41,52 @@ export class ActorHttpFetch extends ActorHttp {
       init.credentials = 'include';
     }
 
+    // Browsers don't yet support passing ReadableStream as body to requests, see
+    // https://bugs.chromium.org/p/chromium/issues/detail?id=688906
+    // https://bugzilla.mozilla.org/show_bug.cgi?id=1387483
+    // As such, we convert those bodies to a plain string
+    // TODO: remove this once browser support ReadableStream in requests
+    if (ActorHttpFetch.isBrowser() && init.body && typeof init.body === 'object' && 'getReader' in init.body) {
+      const reader = init.body.getReader();
+      const chunks = [];
+
+      while (true) {
+        const readResult = await reader.read();
+        if (readResult.done) {
+          break;
+        }
+        chunks.push(readResult.value);
+      }
+
+      init.body = chunks.join('');
+    }
+
+    // Only enable keepalive functionality if we are not sending a body (some browsers seem to trip over this).
+    // The same applies to Node.js runtime, hence this common logic here.
+    init.keepalive = !init.body;
+
+    if (!ActorHttpFetch.isBrowser() && init.body) {
+      // The Fetch API requires specific options to be set when sending body streams:
+      // - 'keepalive' can not be true (handled above)
+      // - 'duplex' must be set to 'half'
+      (<any>init).duplex = 'half';
+    }
+
     const httpTimeout = action.context.get<number>(KeysHttp.httpTimeout);
     const httpBodyTimeout = action.context.get<boolean>(KeysHttp.httpBodyTimeout);
     const fetchFunction = action.context.get<Fetch>(KeysHttp.fetch) ?? fetch;
-    const requestInit = await this.fetchInitPreprocessor.handle(init);
 
     let timeoutCallback: () => void;
     let timeoutHandle: NodeJS.Timeout | undefined;
 
     if (httpTimeout) {
       const abortController = new AbortController();
-      requestInit.signal = abortController.signal;
+      init.signal = abortController.signal;
       timeoutCallback = () => abortController.abort(new Error(`Fetch timed out for ${ActorHttpFetch.getInputUrl(action.input).href} after ${httpTimeout} ms`));
       timeoutHandle = setTimeout(() => timeoutCallback(), httpTimeout);
     }
 
-    const response = await fetchFunction(action.input, requestInit);
+    const response = await fetchFunction(action.input, init);
 
     if (httpTimeout && (!httpBodyTimeout || !response.body)) {
       clearTimeout(timeoutHandle);
@@ -78,7 +103,7 @@ export class ActorHttpFetch extends ActorHttp {
   public prepareRequestHeaders(action: IActionHttp): Headers {
     const headers = new Headers(action.init?.headers);
 
-    if (ActorHttp.isBrowser()) {
+    if (ActorHttpFetch.isBrowser()) {
       // When running in a browser, the User-Agent header should never be set
       headers.delete('user-agent');
     } else if (!headers.has('user-agent')) {
@@ -108,7 +133,7 @@ export class ActorHttpFetch extends ActorHttp {
    * Within browsers, returns undefined, because the value should not be overridden due to potential CORS issues.
    */
   public static createUserAgent(actorName: string, actorVersion: string): string | undefined {
-    if (!ActorHttp.isBrowser()) {
+    if (!ActorHttpFetch.isBrowser()) {
       const versions = [
         `Comunica/${actorVersion.split('.')[0]}.0`,
         `${actorName}/${actorVersion}`,
@@ -154,11 +179,4 @@ export class ActorHttpFetch extends ActorHttp {
   }
 }
 
-export interface IActorHttpFetchArgs extends IActorHttpArgs {
-  /**
-   * The agent options for the HTTP agent
-   * @range {json}
-   * @default {{ "keepAlive": true, "maxSockets": 5 }}
-   */
-  agentOptions?: Record<string, any>;
-}
+export interface IActorHttpFetchArgs extends IActorHttpArgs {}

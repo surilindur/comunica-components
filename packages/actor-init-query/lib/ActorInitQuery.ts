@@ -11,12 +11,12 @@ import { CliArgsHandlerBase } from './cli/CliArgsHandlerBase';
 import { CliArgsHandlerQuery } from './cli/CliArgsHandlerQuery';
 import { QueryEngineBase } from './QueryEngineBase';
 
-// eslint-disable-next-line ts/no-require-imports,ts/no-var-requires
-const streamifyString = require('streamify-string');
+const streamifyString = <Function><unknown>require('streamify-string');
 
 /**
  * A comunica Query Init Actor.
  */
+// eslint-disable-next-line ts/naming-convention
 export class ActorInitQuery<QueryContext extends IQueryContextCommon = IQueryContextCommon> extends ActorInitQueryBase {
   public constructor(args: IActorInitQueryBaseArgs) {
     super(args);
@@ -40,6 +40,7 @@ export class ActorInitQuery<QueryContext extends IQueryContextCommon = IQueryCon
     // Populate yargs arguments object
     let argumentsBuilder = yargs([]);
     for (const cliArgsHandler of cliArgsHandlers) {
+      // eslint-disable-next-line ts/no-unsafe-assignment
       argumentsBuilder = cliArgsHandler.populateYargs(argumentsBuilder);
     }
 
@@ -49,6 +50,7 @@ export class ActorInitQuery<QueryContext extends IQueryContextCommon = IQueryCon
       args = await argumentsBuilder.parse(action.argv);
     } catch (error: unknown) {
       return {
+        // eslint-disable-next-line ts/no-unsafe-assignment
         stderr: streamifyString(`${await argumentsBuilder.getHelp()}\n\n${(<Error> error).message}\n`),
       };
     }
@@ -56,6 +58,7 @@ export class ActorInitQuery<QueryContext extends IQueryContextCommon = IQueryCon
     // Print supported MIME types
     if (args.listformats) {
       const mediaTypes: Record<string, number> = await queryEngine.getResultMediaTypes();
+      // eslint-disable-next-line ts/no-unsafe-assignment
       return { stdout: streamifyString(`${Object.keys(mediaTypes).join('\n')}\n`) };
     }
 
@@ -65,8 +68,10 @@ export class ActorInitQuery<QueryContext extends IQueryContextCommon = IQueryCon
     if (args.query) {
       query = <string> args.query;
     } else if (args.file) {
+      // eslint-disable-next-line ts/no-unsafe-argument
       query = readFileSync(args.file, { encoding: 'utf8' });
     } else if (args.sources.length > 0) {
+      // eslint-disable-next-line ts/no-unsafe-assignment
       query = args.sources.at(-1);
       args.sources.pop();
     }
@@ -78,7 +83,6 @@ export class ActorInitQuery<QueryContext extends IQueryContextCommon = IQueryCon
         await cliArgsHandler.handleArgs(args, context);
       }
     } catch (error: unknown) {
-      // eslint-disable-next-line ts/no-require-imports,ts/no-var-requires
       return { stderr: require('streamify-string')((<Error> error).message) };
     }
 

@@ -1,16 +1,16 @@
 {
   "name": "@comunica/actor-context-preprocess-link-filter",
-  "version": "0.0.0",
-  "description": "Comunica context preprocess actor for link filters",
+  "version": "3.0.0",
+  "private": true,
+  "license": "MIT",
   "main": "lib/index.js",
   "types": "lib/index",
-  "repository": "https://github.com/surilindur/comunica-components",
-  "author": "surilindur",
-  "license": "MIT",
-  "private": true,
   "lsd:module": true,
   "dependencies": {
-    "@comunica/bus-context-preprocess": "^2.0.0",
-    "@comunica/bus-rdf-parse-link-filter": "^0.0.0"
+    "@comunica/bus-context-preprocess": "^3.0.0",
+    "@comunica/bus-rdf-parse-link-filter": "^3.0.0"
+  },
+  "devDependencies": {
+    "@comunica/core": "^3.0.0"
   }
 }

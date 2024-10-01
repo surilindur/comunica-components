@@ -60,9 +60,8 @@ export class ActorRdfJoinInnerMultiAdaptiveHeuristics extends ActorRdfJoinInnerM
     let currentJoinOrder: IJoinEntryWithMetadata[] = await this.getSortedJoinEntries(action);
     let allowRestarts = true;
 
-    const entries = !this.useCardinality ?
-      action.entries :
-      action.entries.map(entry => {
+    const entries = this.useCardinality ?
+      action.entries.map((entry) => {
         const addMetadataInvalidationListener = (metadata: MetadataBindings): void => {
           const handleInvalidationEvent = async(): Promise<void> => {
             if (allowRestarts) {
@@ -78,14 +77,16 @@ export class ActorRdfJoinInnerMultiAdaptiveHeuristics extends ActorRdfJoinInnerM
             }
           };
           if (allowRestarts) {
+            // eslint-disable-next-line ts/no-misused-promises
             metadata.state.addInvalidateListener(() => setTimeout(handleInvalidationEvent));
           }
         };
-        entry.output.metadata().then(addMetadataInvalidationListener).catch(error => {
+        entry.output.metadata().then(addMetadataInvalidationListener).catch((error: string) => {
           throw new Error(error);
         });
         return entry;
-      });
+      }) :
+      action.entries;
 
     const mediateJoin = (): Promise<IQueryOperationResultBindings> => this.mediatorJoin.mediate({
       type: action.type,
@@ -116,6 +117,7 @@ export class ActorRdfJoinInnerMultiAdaptiveHeuristics extends ActorRdfJoinInnerM
     );
 
     // This will hopefully make sure that the original streams are destroyed
+    // eslint-disable-next-line unicorn/no-array-for-each
     bindingsStreamAdaptive.on('end', () => action.entries.forEach(je => je.output.bindingsStream.destroy()));
 
     return {
@@ -146,7 +148,7 @@ export class ActorRdfJoinInnerMultiAdaptiveHeuristics extends ActorRdfJoinInnerM
   }
 
   protected cloneEntries(entries: IJoinEntry[]): IJoinEntry[] {
-    return entries.map(entry => {
+    return entries.map((entry) => {
       const clonedBindingsStream = entry.output.bindingsStream.clone();
       return {
         operation: entry.operation,

@@ -4,7 +4,7 @@ import type {
   IActorRdfMetadataExtractOutput,
 } from '@comunica/bus-rdf-metadata-extract';
 import { ActorRdfMetadataExtract } from '@comunica/bus-rdf-metadata-extract';
-import { KeyLinkFilters } from '@comunica/bus-rdf-parse-link-filter';
+import { keyLinkFilters } from '@comunica/bus-rdf-parse-link-filter';
 import type { MediatorRdfParseLinkFilter, ILinkFilter } from '@comunica/bus-rdf-parse-link-filter';
 import type { IActorTest } from '@comunica/core';
 import type * as RDF from '@rdfjs/types';
@@ -16,7 +16,7 @@ export class ActorRdfMetadataExtractLinkFilter extends ActorRdfMetadataExtract {
   protected readonly mediatorRdfParseLinkFilter: MediatorRdfParseLinkFilter;
   protected readonly linkFilterTypes: Set<string>;
 
-  public static readonly RDF_TYPE = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type';
+  public static readonly rdfType = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type';
 
   public constructor(args: IActorRdfMetadataExtractLinkFilterArgs) {
     super(args);
@@ -25,7 +25,7 @@ export class ActorRdfMetadataExtractLinkFilter extends ActorRdfMetadataExtract {
   }
 
   public async test(action: IActionRdfMetadataExtract): Promise<IActorTest> {
-    if (!action.context.has(KeyLinkFilters)) {
+    if (!action.context.has(keyLinkFilters)) {
       throw new Error(`${this.name} can only extract link filters into a context storage`);
     }
     return true;
@@ -34,15 +34,13 @@ export class ActorRdfMetadataExtractLinkFilter extends ActorRdfMetadataExtract {
   public async run(action: IActionRdfMetadataExtract): Promise<IActorRdfMetadataExtractOutput> {
     const filterData = await this.collectFilterData(action.metadata);
     if (filterData.size > 0) {
-      const filters = action.context.getSafe<Map<string, ILinkFilter>>(KeyLinkFilters);
-      for (const [ filterUri, filterQuads ] of filterData) {
-        if (!filters.has(filterUri)) {
-          const parseResult = await this.mediatorRdfParseLinkFilter.mediate({
-            data: filterQuads,
-            context: action.context,
-          });
-          filters.set(parseResult.filter.uri, parseResult.filter);
-        }
+      for (const filterQuads of filterData.values()) {
+        const parseResult = await this.mediatorRdfParseLinkFilter.mediate({
+          data: filterQuads,
+          context: action.context,
+        });
+        const filters = action.context.getSafe<ILinkFilter[]>(keyLinkFilters);
+        filters.push(...parseResult.filters);
       }
     }
     return { metadata: {}};
@@ -71,7 +69,7 @@ export class ActorRdfMetadataExtractLinkFilter extends ActorRdfMetadataExtract {
           if (filters.has(quad.subject.value)) {
             filters.get(quad.subject.value)!.push(quad);
           } else if (
-            quad.predicate.value === ActorRdfMetadataExtractLinkFilter.RDF_TYPE &&
+            quad.predicate.value === ActorRdfMetadataExtractLinkFilter.rdfType &&
             quad.object.termType === 'NamedNode' &&
             this.linkFilterTypes.has(quad.object.value)
           ) {

@@ -11,20 +11,20 @@ import { LinkFilterBloom } from './LinkFilterBloom';
  * A comunica Bloom RDF Link Filter Actor.
  */
 export class ActorRdfParseLinkFilterBloom extends ActorRdfParseLinkFilter {
-  public static readonly RDF_TYPE = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type';
-  public static readonly XSD_INTEGER = 'http://www.w3.org/2001/XMLSchema#integer';
-  public static readonly XSD_BASE64 = 'http://www.w3.org/2001/XMLSchema#base64Binary';
+  public static readonly rdfType = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type';
+  public static readonly xsdInteger = 'http://www.w3.org/2001/XMLSchema#integer';
+  public static readonly xsdBase64 = 'http://www.w3.org/2001/XMLSchema#base64Binary';
 
-  public static readonly MEM_PREFIX = 'http://semweb.mmlab.be/ns/membership#';
-  public static readonly MEM_BLOOMFILTER = `${ActorRdfParseLinkFilterBloom.MEM_PREFIX}BloomFilter`;
-  public static readonly MEM_HASHFUNCTIONFNV = `${ActorRdfParseLinkFilterBloom.MEM_PREFIX}FowlerNollVo`;
+  public static readonly mem = 'http://semweb.mmlab.be/ns/membership#';
+  public static readonly memBloomFilter = `${ActorRdfParseLinkFilterBloom.mem}BloomFilter`;
+  public static readonly memFowlerNollVo = `${ActorRdfParseLinkFilterBloom.mem}FowlerNollVo`;
 
-  public static readonly MEM_SOURCECOLLECTION = `${ActorRdfParseLinkFilterBloom.MEM_PREFIX}sourceCollection`;
-  public static readonly MEM_BINARYREPRESENTATION = `${ActorRdfParseLinkFilterBloom.MEM_PREFIX}binaryRepresentation`;
-  public static readonly MEM_BITSIZE = `${ActorRdfParseLinkFilterBloom.MEM_PREFIX}bitSize`;
-  public static readonly MEM_HASHSIZE = `${ActorRdfParseLinkFilterBloom.MEM_PREFIX}hashSize`;
-  public static readonly MEM_PROJECTEDPROPERTY = `${ActorRdfParseLinkFilterBloom.MEM_PREFIX}projectedProperty`;
-  public static readonly MEM_PROJECTEDRESOURCE = `${ActorRdfParseLinkFilterBloom.MEM_PREFIX}projectedResource`;
+  public static readonly memSourceCollection = `${ActorRdfParseLinkFilterBloom.mem}sourceCollection`;
+  public static readonly memBinaryRepresentation = `${ActorRdfParseLinkFilterBloom.mem}binaryRepresentation`;
+  public static readonly memBitSize = `${ActorRdfParseLinkFilterBloom.mem}bitSize`;
+  public static readonly memHashSize = `${ActorRdfParseLinkFilterBloom.mem}hashSize`;
+  public static readonly memProjectedProperty = `${ActorRdfParseLinkFilterBloom.mem}projectedProperty`;
+  public static readonly memProjectedResource = `${ActorRdfParseLinkFilterBloom.mem}projectedResource`;
 
   public constructor(args: IActorRdfParseLinkFilterArgs) {
     super(args);
@@ -32,71 +32,66 @@ export class ActorRdfParseLinkFilterBloom extends ActorRdfParseLinkFilter {
 
   public async test(action: IActionRdfParseLinkFilter): Promise<IActorTest> {
     if (!action.data.some(quad =>
-      quad.predicate.value === ActorRdfParseLinkFilterBloom.RDF_TYPE &&
-      quad.object.value === ActorRdfParseLinkFilterBloom.MEM_BLOOMFILTER)) {
-      throw new Error(`${this.name} can only parse membership filters with type ${ActorRdfParseLinkFilterBloom.MEM_BLOOMFILTER}`);
+      quad.predicate.value === ActorRdfParseLinkFilterBloom.rdfType &&
+      quad.object.value === ActorRdfParseLinkFilterBloom.memBloomFilter)) {
+      throw new Error(`${this.name} can only parse membership filters with type ${ActorRdfParseLinkFilterBloom.memBloomFilter}`);
     }
     if (!action.data.some(quad =>
-      quad.predicate.value === ActorRdfParseLinkFilterBloom.RDF_TYPE &&
-      quad.object.value === ActorRdfParseLinkFilterBloom.MEM_HASHFUNCTIONFNV)) {
+      quad.predicate.value === ActorRdfParseLinkFilterBloom.rdfType &&
+      quad.object.value === ActorRdfParseLinkFilterBloom.memFowlerNollVo)) {
       throw new Error(`${this.name} can only parse membership filters using the FNV hash function`);
     }
     if (!action.data.some(quad =>
-      quad.predicate.value === ActorRdfParseLinkFilterBloom.MEM_PROJECTEDPROPERTY ||
-      quad.predicate.value === ActorRdfParseLinkFilterBloom.MEM_PROJECTEDRESOURCE)) {
+      quad.predicate.value === ActorRdfParseLinkFilterBloom.memProjectedProperty ||
+      quad.predicate.value === ActorRdfParseLinkFilterBloom.memProjectedResource)) {
       throw new Error(`${this.name} needs a projectedProperty or projectedResource`);
     }
     if (!action.data.some(quad =>
-      quad.predicate.value === ActorRdfParseLinkFilterBloom.MEM_BITSIZE &&
+      quad.predicate.value === ActorRdfParseLinkFilterBloom.memBitSize &&
       quad.object.termType === 'Literal' &&
-      quad.object.datatype.value === ActorRdfParseLinkFilterBloom.XSD_INTEGER)) {
+      quad.object.datatype.value === ActorRdfParseLinkFilterBloom.xsdInteger)) {
       throw new Error(`${this.name} needs a bitSize property as integer`);
     }
     if (!action.data.some(quad =>
-      quad.predicate.value === ActorRdfParseLinkFilterBloom.MEM_HASHSIZE &&
+      quad.predicate.value === ActorRdfParseLinkFilterBloom.memHashSize &&
       quad.object.termType === 'Literal' &&
-      quad.object.datatype.value === ActorRdfParseLinkFilterBloom.XSD_INTEGER)) {
+      quad.object.datatype.value === ActorRdfParseLinkFilterBloom.xsdInteger)) {
       throw new Error(`${this.name} needs a hashSize property as integer`);
     }
     if (!action.data.some(quad =>
-      quad.predicate.value === ActorRdfParseLinkFilterBloom.MEM_SOURCECOLLECTION &&
+      quad.predicate.value === ActorRdfParseLinkFilterBloom.memSourceCollection &&
       quad.object.termType === 'NamedNode')) {
       throw new Error(`${this.name} needs a sourceCollection`);
     }
     if (!action.data.some(quad =>
-      quad.predicate.value === ActorRdfParseLinkFilterBloom.MEM_BINARYREPRESENTATION &&
+      quad.predicate.value === ActorRdfParseLinkFilterBloom.memBinaryRepresentation &&
       quad.object.termType === 'Literal' &&
-      quad.object.datatype.value === ActorRdfParseLinkFilterBloom.XSD_BASE64)) {
+      quad.object.datatype.value === ActorRdfParseLinkFilterBloom.xsdBase64)) {
       throw new Error(`${this.name} needs a binaryRepresentation`);
     }
     return true;
   }
 
   public async run(action: IActionRdfParseLinkFilter): Promise<IActorRdfParseLinkFilterOutput> {
-    const uri = action.data.find(quad =>
-      quad.subject.termType === 'NamedNode' &&
-      quad.predicate.value === ActorRdfParseLinkFilterBloom.RDF_TYPE &&
-      quad.object.value === ActorRdfParseLinkFilterBloom.MEM_BLOOMFILTER)!.subject.value;
     const hashBits = Number.parseInt(action.data.find(quad =>
-      quad.predicate.value === ActorRdfParseLinkFilterBloom.MEM_BITSIZE)!.object.value, 10);
+      quad.predicate.value === ActorRdfParseLinkFilterBloom.memBitSize)!.object.value, 10);
     const hashCount = Number.parseInt(action.data.find(quad =>
-      quad.predicate.value === ActorRdfParseLinkFilterBloom.MEM_HASHSIZE)!.object.value, 10);
-    const dataset = action.data.find(quad =>
-      quad.predicate.value === ActorRdfParseLinkFilterBloom.MEM_SOURCECOLLECTION)!.object.value;
+      quad.predicate.value === ActorRdfParseLinkFilterBloom.memHashSize)!.object.value, 10);
+    const uriPrefix = action.data.find(quad =>
+      quad.predicate.value === ActorRdfParseLinkFilterBloom.memSourceCollection)!.object.value;
     const projectedProperty = action.data.find(quad =>
-      quad.predicate.value === ActorRdfParseLinkFilterBloom.MEM_PROJECTEDPROPERTY)?.object.value;
+      quad.predicate.value === ActorRdfParseLinkFilterBloom.memProjectedProperty)?.object.value;
     const projectedResource = action.data.find(quad =>
-      quad.predicate.value === ActorRdfParseLinkFilterBloom.MEM_PROJECTEDRESOURCE)?.object.value;
+      quad.predicate.value === ActorRdfParseLinkFilterBloom.memProjectedResource)?.object.value;
     const buffer = Buffer.from(action.data.find(quad =>
-      quad.predicate.value === ActorRdfParseLinkFilterBloom.MEM_BINARYREPRESENTATION)!.object.value, 'base64');
-    return { filter: new LinkFilterBloom({
-      uri,
-      dataset,
+      quad.predicate.value === ActorRdfParseLinkFilterBloom.memBinaryRepresentation)!.object.value, 'base64');
+    return { filters: [ new LinkFilterBloom({
+      uriRegex: new RegExp(`^${uriPrefix}`, 'u'),
       hashBits,
       hashCount,
       buffer,
       projectedProperty,
       projectedResource,
-    }) };
+    }) ]};
   }
 }

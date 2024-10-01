@@ -1,29 +1,18 @@
+import type { ILink } from '@comunica/bus-rdf-resolve-hypermedia-links-queue';
 import { ActionContextKey } from '@comunica/core';
-import type { Algebra } from 'sparqlalgebrajs';
-
-export interface ILinkFilter {
-  uri: string;
-  dataset: string;
-  answers: (patterns: Algebra.Pattern[]) => boolean;
-}
+import type { IActionContext } from '@comunica/types';
 
 export abstract class LinkFilter implements ILinkFilter {
-  public uri: string;
-  public dataset: string;
-
-  public constructor(args: ILinkFilterArgs) {
-    this.uri = args.uri;
-    this.dataset = args.dataset;
-  }
-
-  public abstract answers(patterns: Algebra.Pattern[]): boolean;
+  public abstract test(input: ILinkFilterTestInput): boolean | undefined;
 }
 
-export interface ILinkFilterArgs {
-  uri: string;
-  dataset: string;
+export interface ILinkFilter {
+  test: (input: ILinkFilterTestInput) => boolean | undefined;
 }
 
-export const KeyLinkFilters = new ActionContextKey<Map<string, ILinkFilter>>(
-  '@comunica/bus-rdf-parse:link-filters',
-);
+export interface ILinkFilterTestInput {
+  context: IActionContext;
+  link: ILink;
+}
+
+export const keyLinkFilters = new ActionContextKey<ILinkFilter[]>('@comunica/bus-rdf-parse:link-filters');

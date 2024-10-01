@@ -12,6 +12,7 @@ export class VoidCardinalityProvider implements IVoidCardinalityProvider {
   ): RDF.QueryResultCardinality {
     const value = this.getCardinalityRaw(subject, predicate, object, graph);
     if (Number.isNaN(value)) {
+      // eslint-disable-next-line no-console
       console.log([
         'CARDINALITY:',
         `\tquad: ( ${subject.value}, ${predicate.value}, ${object.value}, ${graph.value} )`,

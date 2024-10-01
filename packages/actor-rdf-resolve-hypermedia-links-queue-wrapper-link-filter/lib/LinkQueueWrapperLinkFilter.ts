@@ -1,17 +1,18 @@
 import type { ILinkQueue, ILink } from '@comunica/bus-rdf-resolve-hypermedia-links-queue';
 import { LinkQueueWrapper } from '@comunica/bus-rdf-resolve-hypermedia-links-queue';
 
-type AcceptanceCheck = (link: ILink) => boolean;
+type Acceptable = (link: ILink) => boolean;
 
 /**
- * A link queue that uses the link filter bus.
+ * Minimalistic link queue that uses an acceptable function to filter out link when popped.
+ * The queue will only do the acceptance check once per link, at the time of pop.
  */
 export class LinkQueueWrapperFilter extends LinkQueueWrapper {
-  protected readonly acceptable: AcceptanceCheck;
+  protected readonly acceptable: Acceptable;
 
-  public constructor(linkQueue: ILinkQueue, acceptanceCheck: AcceptanceCheck) {
+  public constructor(linkQueue: ILinkQueue, acceptable: Acceptable) {
     super(linkQueue);
-    this.acceptable = acceptanceCheck;
+    this.acceptable = acceptable;
   }
 
   public pop(): ILink | undefined {

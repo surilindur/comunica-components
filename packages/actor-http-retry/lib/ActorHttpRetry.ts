@@ -1,8 +1,7 @@
 import type { IActionHttp, IActorHttpOutput, IActorHttpArgs, MediatorHttp } from '@comunica/bus-http';
 import { ActorHttp } from '@comunica/bus-http';
 import { KeysHttp } from '@comunica/context-entries';
-import { ActionContextKey, passTest, failTest } from '@comunica/core';
-import type { TestResult } from '@comunica/core';
+import { ActionContextKey } from '@comunica/core';
 import type { IMediatorTypeTime } from '@comunica/mediatortype-time';
 
 export class ActorHttpRetry extends ActorHttp {
@@ -21,24 +20,24 @@ export class ActorHttpRetry extends ActorHttp {
     this.activeDelays = {};
   }
 
-  public async test(action: IActionHttp): Promise<TestResult<IMediatorTypeTime>> {
+  public async test(action: IActionHttp): Promise<IMediatorTypeTime> {
     if (action.context.has(ActorHttpRetry.keyWrapped)) {
-      return failTest(`${this.name} can only wrap a request once`);
+      throw new Error(`${this.name} can only wrap a request once`);
     }
     const retryCount = action.context.get<number>(KeysHttp.httpRetryCount);
     if (!retryCount || retryCount < 1) {
-      return failTest(`${this.name} requires a retry count greater than zero to function`);
+      throw new Error(`${this.name} requires a retry count greater than zero to function`);
     }
-    return passTest({ time: 0 });
+    return { time: 0 };
   }
 
   public async run(action: IActionHttp): Promise<IActorHttpOutput> {
-    const url = ActorHttp.getInputUrl(action.input);
+    const url = ActorHttpRetry.getInputUrl(action.input);
 
     // Attempt once + the number of retries specified by the user
     const attemptLimit = action.context.getSafe<number>(KeysHttp.httpRetryCount) + 1;
     const retryDelay = action.context.get<number>(KeysHttp.httpRetryDelay) ?? 0;
-    const retryStatusCodes = action.context.get<number[]>(KeysHttp.httpRetryStatusCodes);
+    const retryOnServerError = action.context.get<boolean>(KeysHttp.httpRetryOnServerError);
 
     // This is declared outside the loop so it can be used for the final error message
     for (let attempt = 1; attempt <= attemptLimit; attempt++) {
@@ -60,16 +59,6 @@ export class ActorHttpRetry extends ActorHttp {
 
       if (response.ok) {
         return response;
-      }
-
-      if (retryStatusCodes && retryStatusCodes.includes(response.status)) {
-        this.logDebug(action.context, 'Status code in force retry list, forcing retry', () => ({
-          url: url.href,
-          status: response.status,
-          statusText: response.statusText,
-          currentAttempt: `${attempt} / ${attemptLimit}`,
-        }));
-        continue;
       }
 
       if (response.status === 504) {
@@ -127,7 +116,7 @@ export class ActorHttpRetry extends ActorHttp {
         break;
       }
 
-      if (response.status >= 500 && response.status < 600) {
+      if (response.status >= 500 && response.status < 600 && !retryOnServerError) {
         // When a server-side error is encountered, it will likely not be fixable client-side,
         // and sending the same request again will most likely result in the same server-side failure.
         // Therefore, it makes sense not to retry on such errors at all.
@@ -167,6 +156,15 @@ export class ActorHttpRetry extends ActorHttp {
       return new Date(retryAfter);
     }
     throw new Error(`Invalid Retry-After header: ${retryAfter}`);
+  }
+
+  /**
+   * Extract the requested URL from the action input.
+   * @param {RequestInfo | URL} input The request input.
+   * @returns {URL} The extracted URL.
+   */
+  public static getInputUrl(input: RequestInfo | URL): URL {
+    return new URL(input instanceof Request ? input.url : input);
   }
 }
 

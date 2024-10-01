@@ -1,20 +1,17 @@
 {
   "name": "@comunica/actor-rdf-join-inner-multi-adaptive-heuristics",
-  "version": "0.0.0",
-  "description": "A Comunica RDF join-inner-multi actor",
+  "version": "3.0.0",
+  "private": true,
+  "license": "MIT",
   "main": "lib/index.js",
   "types": "lib/index",
-  "repository": "https://github.com/surilindur/comunica-components",
-  "author": "surilindur",
-  "license": "MIT",
-  "private": true,
   "lsd:module": true,
   "dependencies": {
-    "@comunica/actor-rdf-join-inner-multi-adaptive-destroy": "^0.2.0",
-    "@comunica/bus-query-operation": "^2.0.0",
-    "@comunica/bus-rdf-join": "^2.0.0",
-    "@comunica/bus-rdf-join-entries-sort": "^2.0.0",
-    "@comunica/context-entries-link-traversal": "^0.2.0",
+    "@comunica/actor-rdf-join-inner-multi-adaptive-destroy": "^0.5.0",
+    "@comunica/bus-query-operation": "^3.0.0",
+    "@comunica/bus-rdf-join": "^3.0.0",
+    "@comunica/bus-rdf-join-entries-sort": "^3.0.0",
+    "@comunica/context-entries-link-traversal": "^0.5.0",
     "asynciterator": "^3.0.0"
   }
 }

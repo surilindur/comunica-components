@@ -31,22 +31,22 @@ describe('ActorHttpRetry', () => {
   describe('test', () => {
     it('should reject without retry count in the context', async() => {
       const context = new ActionContext();
-      await expect(actor.test({ input, context })).resolves.toFailTest(`${actor.name} requires a retry count greater than zero to function`);
+      await expect(actor.test({ input, context })).rejects.toThrow(`${actor.name} requires a retry count greater than zero to function`);
     });
 
     it('should reject with retry count below 1 in the context', async() => {
       const context = new ActionContext({ [KeysHttp.httpRetryCount.name]: 0 });
-      await expect(actor.test({ input, context })).resolves.toFailTest(`${actor.name} requires a retry count greater than zero to function`);
+      await expect(actor.test({ input, context })).rejects.toThrow(`${actor.name} requires a retry count greater than zero to function`);
     });
 
     it('should reject when the action has already been wrapped by it once', async() => {
       const context = new ActionContext({ [(<any>ActorHttpRetry).keyWrapped.name]: true });
-      await expect(actor.test({ input, context })).resolves.toFailTest(`${actor.name} can only wrap a request once`);
+      await expect(actor.test({ input, context })).rejects.toThrow(`${actor.name} can only wrap a request once`);
     });
 
     it('should accept when retry count is provided in the context', async() => {
       const context = new ActionContext({ [KeysHttp.httpRetryCount.name]: 1 });
-      await expect(actor.test({ input, context })).resolves.toPassTest({ time: 0 });
+      await expect(actor.test({ input, context })).resolves.toStrictEqual({ time: 0 });
     });
   });
 
@@ -120,7 +120,7 @@ describe('ActorHttpRetry', () => {
       expect(mediatorHttp.mediate).not.toHaveBeenCalled();
       await expect(actor.run({
         input,
-        context: context.set(KeysHttp.httpRetryStatusCodes, [ 500 ]),
+        context: context.set(KeysHttp.httpRetryOnServerError, true),
       })).rejects.toThrow(`Request failed: ${input}`);
       expect(ActorHttpRetry.waitUntil).toHaveBeenCalledTimes(1);
       expect(ActorHttpRetry.parseRetryAfterHeader).not.toHaveBeenCalled();
@@ -131,7 +131,7 @@ describe('ActorHttpRetry', () => {
       const retryAfterDate = new Date(1_000);
       jest.spyOn(Date, 'now').mockReturnValue(0);
       jest.spyOn(ActorHttpRetry, 'parseRetryAfterHeader').mockReturnValue(retryAfterDate);
-      jest.spyOn(globalThis, 'setTimeout').mockImplementation(callback => <any>callback());
+      jest.spyOn(globalThis, 'setTimeout').mockImplementation(callback => <any><unknown>callback());
       const response: Response = <any> { ok: false, status: 429, headers: new Headers({ 'retry-after': '1000' }) };
       jest.spyOn(mediatorHttp, 'mediate').mockResolvedValue(response);
       expect(ActorHttpRetry.waitUntil).not.toHaveBeenCalled();
@@ -150,7 +150,7 @@ describe('ActorHttpRetry', () => {
       const retryAfterDate = new Date(200);
       jest.spyOn(Date, 'now').mockReturnValue(0);
       jest.spyOn(ActorHttpRetry, 'parseRetryAfterHeader').mockReturnValue(retryAfterDate);
-      jest.spyOn(globalThis, 'setTimeout').mockImplementation(callback => <any>callback());
+      jest.spyOn(globalThis, 'setTimeout').mockImplementation(callback => <any><unknown>callback());
       const response: Response = <any> { ok: false, status: 429, headers: new Headers() };
       jest.spyOn(mediatorHttp, 'mediate').mockResolvedValue(response);
       expect(ActorHttpRetry.waitUntil).not.toHaveBeenCalled();
@@ -177,7 +177,7 @@ describe('ActorHttpRetry', () => {
 
   describe('waitUntil', () => {
     beforeEach(() => {
-      jest.spyOn(globalThis, 'setTimeout').mockImplementation(callback => <any> callback());
+      jest.spyOn(globalThis, 'setTimeout').mockImplementation(callback => <any><unknown>callback());
     });
 
     it('should wait until the specified time', async() => {

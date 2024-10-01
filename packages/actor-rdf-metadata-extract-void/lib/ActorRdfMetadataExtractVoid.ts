@@ -25,6 +25,7 @@ export class ActorRdfMetadataExtractVoid extends ActorRdfMetadataExtract {
     this.inferUriSpace = args.inferUriSpace;
   }
 
+  // eslint-disable-next-line ts/naming-convention
   public async test(_action: IActionRdfMetadataExtract): Promise<IActorTest> {
     return true;
   }

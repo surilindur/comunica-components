@@ -49,7 +49,7 @@ describe('ActorRdfMetadataExtractVoid', () => {
     });
 
     it('should run without datasets present', async() => {
-      jest.spyOn(actor, 'getDatasets').mockResolvedValue([]);
+      jest.spyOn(actor, 'getDatasets').mockResolvedValue({});
       expect(storeStream).not.toHaveBeenCalled();
       await expect(actor.run(<any>{ metadata: 'metadata' })).resolves.toEqual({
         metadata: {},
@@ -170,7 +170,7 @@ describe('ActorRdfMetadataExtractVoid', () => {
       });
       jest.spyOn(actor, 'getPropertyPartitions').mockResolvedValue(<any>'pp');
       expect(actor.getPropertyPartitions).not.toHaveBeenCalled();
-      await expect(actor.getClassPartitions('ex:dataset', <any>'store')).resolves.toEqual({
+      await expect(actor.getClassPartitions(<any>'ex:dataset', <any>'store')).resolves.toEqual({
         'ex:class': {
           entities: 15,
           propertyPartitions: 'pp',
@@ -191,7 +191,7 @@ describe('ActorRdfMetadataExtractVoid', () => {
       });
       jest.spyOn(actor, 'getPropertyPartitions').mockResolvedValue(<any>'pp');
       expect(actor.getPropertyPartitions).not.toHaveBeenCalled();
-      await expect(actor.getClassPartitions('ex:dataset', <any>'store')).resolves.toEqual({
+      await expect(actor.getClassPartitions(<any>'ex:dataset', <any>'store')).resolves.toEqual({
         'ex:class': {
           entities: 0,
           propertyPartitions: 'pp',
@@ -215,7 +215,7 @@ describe('ActorRdfMetadataExtractVoid', () => {
           ]),
         ]),
       });
-      await expect(actor.getPropertyPartitions('ex:dataset', <any>'store')).resolves.toEqual({
+      await expect(actor.getPropertyPartitions(<any>'ex:dataset', <any>'store')).resolves.toEqual({
         'ex:property': {
           triples: 30,
           distinctSubjects: 10,
@@ -233,7 +233,7 @@ describe('ActorRdfMetadataExtractVoid', () => {
           ]),
         ]),
       });
-      await expect(actor.getPropertyPartitions('ex:dataset', <any>'store')).resolves.toEqual({
+      await expect(actor.getPropertyPartitions(<any>'ex:dataset', <any>'store')).resolves.toEqual({
         'ex:property': {
           triples: 0,
           distinctSubjects: 0,

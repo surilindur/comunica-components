@@ -24,6 +24,15 @@ export class ActorInitQueryBase extends ActorInit implements IActorInitQueryBase
   public readonly allowNoSources?: boolean;
   public readonly context?: string;
 
+  public constructor(args: IActorInitQueryBaseArgs) {
+    super(args);
+    this.mediatorQueryResultSerialize = args.mediatorQueryResultSerialize;
+    this.mediatorQueryResultSerializeMediaTypeCombiner = args.mediatorQueryResultSerializeMediaTypeCombiner;
+    this.mediatorQueryResultSerializeMediaTypeFormatCombiner = args.mediatorQueryResultSerializeMediaTypeFormatCombiner;
+    this.mediatorHttpInvalidate = args.mediatorHttpInvalidate;
+    this.mediatorQueryProcess = args.mediatorQueryProcess;
+  }
+
   public async test(_action: IActionInit): Promise<IActorTest> {
     return true;
   }

@@ -1,5 +1,5 @@
 {
-  "name": "@comunica/actor-http-limit-rate",
+  "name": "@comunica/actor-http-fetch",
   "version": "3.0.0",
   "lsd:module": true,
   "license": "MIT",

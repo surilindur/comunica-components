@@ -1,13 +1,13 @@
 {
   "name": "@comunica/config-query-sparql-components",
-  "version": "0.0.0",
+  "version": "3.0.0",
+  "private": true,
   "description": "Configurations for Comunica using custom components here",
+  "license": "MIT",
   "main": "lib/index.js",
   "types": "lib/index",
-  "license": "MIT",
-  "private": true,
   "lsd:module": true,
   "dependencies": {
-    "@comunica/config-query-sparql-link-traversal": "^0.2.0"
+    "@comunica/config-query-sparql-link-traversal": "^0.5.0"
   }
 }

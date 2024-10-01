@@ -116,6 +116,15 @@ export class ActorHttpLimitRate extends ActorHttp {
   private async sleep(ms: number): Promise<void> {
     await new Promise(resolve => setTimeout(resolve, ms));
   }
+
+  /**
+   * Extract the requested URL from the action input.
+   * @param {RequestInfo | URL} input The request input.
+   * @returns {URL} The extracted URL.
+   */
+  public static getInputUrl(input: RequestInfo | URL): URL {
+    return new URL(input instanceof Request ? input.url : input);
+  }
 }
 
 interface IHostRequestData {

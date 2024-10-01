@@ -39,7 +39,9 @@
   "dependencies": {
     "@comunica/bus-rdf-metadata-extract": "^3.2.1",
     "@comunica/core": "^3.2.1",
-    "@rdfjs/types": "*",
     "relative-to-absolute-iri": "^1.0.7"
+  },
+  "devDependencies": {
+    "@rdfjs/types": "*"
   }
 }

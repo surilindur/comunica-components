@@ -63,6 +63,7 @@ export class BindingsStreamAdaptiveHeuristics extends TransformIterator<Bindings
     }
   }
 
+  // eslint-disable-next-line ts/naming-convention
   protected _begin(done: () => void): void {
     super._begin(done);
     if (this.timeout) {
@@ -71,6 +72,7 @@ export class BindingsStreamAdaptiveHeuristics extends TransformIterator<Bindings
     }
   }
 
+  // eslint-disable-next-line ts/naming-convention
   protected _push(item: Bindings): void {
     const bindingsKey = this.hashBindings(item);
     let shouldPushBinding = true;
@@ -92,6 +94,7 @@ export class BindingsStreamAdaptiveHeuristics extends TransformIterator<Bindings
     }
   }
 
+  // eslint-disable-next-line ts/naming-convention
   protected _end(destroy: boolean): void {
     super._end(destroy);
     if (this.timeoutHandle) {

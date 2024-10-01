@@ -1,4 +1,5 @@
-import { LinkFilter, type ILinkFilterArgs } from '@comunica/bus-rdf-parse-link-filter';
+import { LinkFilter } from '@comunica/bus-rdf-parse-link-filter';
+import type { ILinkFilterTestInput } from '@comunica/bus-rdf-parse-link-filter';
 import type * as RDF from '@rdfjs/types';
 import { Bloem } from 'bloem';
 import type { Algebra } from 'sparqlalgebrajs';
@@ -7,17 +8,25 @@ import type { Algebra } from 'sparqlalgebrajs';
  * An approximate membership filter that is backed by a Bloom filter.
  */
 export class LinkFilterBloom extends LinkFilter {
+  private readonly uriRegex: RegExp;
   private readonly filter: Bloem;
   private readonly projectedProperty?: string;
   private readonly projectedResource?: string;
 
   public constructor(args: ILinkFilterBloomArgs) {
-    super(args);
+    super();
+    this.uriRegex = args.uriRegex;
     this.filter = new Bloem(args.hashBits, args.hashCount, args.buffer);
     this.projectedProperty = args.projectedProperty;
     this.projectedResource = args.projectedResource;
     if (!this.projectedProperty && !this.projectedResource) {
       throw new Error('Bloom link filter requires a property or resource to filter by');
+    }
+  }
+
+  public test(input: ILinkFilterTestInput): boolean | undefined {
+    if (this.uriRegex.test(input.link.url)) {
+      return true;
     }
   }
 
@@ -58,7 +67,8 @@ export class LinkFilterBloom extends LinkFilter {
   }
 }
 
-export interface ILinkFilterBloomArgs extends ILinkFilterArgs {
+export interface ILinkFilterBloomArgs {
+  uriRegex: RegExp;
   buffer: Buffer;
   hashBits: number;
   hashCount: number;

@@ -70,6 +70,7 @@ This project can be set to use local [Comunica](https://github.com/comunica/comu
 
 This can be done by having the workspaces definitions in the repositories pointing at each other, for example as in this repository:
 ```json
+{
   "workspaces": [
     "../comunica/engines/*",
     "../comunica/packages/*",
@@ -79,7 +80,8 @@ This can be done by having the workspaces definitions in the repositories pointi
     "../comunica-feature-link-traversal-fork/packages/*",
     "packages/*",
     "engines/*"
-  ],
+  ]
+}
 ```
 
 Afterwards, all the projects should be set up using `yarn install`.
