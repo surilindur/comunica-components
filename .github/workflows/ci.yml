@@ -12,6 +12,7 @@ env:
 jobs:
 
   lint:
+    name: Lint
     runs-on: ubuntu-latest
     steps:
       - run: git config --global core.autocrlf input
@@ -29,9 +30,9 @@ jobs:
       - run: yarn install --immutable
       - run: yarn run lint
 
-  build:
+  unittest:
+    name: Unit tests
     needs: lint
-    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         os:
@@ -42,6 +43,37 @@ jobs:
           - 18.x
           - 20.x
           - 22.x
+    runs-on: ${{ matrix.os }}
+    steps:
+      - run: git config --global core.autocrlf input
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+      - run: corepack enable
+      - uses: actions/checkout@v4
+      - uses: actions/cache@v4
+        with:
+          path: |
+            .yarn
+            **/node_modules
+          key: ${{ runner.os }}-yarn-${{ hashFiles('yarn.lock') }}
+      - run: yarn install --immutable
+      - run: yarn run test:node --selectProjects packages
+
+  systemtest:
+    name: System tests
+    needs: unittest
+    strategy:
+      matrix:
+        os:
+          - macos-latest
+          - ubuntu-latest
+          - windows-latest
+        node-version:
+          - 18.x
+          - 20.x
+          - 22.x
+    runs-on: ${{ matrix.os }}
     steps:
       - run: git config --global core.autocrlf input
       - uses: actions/setup-node@v4
@@ -59,4 +91,4 @@ jobs:
       - run: yarn run build:ts
       - run: yarn run build:components
       - run: yarn run build:engines
-      - run: yarn run build:engines-browser
+      - run: yarn run test:node --selectProjects engines

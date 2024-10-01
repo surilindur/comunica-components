@@ -1,6 +1,7 @@
 .yarn
-node_modules
 components
+coverage
+node_modules
 testing
 
 *.d.ts
