@@ -12,7 +12,8 @@
     "comunica-sparql-components-http": "bin/http.js"
   },
   "scripts": {
-    "prepare": "comunica-compile-config config/config-default.json > engine-default.js"
+    "prepare": "comunica-compile-config config/config-default.json > engine-default.js",
+    "browser": "node \"../../node_modules/.bin/webpack\" --mode production"
   },
   "dependencies": {
     "@comunica/actor-context-preprocess-link-filter": "^3.0.0",

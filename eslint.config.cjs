@@ -24,6 +24,7 @@ module.exports = config([
       'engines/*/bin/http.ts',
       'engines/*/bin/query-dynamic.ts',
       'engines/*/lib/QueryEngineFactory.ts',
+      'webpack.config.ts',
     ],
     rules: {
       'import/no-nodejs-modules': 'off',
@@ -33,11 +34,12 @@ module.exports = config([
     files: [
       'engines/*/bin/query.ts',
       'engines/*/lib/QueryEngine.ts',
+      '**/webpack.config.ts',
     ],
     rules: {
+      'import/extensions': 'off',
       'ts/no-var-requires': 'off',
       'ts/no-require-imports': 'off',
-      'import/extensions': 'off',
     },
   },
 ]);

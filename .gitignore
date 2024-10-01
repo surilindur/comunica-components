@@ -3,8 +3,8 @@ node_modules
 components
 testing
 
-*.js
-*.js.map
 *.d.ts
+*.js
+*.js.*
 
 componentsjs-error-state.json
