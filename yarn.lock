@@ -907,7 +907,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@comunica/actor-http-proxy@npm:^3.0.0, @comunica/actor-http-proxy@npm:^3.2.1":
+"@comunica/actor-http-proxy@npm:^3.2.1":
   version: 3.2.1
   resolution: "@comunica/actor-http-proxy@npm:3.2.1"
   dependencies:
@@ -943,32 +943,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@comunica/actor-init-query@npm:^3.0.0, @comunica/actor-init-query@workspace:packages/actor-init-query":
-  version: 0.0.0-use.local
-  resolution: "@comunica/actor-init-query@workspace:packages/actor-init-query"
-  dependencies:
-    "@comunica/actor-http-proxy": "npm:^3.0.0"
-    "@comunica/bus-http-invalidate": "npm:^3.0.0"
-    "@comunica/bus-init": "npm:^3.0.0"
-    "@comunica/bus-query-process": "npm:^3.0.0"
-    "@comunica/bus-query-result-serialize": "npm:^3.0.0"
-    "@comunica/context-entries": "npm:^3.0.0"
-    "@comunica/core": "npm:^3.0.0"
-    "@comunica/logger-pretty": "npm:^3.0.0"
-    "@comunica/runner": "npm:^3.0.0"
-    "@comunica/types": "npm:^3.0.0"
-    "@rdfjs/types": "npm:*"
-    "@types/yargs": "npm:^17.0.0"
-    asynciterator: "npm:^3.0.0"
-    negotiate: "npm:^1.0.0"
-    process: "npm:^0.11.0"
-    rdf-data-factory: "npm:^1.0.0"
-    streamify-string: "npm:^1.0.0"
-    yargs: "npm:^17.0.0"
-  languageName: unknown
-  linkType: soft
-
-"@comunica/actor-init-query@npm:^3.2.1":
+"@comunica/actor-init-query@npm:^3.0.0, @comunica/actor-init-query@npm:^3.2.1":
   version: 3.2.1
   resolution: "@comunica/actor-init-query@npm:3.2.1"
   dependencies:
@@ -2463,7 +2438,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@comunica/actor-rdf-metadata-extract-void@workspace:packages/actor-rdf-metadata-extract-void":
+"@comunica/actor-rdf-metadata-extract-void@npm:^3.0.0, @comunica/actor-rdf-metadata-extract-void@workspace:packages/actor-rdf-metadata-extract-void":
   version: 0.0.0-use.local
   resolution: "@comunica/actor-rdf-metadata-extract-void@workspace:packages/actor-rdf-metadata-extract-void"
   dependencies:
@@ -3032,7 +3007,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@comunica/bus-http-invalidate@npm:^3.0.0, @comunica/bus-http-invalidate@npm:^3.2.1":
+"@comunica/bus-http-invalidate@npm:^3.2.1":
   version: 3.2.1
   resolution: "@comunica/bus-http-invalidate@npm:3.2.1"
   dependencies:
@@ -3078,7 +3053,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@comunica/bus-init@npm:^3.0.0, @comunica/bus-init@npm:^3.2.1":
+"@comunica/bus-init@npm:^3.2.1":
   version: 3.2.1
   resolution: "@comunica/bus-init@npm:3.2.1"
   dependencies:
@@ -3140,7 +3115,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@comunica/bus-query-process@npm:^3.0.0, @comunica/bus-query-process@npm:^3.2.1":
+"@comunica/bus-query-process@npm:^3.2.1":
   version: 3.2.1
   resolution: "@comunica/bus-query-process@npm:3.2.1"
   dependencies:
@@ -3151,7 +3126,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@comunica/bus-query-result-serialize@npm:^3.0.0, @comunica/bus-query-result-serialize@npm:^3.2.1":
+"@comunica/bus-query-result-serialize@npm:^3.2.1":
   version: 3.2.1
   resolution: "@comunica/bus-query-result-serialize@npm:3.2.1"
   dependencies:
@@ -3497,7 +3472,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@comunica/logger-pretty@npm:^3.0.0, @comunica/logger-pretty@npm:^3.2.1":
+"@comunica/logger-pretty@npm:^3.2.1":
   version: 3.2.1
   resolution: "@comunica/logger-pretty@npm:3.2.1"
   dependencies:
@@ -3678,11 +3653,13 @@ __metadata:
     "@comunica/actor-init-query": "npm:^3.0.0"
     "@comunica/actor-rdf-join-inner-multi-adaptive-heuristics": "npm:^3.0.0"
     "@comunica/actor-rdf-metadata-extract-link-filter": "npm:^3.0.0"
+    "@comunica/actor-rdf-metadata-extract-void": "npm:^3.0.0"
     "@comunica/actor-rdf-parse-link-filter-bloom": "npm:^3.0.0"
     "@comunica/actor-rdf-resolve-hypermedia-links-queue-wrapper-link-filter": "npm:^3.0.0"
     "@comunica/bus-rdf-parse-link-filter": "npm:^3.0.0"
     "@comunica/config-query-sparql-components": "npm:^3.0.0"
     "@comunica/query-sparql-link-traversal-solid": "npm:^0.5.0"
+    "@comunica/runner": "npm:^3.0.0"
     "@comunica/runner-cli": "npm:^3.0.0"
   bin:
     comunica-dynamic-sparql-components: bin/query-dynamic.js
@@ -4131,7 +4108,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@comunica/types@npm:^3.0.0, @comunica/types@npm:^3.2.1":
+"@comunica/types@npm:^3.2.1":
   version: 3.2.1
   resolution: "@comunica/types@npm:3.2.1"
   dependencies:
@@ -5326,7 +5303,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/yargs@npm:^17.0.0, @types/yargs@npm:^17.0.24, @types/yargs@npm:^17.0.8":
+"@types/yargs@npm:^17.0.24, @types/yargs@npm:^17.0.8":
   version: 17.0.33
   resolution: "@types/yargs@npm:17.0.33"
   dependencies:
@@ -10041,7 +10018,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"negotiate@npm:^1.0.0, negotiate@npm:^1.0.1":
+"negotiate@npm:^1.0.1":
   version: 1.0.1
   resolution: "negotiate@npm:1.0.1"
   checksum: 10/088f71bd733ee5ecbc0bd16519134eaebd7d22fe496fca18ab61deb3ad470b103755e63ed27b315759fbd64974c68897a41c678159d8e0bf39e8547609db9851
@@ -10601,7 +10578,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"process@npm:^0.11.0, process@npm:^0.11.10":
+"process@npm:^0.11.10":
   version: 0.11.10
   resolution: "process@npm:0.11.10"
   checksum: 10/dbaa7e8d1d5cf375c36963ff43116772a989ef2bb47c9bdee20f38fd8fc061119cf38140631cf90c781aca4d3f0f0d2c834711952b728953f04fd7d238f59f5b
@@ -10701,7 +10678,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rdf-data-factory@npm:^1.0.0, rdf-data-factory@npm:^1.0.1, rdf-data-factory@npm:^1.1.0, rdf-data-factory@npm:^1.1.1, rdf-data-factory@npm:^1.1.2":
+"rdf-data-factory@npm:^1.0.1, rdf-data-factory@npm:^1.1.0, rdf-data-factory@npm:^1.1.1, rdf-data-factory@npm:^1.1.2":
   version: 1.1.2
   resolution: "rdf-data-factory@npm:1.1.2"
   dependencies:
@@ -11625,13 +11602,6 @@ __metadata:
   version: 1.0.1
   resolution: "streamify-array@npm:1.0.1"
   checksum: 10/2af68af440ba6f38decb318f95072224c97b766576e8642758a60884878c8e3f2ff323668e215b6bebb5ebe124250fecd915b9c0f29ab8e9e332894cb79b0ffa
-  languageName: node
-  linkType: hard
-
-"streamify-string@npm:^1.0.0":
-  version: 1.0.1
-  resolution: "streamify-string@npm:1.0.1"
-  checksum: 10/5637d10d30907875ce194e468f11a5252bd76f8c991f2bb46cddfe794cdeff82d6faad4afa5325b397ad78ca6222053a0235d7769b48a45e03de3c637bc5fd8f
   languageName: node
   linkType: hard
 
@@ -12593,7 +12563,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"yargs@npm:^17.0.0, yargs@npm:^17.3.1, yargs@npm:^17.7.2":
+"yargs@npm:^17.3.1, yargs@npm:^17.7.2":
   version: 17.7.2
   resolution: "yargs@npm:17.7.2"
   dependencies:

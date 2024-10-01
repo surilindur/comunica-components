@@ -1,7 +1,7 @@
 {
   "@context": [
-    "https://linkedsoftwaredependencies.org/bundles/npm/@comunica/runner/^2.0.0/components/context.jsonld",
-    "https://linkedsoftwaredependencies.org/bundles/npm/@comunica/actor-rdf-resolve-hypermedia-links-queue-wrapper-link-filter/^0.0.0/components/context.jsonld"
+    "https://linkedsoftwaredependencies.org/bundles/npm/@comunica/runner/^3.0.0/components/context.jsonld",
+    "https://linkedsoftwaredependencies.org/bundles/npm/@comunica/actor-rdf-resolve-hypermedia-links-queue-wrapper-link-filter/^3.0.0/components/context.jsonld"
   ],
   "@id": "urn:comunica:default:Runner",
   "@type": "Runner",
@@ -15,8 +15,13 @@
       "mediatorRdfResolveHypermediaLinksQueue": {
         "@id": "urn:comunica:default:rdf-resolve-hypermedia-links-queue/mediators#main"
       },
-      "ignorePattern": "(public|private)TypeIndex$",
-      "alwaysReject": "^https?://www.w3.org/"
+      "acceptPatterns": [
+        "publicTypeIndex$",
+        "privateTypeIndex$"
+      ],
+      "rejectPatterns": [
+        "^https?://www.w3.org/"
+      ]
     }
   ]
 }

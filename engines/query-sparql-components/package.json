@@ -19,11 +19,13 @@
     "@comunica/actor-init-query": "^3.0.0",
     "@comunica/actor-rdf-join-inner-multi-adaptive-heuristics": "^3.0.0",
     "@comunica/actor-rdf-metadata-extract-link-filter": "^3.0.0",
+    "@comunica/actor-rdf-metadata-extract-void": "^3.0.0",
     "@comunica/actor-rdf-parse-link-filter-bloom": "^3.0.0",
     "@comunica/actor-rdf-resolve-hypermedia-links-queue-wrapper-link-filter": "^3.0.0",
     "@comunica/bus-rdf-parse-link-filter": "^3.0.0",
     "@comunica/config-query-sparql-components": "^3.0.0",
     "@comunica/query-sparql-link-traversal-solid": "^0.5.0",
+    "@comunica/runner": "^3.0.0",
     "@comunica/runner-cli": "^3.0.0"
   }
 }

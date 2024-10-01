@@ -40,11 +40,4 @@ module.exports = config([
       'import/extensions': 'off',
     },
   },
-  {
-    ignores: [
-      '**/*.js',
-      '**/*.d.ts',
-      'packages/actor-init-query/**/*.ts',
-    ],
-  },
 ]);

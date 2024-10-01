@@ -1,9 +1,10 @@
 {
   "@context": [
+    "https://linkedsoftwaredependencies.org/bundles/npm/@comunica/config-query-sparql-components/^3.0.0/components/context.jsonld",
     "https://linkedsoftwaredependencies.org/bundles/npm/@comunica/config-query-sparql-link-traversal/^0.0.0/components/context.jsonld"
   ],
   "import": [
-    "ccqslt:config/config-solid-base-adaptive.json",
+    "ccqsc:config/config-solid-base-adaptive.json",
     "ccqslt:config/extract-links/actors/predicates-common.json",
     "ccqslt:config/extract-links/actors/predicates-ldp.json",
     "ccqslt:config/extract-links/actors/predicates-solidstorage.json",
