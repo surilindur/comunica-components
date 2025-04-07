@@ -17,7 +17,7 @@
     "forceConsistentCasingInFileNames": true
   },
   "include": [
-    "./engines/*/bin*.ts",
+    "./engines/*/bin/*.ts",
     "./engines/*/lib/*.ts",
     "./packages/*/lib/*.ts"
   ],

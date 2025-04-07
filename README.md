@@ -1,48 +1,27 @@
 <p align="center">
-  <img src="./.github/assets/comunica.svg" width="500">
+  <img alt="Comunica" src=".github/assets/logo.svg" width="50">
 </p>
 
 <p align="center">
-  <a href="https://github.com/surilindur/comunica-components/actions/workflows/ci.yml"><img alt="CI" src=https://github.com/surilindur/comunica-components/actions/workflows/ci.yml/badge.svg?branch=main"></a>
-  <a href="https://www.typescriptlang.org/"><img alt="TypeScript" src="https://img.shields.io/badge/%3C%2F%3E-TypeScript-%230074c1.svg"></a>
-  <a href="https://opensource.org/licenses/MIT"><img alt="License: MIT" src="https://img.shields.io/badge/License-MIT-yellow.svg"></a>
+  <strong>Comunica Components</strong>
 </p>
 
-This is a collection of experimental components for [Comunica](https://github.com/comunica/comunica),
-created only for various experiments, not for actual use.
+<p align="center">
+  <a href="https://github.com/surilindur/comunica-components/actions/workflows/ci.yml"><img alt="Workflow: CI" src=https://github.com/surilindur/comunica-components/actions/workflows/ci.yml/badge.svg?branch=main"></a>
+  <a href="https://www.typescriptlang.org/"><img alt="TypeScript" src="https://img.shields.io/badge/%3C%2F%3E-TypeScript-%230074c1.svg"></a>
+  <a href="https://opensource.org/licenses/MIT"><img alt="License: MIT" src="https://img.shields.io/badge/License-MIT-%23750014.svg"></a>
+</p>
+
+This is a collection of work-in-progress components for the [Comunica](https://github.com/comunica/comunica) query engine,
+maintained here separately for prototyping and experimentation purposes.
 If you wish to learn more about Comunica or actually use it, please refer to [its website](https://comunica.dev/).
-
-Simplified and updated base component replacements:
-
-* [**Universal fetch actor**](packages/actor-http-fetch/), that has been reduced to the bare minimum required for it to function both in browser and in Node.
-* [**Simplified initialisation actor**](packages/actor-init-query/), with improvements to the SPARQL endpoint behaviour.
-
-Components for better HTTP request process:
-
-* [**HTTP retry actor**](packages/actor-http-retry/), that handles request retries while taking into account the `Retry-After` headers from servers.
-* [**HTTP rate limit actor**](packages/actor-http-limit-rate/), that automatically adjusts the number of concurrent and new requests on a per-host basis.
-
-Components for membership metadata handling:
-
-* [**Membership filter metadata extractor**](packages/actor-rdf-metadata-extract-membership-filter/), that parses membership filters from metadata streams and stores them back in the metadata.
-* [**Membership filter parse bus**](packages/bus-rdf-parse-membership-filter/), where membership filter parsers are listening.
-* [**Membership filter parser for Bloom filters**](packages/actor-rdf-parse-membership-filter-bloom/), that parses Bloom filters into membership filter objects.
-* [**Membership filter context preprocess actor**](packages/actor-context-preprocess-membership-filter/), that creates the metadata filter storage in quest context, used to hold the extracted filters. This is the result of the link queue not having access to RDF metadata streams, so the filters need to be stored in another query-specific location.
-* [**Membership filter-based link queue wrapper**](packages/actor-rdf-resolve-hypermedia-links-queue-wrapper-membership-filter/), that filters link queue output based on discovered membership filters.
-
-Components for triple pattern cardinality estimation and join operation restarts:
-
-* [**VoID description metadata extractor**](packages/actor-rdf-metadata-extract-void-description/), that parses VoID descriptions from metadata streams and stores them back in the metadata.
-* [**VoID description metadata accumulator**](packages/actor-rdf-metadata-accumulate-void-description/), that accumulates VoID descriptions from multiple metadata. This package also includes **triple pattern cardinality estimators** that use available metadata at accumulation time to update estimated triple pattern cardinalities.
-* [**Simple "adaptive" inner join actor**](packages/actor-rdf-join-inner-multi-adaptive-heuristics/), that allows restarting a join operation based on a set of conditions.
+If a component was found here previous, but not anymore, it could have been merged into the engine itself, or deprecated in favour of another one.
 
 ## Development Setup
 
-The project can be cloned, after which the dependencies can be installed using Yarn with:
+The dependencies can be installed and the component built using Yarn:
 
 ```bash
-git clone https://github.com/surilindur/comunica-components
-cd comunica-components
 yarn install --immutable
 yarn build
 ```
@@ -53,13 +32,12 @@ The default configuration for the engine using whichever components happen to be
 yarn comunica-sparql-components --help
 ```
 
-There are no unit tests and nothing is guaranteed to function as one would expect it to.
-
-## Using Local Comunica
+## Linking to Local Comunica Source
 
 This project can be set to use local [Comunica](https://github.com/comunica/comunica),
 [Comunica Solid](https://github.com/comunica/comunica-feature-solid) and
-[Comunica Link Traversal](https://github.com/comunica/comunica-feature-link-traversal):
+[Comunica Link Traversal](https://github.com/comunica/comunica-feature-link-traversal),
+by cloning the projects next to each other:
 
 ```
 .../comunica
@@ -68,7 +46,9 @@ This project can be set to use local [Comunica](https://github.com/comunica/comu
 .../comunica-components
 ```
 
-This can be done by having the workspaces definitions in the repositories pointing at each other, for example as in this repository:
+Then, the Yarn workspaces feature can be used to point the projects to each other.
+For example, in this repository:
+
 ```json
 {
   "workspaces": [
@@ -88,8 +68,7 @@ Afterwards, all the projects should be set up using `yarn install`.
 
 ## Issues
 
-Please feel free to report any issues on the GitHub issue tracker,
-but do note that none of these components are intended for real use.
+Please feel free to report any issues on the GitHub issue tracker.
 
 ## License
 

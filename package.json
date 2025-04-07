@@ -1,7 +1,7 @@
 {
   "name": "comunica-components",
   "private": true,
-  "packageManager": "yarn@4.5.0",
+  "packageManager": "yarn@4.8.1",
   "description": "Experimental components for Comunica",
   "license": "MIT",
   "repository": "https://github.com/surilindur/comunica-components",
@@ -17,9 +17,7 @@
     "build:ts": "tsc",
     "clean": "git clean -dfx",
     "lint": "eslint .",
-    "query": "node node_modules/.bin/comunica-sparql-components",
-    "test": "yarn run test:node",
-    "test:node": "yarn jest"
+    "test": "yarn jest"
   },
   "devDependencies": {
     "@rdfjs/types": "*",
@@ -29,13 +27,10 @@
     "eslint": "^8.0.0",
     "jest": "^29.0.0",
     "ts-jest": "^29.0.0",
-    "ts-loader": "^9.0.0",
-    "ts-node": "^10.0.0",
-    "typescript": "^5.0.0",
-    "webpack": "^5.0.0",
-    "webpack-cli": "^5.0.0"
+    "typescript": "^5.0.0"
   },
   "resolutions": {
-    "@rdfjs/types": "1.1.2"
+    "@rdfjs/types": "1.1.2",
+    "typescript": "5.5.4"
   }
 }

@@ -1,6 +1,6 @@
 {
   "name": "@comunica/query-sparql-components",
-  "version": "3.0.0",
+  "version": "4.0.0",
   "private": true,
   "license": "MIT",
   "main": "lib/index.js",
@@ -12,21 +12,15 @@
     "comunica-sparql-components-http": "bin/http.js"
   },
   "scripts": {
-    "prepare": "comunica-compile-config config/config-default.json > engine-default.js",
-    "browser": "node \"../../node_modules/.bin/webpack\" --mode production"
+    "prepare": "comunica-compile-config config/config-default.json > engine-default.js"
   },
   "dependencies": {
-    "@comunica/actor-context-preprocess-link-filter": "^3.0.0",
-    "@comunica/actor-init-query": "^3.0.0",
-    "@comunica/actor-rdf-join-inner-multi-adaptive-heuristics": "^3.0.0",
-    "@comunica/actor-rdf-metadata-extract-link-filter": "^3.0.0",
-    "@comunica/actor-rdf-metadata-extract-void": "^3.0.0",
-    "@comunica/actor-rdf-parse-link-filter-bloom": "^3.0.0",
-    "@comunica/actor-rdf-resolve-hypermedia-links-queue-wrapper-link-filter": "^3.0.0",
-    "@comunica/bus-rdf-parse-link-filter": "^3.0.0",
-    "@comunica/config-query-sparql-components": "^3.0.0",
-    "@comunica/query-sparql-link-traversal-solid": "^0.5.0",
-    "@comunica/runner": "^3.0.0",
-    "@comunica/runner-cli": "^3.0.0"
+    "@comunica/actor-init-query": "^4.0.0",
+    "@comunica/actor-rdf-join-inner-multi-adaptive-heuristics": "^0.0.0",
+    "@comunica/actor-rdf-metadata-extract-void": "^4.0.0",
+    "@comunica/config-query-sparql-components": "^4.0.0",
+    "@comunica/query-sparql-link-traversal-solid": "^0.6.0",
+    "@comunica/runner": "^4.0.0",
+    "@comunica/runner-cli": "^4.0.0"
   }
 }

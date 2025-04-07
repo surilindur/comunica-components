@@ -7,31 +7,32 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  DEFAULT_NODE_VERSION: 22.x
+  DEFAULT_NODE_VERSION: 23.x
 
 jobs:
-
   lint:
     name: Lint
     runs-on: ubuntu-latest
     steps:
-      - run: git config --global core.autocrlf input
-      - uses: actions/setup-node@v4
+      - name: Use Node.js ${{ env.DEFAULT_NODE_VERSION }}
+        uses: actions/setup-node@v4
         with:
           node-version: ${{ env.DEFAULT_NODE_VERSION }}
-      - run: corepack enable
-      - uses: actions/checkout@v4
-      - uses: actions/cache@v4
+      - name: Enable Corepack
+        run: corepack enable
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Load Yarn cache
+        uses: actions/cache@v4
         with:
-          path: |
-            .yarn
-            **/node_modules
+          path: .yarn
           key: ${{ runner.os }}-yarn-${{ hashFiles('yarn.lock') }}
-      - run: yarn install --immutable
-      - run: yarn run lint
-
-  unittest:
-    name: Unit tests
+      - name: Install dependencies
+        run: yarn install --immutable
+      - name: Run ESLint
+        run: yarn run lint
+  jest:
+    name: Test
     needs: lint
     strategy:
       matrix:
@@ -40,55 +41,25 @@ jobs:
           - ubuntu-latest
           - windows-latest
         node-version:
-          - 18.x
           - 20.x
           - 22.x
+          - 23.x
     runs-on: ${{ matrix.os }}
     steps:
-      - run: git config --global core.autocrlf input
-      - uses: actions/setup-node@v4
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
-      - run: corepack enable
-      - uses: actions/checkout@v4
-      - uses: actions/cache@v4
+      - name: Enable Corepack
+        run: corepack enable
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Load Yarn cache
+        uses: actions/cache@v4
         with:
-          path: |
-            .yarn
-            **/node_modules
+          path: .yarn
           key: ${{ runner.os }}-yarn-${{ hashFiles('yarn.lock') }}
-      - run: yarn install --immutable
-      - run: yarn run test:node --selectProjects packages
-
-  systemtest:
-    name: System tests
-    needs: unittest
-    strategy:
-      matrix:
-        os:
-          - macos-latest
-          - ubuntu-latest
-          - windows-latest
-        node-version:
-          - 18.x
-          - 20.x
-          - 22.x
-    runs-on: ${{ matrix.os }}
-    steps:
-      - run: git config --global core.autocrlf input
-      - uses: actions/setup-node@v4
-        with:
-          node-version: ${{ matrix.node-version }}
-      - run: corepack enable
-      - uses: actions/checkout@v4
-      - uses: actions/cache@v4
-        with:
-          path: |
-            .yarn
-            **/node_modules
-          key: ${{ runner.os }}-yarn-${{ hashFiles('yarn.lock') }}
-      - run: yarn install --immutable
-      - run: yarn run build:ts
-      - run: yarn run build:components
-      - run: yarn run build:engines
-      - run: yarn run test:node --selectProjects engines
+      - name: Install dependencies
+        run: yarn install --immutable
+      - name: Execute unit tests
+        run: yarn run test --selectProjects packages

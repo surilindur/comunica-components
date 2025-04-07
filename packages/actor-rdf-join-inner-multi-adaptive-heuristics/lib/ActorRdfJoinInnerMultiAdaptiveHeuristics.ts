@@ -1,10 +1,11 @@
 import { ActorRdfJoinInnerMultiAdaptiveDestroy } from '@comunica/actor-rdf-join-inner-multi-adaptive-destroy';
 import type { IActorRdfJoinInnerMultiAdaptiveDestroyArgs } from '@comunica/actor-rdf-join-inner-multi-adaptive-destroy';
 import type { MediatorHashBindings } from '@comunica/bus-hash-bindings';
-import { ClosableTransformIterator } from '@comunica/bus-query-operation';
-import type { IActionRdfJoin, IActorRdfJoinOutputInner } from '@comunica/bus-rdf-join';
+import type { IActionRdfJoin, IActorRdfJoinOutputInner, IActorRdfJoinTestSideData } from '@comunica/bus-rdf-join';
 import type { MediatorRdfJoinEntriesSort } from '@comunica/bus-rdf-join-entries-sort';
 import { KeysRdfJoin } from '@comunica/context-entries-link-traversal';
+import { failTest } from '@comunica/core';
+import type { TestResult } from '@comunica/core';
 import type { IMediatorTypeJoinCoefficients } from '@comunica/mediatortype-join-coefficients';
 import type {
   BindingsStream,
@@ -14,6 +15,7 @@ import type {
   IJoinEntryWithMetadata,
   MetadataBindings,
 } from '@comunica/types';
+import { TransformIterator } from 'asynciterator';
 import { BindingsStreamAdaptiveHeuristics } from './BindingsStreamAdaptiveHeuristics';
 
 /**
@@ -38,9 +40,11 @@ export class ActorRdfJoinInnerMultiAdaptiveHeuristics extends ActorRdfJoinInnerM
     this.mediatorJoinEntriesSort = args.mediatorJoinEntriesSort;
   }
 
-  public async test(action: IActionRdfJoin): Promise<IMediatorTypeJoinCoefficients> {
+  public async test(
+    action: IActionRdfJoin,
+  ): Promise<TestResult<IMediatorTypeJoinCoefficients, IActorRdfJoinTestSideData>> {
     if (!this.useCardinality && !this.useTimeout) {
-      throw new Error(`${this.name} has been disabled via configuration`);
+      return failTest(`${this.name} has been disabled via configuration`);
     }
     return super.test(action);
   }
@@ -51,11 +55,7 @@ export class ActorRdfJoinInnerMultiAdaptiveHeuristics extends ActorRdfJoinInnerM
 
     let bindingsStreamAdaptive: BindingsStreamAdaptiveHeuristics | undefined;
 
-    const mediatorHashBindingsResult = await this.mediatorHashBindings.mediate({
-      context: action.context,
-      // Hash collisions should not happen at all, but there is no actor like that available
-      allowHashCollisions: true,
-    });
+    const mediatorHashBindingsResult = await this.mediatorHashBindings.mediate({ context: action.context });
 
     let currentJoinOrder: IJoinEntryWithMetadata[] = await this.getSortedJoinEntries(action);
     let allowRestarts = true;
@@ -71,6 +71,7 @@ export class ActorRdfJoinInnerMultiAdaptiveHeuristics extends ActorRdfJoinInnerM
                 const updatedJoinOrder = await this.getSortedJoinEntries(action);
                 if (updatedJoinOrder.some((je, index) => currentJoinOrder[index].operation !== je.operation)) {
                   currentJoinOrder = updatedJoinOrder;
+                  console.log('SWAPPING SOURCE', metadata.cardinality, '->', updatedMetadata.cardinality);
                   bindingsStreamAdaptive.swapSource();
                 }
               }
@@ -81,8 +82,8 @@ export class ActorRdfJoinInnerMultiAdaptiveHeuristics extends ActorRdfJoinInnerM
             metadata.state.addInvalidateListener(() => setTimeout(handleInvalidationEvent));
           }
         };
-        entry.output.metadata().then(addMetadataInvalidationListener).catch((error: string) => {
-          throw new Error(error);
+        entry.output.metadata().then(addMetadataInvalidationListener).catch((error: Error) => {
+          throw error;
         });
         return entry;
       }) :
@@ -150,16 +151,12 @@ export class ActorRdfJoinInnerMultiAdaptiveHeuristics extends ActorRdfJoinInnerM
   protected cloneEntries(entries: IJoinEntry[]): IJoinEntry[] {
     return entries.map((entry) => {
       const clonedBindingsStream = entry.output.bindingsStream.clone();
+      const bindingsStream = new TransformIterator(clonedBindingsStream, { destroySource: true, autoStart: false });
       return {
         operation: entry.operation,
         output: {
           ...entry.output,
-          bindingsStream: new ClosableTransformIterator(clonedBindingsStream, {
-            autoStart: false,
-            onClose() {
-              clonedBindingsStream.destroy();
-            },
-          }),
+          bindingsStream,
         },
       };
     });

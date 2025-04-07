@@ -1,199 +1,241 @@
-import type { ActorInitQueryBase } from '@comunica/actor-init-query';
-import { QueryEngineBase } from '@comunica/actor-init-query';
 import type {
   IActionRdfMetadataExtract,
   IActorRdfMetadataExtractOutput,
   IActorRdfMetadataExtractArgs,
 } from '@comunica/bus-rdf-metadata-extract';
 import { ActorRdfMetadataExtract } from '@comunica/bus-rdf-metadata-extract';
-import type { IActorTest } from '@comunica/core';
+import { KeysQueryOperation } from '@comunica/context-entries';
+import type { IActorTest, TestResult } from '@comunica/core';
+import { passTestVoid, failTest } from '@comunica/core';
 import type * as RDF from '@rdfjs/types';
-import { storeStream } from 'rdf-store-stream';
-import { termToString } from 'rdf-string-ttl';
-import { VoidCardinalityProvider } from './VoidCardinalityProvider';
+import type { Algebra } from 'sparqlalgebrajs';
+import {
+  RDF_TYPE,
+  SD_DEFAULT_DATASET,
+  SD_DEFAULT_GRAPH,
+  SD_FEATURE,
+  SD_GRAPH,
+  SD_UNION_DEFAULT_GRAPH,
+  VOID_CLASS,
+  VOID_CLASS_PARTITION,
+  VOID_CLASSES,
+  VOID_DATASET,
+  VOID_DISTINCT_OBJECTS,
+  VOID_DISTINCT_SUBJECTS,
+  VOID_ENTITIES,
+  VOID_PROPERTY,
+  VOID_PROPERTY_PARTITION,
+  VOID_TRIPLES,
+  VOID_URI_REGEX_PATTERN,
+  VOID_URI_SPACE,
+  VOID_VOCABULARY,
+} from './Definitions';
+import { getCardinality } from './Estimators';
+import type {
+  IVoidClassPartition,
+  IVoidDataset,
+  IVoidPropertyPartition,
+} from './Types';
 
 /**
  * A comunica Void RDF Metadata Extract Actor.
  */
 export class ActorRdfMetadataExtractVoid extends ActorRdfMetadataExtract {
-  public readonly queryEngine: QueryEngineBase;
-  public readonly inferUriSpace: boolean;
-
-  public constructor(args: IActorRdfMetadataExtractVoidArgs) {
+  public constructor(args: IActorRdfMetadataExtractArgs) {
     super(args);
-    this.queryEngine = new QueryEngineBase(args.actorInitQuery);
-    this.inferUriSpace = args.inferUriSpace;
   }
 
-  // eslint-disable-next-line ts/naming-convention
-  public async test(_action: IActionRdfMetadataExtract): Promise<IActorTest> {
-    return true;
+  public async test(action: IActionRdfMetadataExtract): Promise<TestResult<IActorTest>> {
+    if (!action.context.has(KeysQueryOperation.operation)) {
+      return failTest(`${this.name} requires a query operation to be present in context.`);
+    }
+    return passTestVoid();
   }
 
   public async run(action: IActionRdfMetadataExtract): Promise<IActorRdfMetadataExtractOutput> {
-    const metadataStore = await storeStream(action.metadata);
-    const voidDescriptions = await this.getDatasets(metadataStore);
-    const metadata = voidDescriptions ?
-        { voidDescriptions, voidCardinalityProvider: new VoidCardinalityProvider(voidDescriptions) } :
-        {};
+    return new Promise<IActorRdfMetadataExtractOutput>((resolve, reject) => {
+      // Track the URIs of identified datasets to extract
+      const datasetUris = new Set<string>();
 
-    return { metadata };
+      // Track the other stats per-URI to allow arbitrary triple ordering in the stream
+      const triples: Record<string, number> = {};
+      const entities: Record<string, number> = {};
+      const vocabularies: Record<string, string[]> = {};
+      const classes: Record<string, number> = {};
+      const distinctObjects: Record<string, number> = {};
+      const distinctSubjects: Record<string, number> = {};
+      const uriRegexPatterns: Record<string, RegExp> = {};
+      const propertyPartitions: Record<string, string[]> = {};
+      const propertyPartitionProperties: Record<string, string> = {};
+      const classPartitions: Record<string, string[]> = {};
+      const classPartitionClasses: Record<string, string> = {};
+
+      // Default dataset and graph to remove in case of sd:UnionDefaultGraph
+      let defaultDatasetUri: string | undefined;
+      let defaultGraphUri: string | undefined;
+      let unionDefaultGraph = false;
+
+      action.metadata
+        .on('error', reject)
+        .on('data', (quad: RDF.Quad) => {
+          switch (quad.predicate.value) {
+            case RDF_TYPE:
+              if (quad.object.value === SD_GRAPH || quad.object.value === VOID_DATASET) {
+                datasetUris.add(quad.subject.value);
+              }
+              break;
+            case VOID_TRIPLES:
+              triples[quad.subject.value] = Number.parseInt(quad.object.value, 10);
+              break;
+            case VOID_ENTITIES:
+              entities[quad.subject.value] = Number.parseInt(quad.object.value, 10);
+              break;
+            case VOID_CLASSES:
+              classes[quad.subject.value] = Number.parseInt(quad.object.value, 10);
+              break;
+            case VOID_CLASS:
+              classPartitionClasses[quad.subject.value] = quad.object.value;
+              break;
+            case VOID_PROPERTY:
+              propertyPartitionProperties[quad.subject.value] = quad.object.value;
+              break;
+            case VOID_DISTINCT_OBJECTS:
+              distinctObjects[quad.subject.value] = Number.parseInt(quad.object.value, 10);
+              break;
+            case VOID_DISTINCT_SUBJECTS:
+              distinctSubjects[quad.subject.value] = Number.parseInt(quad.object.value, 10);
+              break;
+            case VOID_VOCABULARY:
+              if (vocabularies[quad.subject.value]) {
+                vocabularies[quad.subject.value].push(quad.object.value);
+              } else {
+                vocabularies[quad.subject.value] = [ quad.object.value ];
+              }
+              break;
+            case VOID_URI_SPACE:
+              if (!uriRegexPatterns[quad.subject.value]) {
+                uriRegexPatterns[quad.subject.value] = new RegExp(`^${quad.object.value}`, 'u');
+              }
+              break;
+            case VOID_URI_REGEX_PATTERN:
+              uriRegexPatterns[quad.subject.value] = new RegExp(quad.object.value, 'u');
+              break;
+            case VOID_PROPERTY_PARTITION:
+              if (propertyPartitions[quad.subject.value]) {
+                propertyPartitions[quad.subject.value].push(quad.object.value);
+              } else {
+                propertyPartitions[quad.subject.value] = [ quad.object.value ];
+              }
+              break;
+            case VOID_CLASS_PARTITION:
+              if (classPartitions[quad.subject.value]) {
+                classPartitions[quad.subject.value].push(quad.object.value);
+              } else {
+                classPartitions[quad.subject.value] = [ quad.object.value ];
+              }
+              break;
+            case SD_DEFAULT_DATASET:
+              defaultDatasetUri = quad.object.value;
+              break;
+            case SD_DEFAULT_GRAPH:
+              defaultGraphUri = quad.object.value;
+              break;
+            case SD_FEATURE:
+              if (quad.object.value === SD_UNION_DEFAULT_GRAPH) {
+                unionDefaultGraph = true;
+              }
+              break;
+          }
+        })
+        .on('end', () => {
+          // Helper function to extract property partitions into a map
+          const getPropertyPartitions = (uri: string): Record<string, IVoidPropertyPartition> => {
+            const partitions: Record<string, IVoidPropertyPartition> = {};
+            for (const partitionUri of propertyPartitions[uri]) {
+              const propertyUri = propertyPartitionProperties[partitionUri];
+              if (propertyUri) {
+                partitions[propertyUri] = {
+                  distinctObjects: distinctObjects[partitionUri],
+                  distinctSubjects: distinctSubjects[partitionUri],
+                  triples: triples[partitionUri],
+                };
+              }
+            }
+            return partitions;
+          };
+
+          // Helper function to extract class partitions into a map
+          const getClassPartitions = (uri: string): Record<string, IVoidClassPartition> => {
+            const partitions: Record<string, IVoidClassPartition> = {};
+            for (const partitionUri of classPartitions[uri]) {
+              const classUri = classPartitionClasses[partitionUri];
+              if (classUri) {
+                partitions[classUri] = {
+                  entities: entities[partitionUri],
+                  propertyPartitions: propertyPartitions[partitionUri] ?
+                    getPropertyPartitions(partitionUri) :
+                    undefined,
+                };
+              }
+            }
+            return partitions;
+          };
+
+          if (defaultDatasetUri) {
+            if (defaultGraphUri && vocabularies[defaultDatasetUri] && !vocabularies[defaultGraphUri]) {
+              vocabularies[defaultGraphUri] = vocabularies[defaultDatasetUri];
+            }
+            datasetUris.delete(defaultDatasetUri);
+          }
+
+          if (unionDefaultGraph && defaultGraphUri) {
+            datasetUris.delete(defaultGraphUri);
+          }
+
+          const datasets: Record<string, IVoidDataset> = {};
+
+          for (const uri of datasetUris) {
+            // Only the VoID descriptions with triple counts and class or property partitions are actually useful,
+            // and any other ones would contain insufficient information to use in estimation, as the formulae
+            // would go to 0 for most estimations.
+            if (triples[uri]) {
+              datasets[uri] = {
+                entities: entities[uri],
+                identifier: uri,
+                classes: classes[uri] ?? classPartitions[uri]?.length ?? 0,
+                classPartitions: classPartitions[uri] ? getClassPartitions(uri) : undefined,
+                distinctObjects: distinctObjects[uri],
+                distinctSubjects: distinctSubjects[uri],
+                propertyPartitions: propertyPartitions[uri] ? getPropertyPartitions(uri) : undefined,
+                triples: triples[uri],
+                uriRegexPattern: uriRegexPatterns[uri],
+                vocabularies: vocabularies[uri],
+              };
+            }
+          }
+
+          let cardinality: RDF.QueryResultCardinality | undefined;
+          const operation: Algebra.Operation = action.context.getSafe(KeysQueryOperation.operation);
+
+          if (unionDefaultGraph) {
+            cardinality = {
+              type: 'estimate',
+              value: Object.values(datasets)
+                .map(ds => getCardinality(ds, operation).value)
+                .reduce((acc, cur) => acc + cur, 0),
+            };
+          } else if (defaultGraphUri && defaultGraphUri in datasets) {
+            cardinality = getCardinality(datasets[defaultGraphUri], operation);
+          } else if (action.url in datasets) {
+            cardinality = getCardinality(datasets[action.url], operation);
+          }
+
+          if (cardinality) {
+            console.log('CARDINALITY', cardinality, operation);
+          }
+
+          resolve({ metadata: cardinality ? { cardinality } : {}});
+        });
+    });
   }
-
-  public async getDatasets(store: RDF.Store): Promise<Record<string, IVoidDataset>> {
-    const datasets: Record<string, IVoidDataset> = {};
-
-    const query = `
-      PREFIX void: <http://rdfs.org/ns/void#>
-      PREFIX sd: <http://www.w3.org/ns/sparql-service-description#>
-      PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-
-      SELECT * WHERE {
-        ?dataset rdf:type ?type.
-
-        OPTIONAL { ?dataset void:triples ?triples }
-        OPTIONAL { ?dataset void:uriSpace ?uriSpace }
-        OPTIONAL { ?dataset void:sparqlEndpoint ?sparqlEndpoint }
-        OPTIONAL { ?dataset void:distinctSubjects ?distinctSubjects }
-        OPTIONAL { ?dataset void:distinctObjects ?distinctObjects }
-
-        FILTER(?type IN (sd:Graph,sd:Dataset,void:Dataset))
-      }`;
-
-    const datasetBindings = await (await this.queryEngine.queryBindings(query, { sources: [ store ]})).toArray();
-
-    for (const bindings of datasetBindings) {
-      const dataset = bindings.get('dataset')!;
-      if (dataset.termType === 'NamedNode') {
-        datasets[dataset.value] = {
-          triples: Number.parseInt(bindings.get('triples')?.value ?? '0', 10),
-          uriSpace: bindings.get('uriSpace')?.value ?? (
-            this.inferUriSpace ? dataset.value.split('.well-known')[0] : undefined
-          ),
-          sparqlEndpoint: bindings.get('sparqlEndpoint')?.value,
-          distinctObjects: Number.parseInt(bindings.get('distinctObjects')?.value ?? '0', 10),
-          distinctSubjects: Number.parseInt(bindings.get('distinctSubjects')?.value ?? '0', 10),
-          classPartitions: await this.getClassPartitions(dataset, store),
-          propertyPartitions: await this.getPropertyPartitions(dataset, store),
-        };
-      }
-    }
-
-    return datasets;
-  }
-
-  public async getClassPartitions(
-    dataset: RDF.NamedNode | RDF.BlankNode,
-    store: RDF.Store,
-  ): Promise<Record<string, IVoidClassPartition>> {
-    const partitions: Record<string, IVoidClassPartition> = {};
-
-    const query = `
-      PREFIX void: <http://rdfs.org/ns/void#>
-      PREFIX sd: <http://www.w3.org/ns/sparql-service-description#>
-      PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-
-      SELECT * WHERE {
-        ${termToString(dataset)} void:classPartition ?classPartition.
-        ?classPartition void:class ?class.
-
-        OPTIONAL { ?classPartition void:entities ?entities }
-      }`;
-
-    const classPartitionBindings = await (await this.queryEngine.queryBindings(query, {
-      sources: [ store ],
-    })).toArray();
-
-    for (const bindings of classPartitionBindings) {
-      const classIri = bindings.get('class')!;
-      const classPartition = bindings.get('classPartition')!;
-      if (classPartition.termType === 'NamedNode' || classPartition.termType === 'BlankNode') {
-        partitions[classIri.value] = {
-          entities: Number.parseInt(bindings.get('entities')?.value ?? '0', 10),
-          propertyPartitions: await this.getPropertyPartitions(classPartition, store),
-        };
-      }
-    }
-
-    return partitions;
-  };
-
-  public async getPropertyPartitions(
-    dataset: RDF.NamedNode | RDF.BlankNode,
-    store: RDF.Store,
-  ): Promise<Record<string, IVoidPropertyPartition>> {
-    const partitions: Record<string, IVoidPropertyPartition> = {};
-
-    const query = `
-      PREFIX void: <http://rdfs.org/ns/void#>
-      PREFIX sd: <http://www.w3.org/ns/sparql-service-description#>
-      PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-
-      SELECT * WHERE {
-        ${termToString(dataset)} void:propertyPartition ?propertyPartition.
-        ?propertyPartition void:property ?property.
-
-        OPTIONAL { ?propertyPartition void:triples ?triples }
-        OPTIONAL { ?propertyPartition void:distinctSubjects ?distinctSubjects }
-        OPTIONAL { ?propertyPartition void:distinctObjects ?distinctObjects }
-      }`;
-
-    const propertyPartitionBindings = await (await this.queryEngine.queryBindings(query, {
-      sources: [ store ],
-    })).toArray();
-
-    for (const bindings of propertyPartitionBindings) {
-      const propertyIri = bindings.get('property')!;
-      partitions[propertyIri.value] = {
-        triples: Number.parseInt(bindings.get('triples')?.value ?? '0', 10),
-        distinctObjects: Number.parseInt(bindings.get('distinctObjects')?.value ?? '0', 10),
-        distinctSubjects: Number.parseInt(bindings.get('distinctSubjects')?.value ?? '0', 10),
-      };
-    }
-
-    return partitions;
-  };
-}
-
-export interface IActorRdfMetadataExtractVoidArgs extends IActorRdfMetadataExtractArgs {
-  /**
-   * An init query actor that is used to query shapes.
-   * @default {<urn:comunica:default:init/actors#query>}
-   */
-  actorInitQuery: ActorInitQueryBase;
-  /**
-   * Whether URI prefixes should be inferred based on dataset URI if not present in the VoID description.
-   * @default {true}
-   */
-  inferUriSpace: boolean;
-}
-
-export interface IVoidDataset {
-  triples: number;
-  uriSpace?: string;
-  sparqlEndpoint?: string;
-  distinctSubjects: number;
-  distinctObjects: number;
-  propertyPartitions: Record<string, IVoidPropertyPartition>;
-  classPartitions: Record<string, IVoidClassPartition>;
-}
-
-export interface IVoidPropertyPartition {
-  triples: number;
-  distinctSubjects: number;
-  distinctObjects: number;
-}
-
-export interface IVoidClassPartition {
-  entities: number;
-  propertyPartitions: Record<string, IVoidPropertyPartition>;
-}
-
-export interface IVoidCardinalityProvider {
-  getCardinality: (
-    subject: RDF.Term,
-    predicate: RDF.Term,
-    object: RDF.Term,
-    graph: RDF.Term,
-  ) => RDF.QueryResultCardinality;
 }

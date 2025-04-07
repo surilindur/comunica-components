@@ -1,30 +1,51 @@
-import { ActorInitQuery } from '@comunica/actor-init-query';
 import { Bus } from '@comunica/core';
-import type * as RDF from '@rdfjs/types';
+import type { IDataset } from '@comunica/types';
 import { DataFactory } from 'rdf-data-factory';
-import { storeStream } from 'rdf-store-stream';
+import { Factory } from 'sparqlalgebrajs';
 import { ActorRdfMetadataExtractVoid } from '../lib/ActorRdfMetadataExtractVoid';
+import '@comunica/utils-jest';
+import {
+  RDF_TYPE,
+  SD_DEFAULT_DATASET,
+  SD_DEFAULT_GRAPH,
+  SD_FEATURE,
+  SD_GRAPH,
+  SD_UNION_DEFAULT_GRAPH,
+  VOID_CLASS,
+  VOID_CLASS_PARTITION,
+  VOID_CLASSES,
+  VOID_DATASET,
+  VOID_DISTINCT_OBJECTS,
+  VOID_DISTINCT_SUBJECTS,
+  VOID_ENTITIES,
+  VOID_PROPERTY,
+  VOID_PROPERTY_PARTITION,
+  VOID_TRIPLES,
+  VOID_URI_REGEX_PATTERN,
+  VOID_URI_SPACE,
+  VOID_VOCABULARY,
+} from '../lib/Definitions';
 
-jest.mock('rdf-store-stream');
+const streamifyArray = require('streamify-array');
+
 jest.mock('@comunica/actor-init-query');
 jest.mock('@comunica/bus-rdf-metadata-extract');
 
 const DF = new DataFactory();
+const AF = new Factory(DF);
 
 describe('ActorRdfMetadataExtractVoid', () => {
   let bus: any;
   let actor: ActorRdfMetadataExtractVoid;
-  let actorInitQuery: ActorInitQuery;
+
+  const sparqlEndpoint = DF.namedNode('http://localhost:3000/sparql');
 
   beforeEach(() => {
     jest.resetAllMocks();
     bus = new Bus({ name: 'bus' });
-    actorInitQuery = new ActorInitQuery(<any> {});
     actor = new ActorRdfMetadataExtractVoid({
       bus,
       name: 'actor',
-      actorInitQuery,
-      inferUriSpace: false,
     });
   });
 
@@ -35,210 +56,183 @@ describe('ActorRdfMetadataExtractVoid', () => {
   });
 
   describe('run', () => {
-    it('should run', async() => {
-      jest.spyOn(actor, 'getDatasets').mockResolvedValue(<any>[ 'dataset' ]);
-      expect(storeStream).not.toHaveBeenCalled();
-      expect(actor.getDatasets).not.toHaveBeenCalled();
-      await expect(actor.run(<any>{ metadata: 'metadata' })).resolves.toEqual({
-        metadata: { voidDescriptions: [ 'dataset' ]},
-      });
-      expect(storeStream).toHaveBeenCalledTimes(1);
-      expect(storeStream).toHaveBeenNthCalledWith(1, 'metadata');
-      expect(actor.getDatasets).toHaveBeenCalledTimes(1);
-      expect(actor.getDatasets).toHaveBeenNthCalledWith(1, undefined);
+    it('should ignore empty metadata stream', async() => {
+      const metadata = streamifyArray([]);
+      await expect(actor.run(<any>{ metadata, url: sparqlEndpoint.value })).resolves.toEqual({ metadata: {}});
     });
 
-    it('should run without datasets present', async() => {
-      jest.spyOn(actor, 'getDatasets').mockResolvedValue({});
-      expect(storeStream).not.toHaveBeenCalled();
-      await expect(actor.run(<any>{ metadata: 'metadata' })).resolves.toEqual({
-        metadata: {},
+    describe.each([
+      [ 'void:Dataset', VOID_DATASET ],
+      [ 'sd:Graph', SD_GRAPH ],
+    ])('with dataset type %s', (_, typeUri) => {
+      it('should ignore datasets without triple count', async() => {
+        const metadata = streamifyArray([
+          DF.quad(sparqlEndpoint, DF.namedNode(RDF_TYPE), DF.namedNode(typeUri)),
+          DF.quad(sparqlEndpoint, DF.namedNode(VOID_CLASSES), DF.literal('1234')),
+          DF.quad(sparqlEndpoint, DF.namedNode(VOID_DISTINCT_OBJECTS), DF.literal('567')),
+          DF.quad(sparqlEndpoint, DF.namedNode(VOID_DISTINCT_SUBJECTS), DF.literal('345')),
+          DF.quad(sparqlEndpoint, DF.namedNode(VOID_URI_SPACE), DF.literal('http://localhost/')),
+          DF.quad(sparqlEndpoint, DF.namedNode(VOID_URI_REGEX_PATTERN), DF.literal('^http://localhost/.*')),
+          DF.quad(sparqlEndpoint, DF.namedNode(VOID_VOCABULARY), DF.namedNode('ex:v1')),
+          DF.quad(sparqlEndpoint, DF.namedNode(VOID_VOCABULARY), DF.namedNode('ex:v2')),
+        ]);
+        await expect(actor.run(<any>{ metadata, url: sparqlEndpoint.value })).resolves.toEqual({ metadata: {}});
       });
-      expect(storeStream).toHaveBeenCalledTimes(1);
-      expect(storeStream).toHaveBeenNthCalledWith(1, 'metadata');
-    });
-  });
 
-  describe('getDatasets', () => {
-    it('should discover complete dataset descriptions', async() => {
-      jest.spyOn((<any> actor).queryEngine, 'queryBindings').mockResolvedValue(<any> {
-        toArray: () => Promise.resolve<RDF.Bindings[]>([
-          <any> new Map<string, RDF.Term>([
-            [ 'dataset', DF.namedNode('ex:dataset') ],
-            [ 'triples', DF.literal('10') ],
-            [ 'uriSpace', DF.literal('ex:urispace') ],
-            [ 'sparqlEndpoint', DF.namedNode('ex:endpoint') ],
-            [ 'distinctSubjects', DF.literal('20') ],
-            [ 'distinctObjects', DF.literal('30') ],
-          ]),
-        ]),
+      it('should parse datasets with only triple count', async() => {
+        const metadata = streamifyArray([
+          DF.quad(sparqlEndpoint, DF.namedNode(RDF_TYPE), DF.namedNode(VOID_DATASET)),
+          DF.quad(sparqlEndpoint, DF.namedNode(VOID_TRIPLES), DF.literal('1234')),
+        ]);
+        await expect(actor.run(<any>{ metadata, url: sparqlEndpoint.value })).resolves.toEqual({
+          metadata: {
+            datasets: [
+              {
+                getCardinality: expect.any(Function),
+                source: sparqlEndpoint.value,
+                uri: sparqlEndpoint.value,
+              },
+            ],
+          },
+        });
       });
-      jest.spyOn(actor, 'getPropertyPartitions').mockResolvedValue(<any>'pp');
-      jest.spyOn(actor, 'getClassPartitions').mockResolvedValue(<any>'cp');
-      expect(actor.getPropertyPartitions).not.toHaveBeenCalled();
-      expect(actor.getClassPartitions).not.toHaveBeenCalled();
-      await expect(actor.getDatasets(<any>'store')).resolves.toEqual([
-        {
-          iri: 'ex:dataset',
-          triples: 10,
-          uriSpace: 'ex:urispace',
-          sparqlEndpoint: 'ex:endpoint',
-          distinctSubjects: 20,
-          distinctObjects: 30,
-          classPartitions: 'cp',
-          propertyPartitions: 'pp',
-        },
-      ]);
-      expect(actor.getPropertyPartitions).toHaveBeenCalledTimes(1);
-      expect(actor.getClassPartitions).toHaveBeenCalledTimes(1);
-      expect(actor.getPropertyPartitions).toHaveBeenNthCalledWith(1, 'ex:dataset', 'store');
-      expect(actor.getClassPartitions).toHaveBeenNthCalledWith(1, 'ex:dataset', 'store');
-    });
 
-    it('should discover partial dataset descriptions', async() => {
-      jest.spyOn((<any> actor).queryEngine, 'queryBindings').mockResolvedValue(<any> {
-        toArray: () => Promise.resolve<RDF.Bindings[]>([
-          <any> new Map<string, RDF.Term>([
-            [ 'dataset', DF.namedNode('ex:dataset') ],
-          ]),
-        ]),
+      it('should drop virtual sd:defaultGraph when sd:UnionDefaultGraph is declared', async() => {
+        const defaultGraph = DF.namedNode('ex:defaultGraph');
+        const metadata = streamifyArray([
+          DF.quad(sparqlEndpoint, DF.namedNode(RDF_TYPE), DF.namedNode(VOID_DATASET)),
+          DF.quad(sparqlEndpoint, DF.namedNode(SD_DEFAULT_GRAPH), defaultGraph),
+          DF.quad(sparqlEndpoint, DF.namedNode(SD_FEATURE), DF.namedNode(SD_UNION_DEFAULT_GRAPH)),
+          DF.quad(defaultGraph, DF.namedNode(RDF_TYPE), DF.namedNode(typeUri)),
+          DF.quad(defaultGraph, DF.namedNode(VOID_TRIPLES), DF.literal('1234')),
+        ]);
+        await expect(actor.run(<any>{ metadata, url: sparqlEndpoint.value })).resolves.toEqual({ metadata: {}});
       });
-      jest.spyOn(actor, 'getPropertyPartitions').mockResolvedValue(<any>'pp');
-      jest.spyOn(actor, 'getClassPartitions').mockResolvedValue(<any>'cp');
-      expect(actor.getPropertyPartitions).not.toHaveBeenCalled();
-      expect(actor.getClassPartitions).not.toHaveBeenCalled();
-      await expect(actor.getDatasets(<any>'store')).resolves.toEqual([
-        {
-          iri: 'ex:dataset',
-          triples: 0,
-          uriSpace: undefined,
-          sparqlEndpoint: undefined,
-          distinctSubjects: 0,
-          distinctObjects: 0,
-          classPartitions: 'cp',
-          propertyPartitions: 'pp',
-        },
-      ]);
-      expect(actor.getPropertyPartitions).toHaveBeenCalledTimes(1);
-      expect(actor.getClassPartitions).toHaveBeenCalledTimes(1);
-      expect(actor.getPropertyPartitions).toHaveBeenNthCalledWith(1, 'ex:dataset', 'store');
-      expect(actor.getClassPartitions).toHaveBeenNthCalledWith(1, 'ex:dataset', 'store');
-    });
 
-    it('should infer missing uriSpace based on dataset when instructed to', async() => {
-      (<any>actor).inferUriSpace = true;
-      jest.spyOn((<any> actor).queryEngine, 'queryBindings').mockResolvedValue(<any> {
-        toArray: () => Promise.resolve<RDF.Bindings[]>([
-          <any> new Map<string, RDF.Term>([
-            [ 'dataset', DF.namedNode('ex:dataset/.well-known/ds') ],
-          ]),
-        ]),
+      it('should drop intermediate sd:defaultDataset and propagate its vocabularies to sd:defaultGraph', async() => {
+        const defaultDataset = DF.namedNode('ex:defaultDataset');
+        const defaultGraph = DF.namedNode('ex:defaultGraph');
+        const metadata = streamifyArray([
+          DF.quad(sparqlEndpoint, DF.namedNode(SD_DEFAULT_DATASET), defaultDataset),
+          DF.quad(defaultDataset, DF.namedNode(VOID_TRIPLES), DF.literal('9876')),
+          DF.quad(defaultDataset, DF.namedNode(VOID_VOCABULARY), DF.namedNode('ex:v')),
+          DF.quad(defaultDataset, DF.namedNode(SD_DEFAULT_GRAPH), defaultGraph),
+          DF.quad(defaultGraph, DF.namedNode(RDF_TYPE), DF.namedNode(typeUri)),
+          DF.quad(defaultGraph, DF.namedNode(VOID_TRIPLES), DF.literal('4657')),
+        ]);
+        await expect(actor.run(<any>{ metadata, url: sparqlEndpoint.value })).resolves.toEqual({
+          metadata: {
+            datasets: [
+              {
+                getCardinality: expect.any(Function),
+                source: sparqlEndpoint.value,
+                uri: defaultGraph.value,
+              },
+            ],
+          },
+        });
       });
-      jest.spyOn(actor, 'getPropertyPartitions').mockResolvedValue(<any>'pp');
-      jest.spyOn(actor, 'getClassPartitions').mockResolvedValue(<any>'cp');
-      expect(actor.getPropertyPartitions).not.toHaveBeenCalled();
-      expect(actor.getClassPartitions).not.toHaveBeenCalled();
-      await expect(actor.getDatasets(<any>'store')).resolves.toEqual([
-        {
-          iri: 'ex:dataset/.well-known/ds',
-          triples: 0,
-          uriSpace: 'ex:dataset/',
-          sparqlEndpoint: undefined,
-          distinctSubjects: 0,
-          distinctObjects: 0,
-          classPartitions: 'cp',
-          propertyPartitions: 'pp',
-        },
-      ]);
-      expect(actor.getPropertyPartitions).toHaveBeenCalledTimes(1);
-      expect(actor.getClassPartitions).toHaveBeenCalledTimes(1);
-      expect(actor.getPropertyPartitions).toHaveBeenNthCalledWith(1, 'ex:dataset/.well-known/ds', 'store');
-      expect(actor.getClassPartitions).toHaveBeenNthCalledWith(1, 'ex:dataset/.well-known/ds', 'store');
-    });
-  });
 
-  describe('getClassPartitions', () => {
-    it('should discover complete class partitions', async() => {
-      jest.spyOn((<any> actor).queryEngine, 'queryBindings').mockResolvedValue(<any> {
-        toArray: () => Promise.resolve<RDF.Bindings[]>([
-          <any> new Map<string, RDF.Term>([
-            [ 'classPartition', DF.namedNode('ex:classPartition') ],
-            [ 'class', DF.namedNode('ex:class') ],
-            [ 'entities', DF.literal('15') ],
-          ]),
-        ]),
+      it('should produce datasets with cardinality estimation capability', async() => {
+        const tripleCount = 1234;
+        const metadata = streamifyArray([
+          DF.quad(sparqlEndpoint, DF.namedNode(RDF_TYPE), DF.namedNode(VOID_DATASET)),
+          DF.quad(sparqlEndpoint, DF.namedNode(VOID_TRIPLES), DF.literal(tripleCount.toString())),
+        ]);
+        const dataset: IDataset | undefined = (await actor.run(<any>{
+          metadata,
+          url: sparqlEndpoint.value,
+        }))?.metadata?.datasets.at(0);
+        expect(dataset).toBeDefined();
+        const pattern = AF.createPattern(DF.variable('s'), DF.variable('p'), DF.variable('o'));
+        await expect(dataset!.getCardinality(pattern)).resolves.toEqual({
+          type: 'estimate',
+          value: tripleCount,
+          dataset: sparqlEndpoint.value,
+        });
       });
-      jest.spyOn(actor, 'getPropertyPartitions').mockResolvedValue(<any>'pp');
-      expect(actor.getPropertyPartitions).not.toHaveBeenCalled();
-      await expect(actor.getClassPartitions(<any>'ex:dataset', <any>'store')).resolves.toEqual({
-        'ex:class': {
-          entities: 15,
-          propertyPartitions: 'pp',
-        },
-      });
-      expect(actor.getPropertyPartitions).toHaveBeenCalledTimes(1);
-      expect(actor.getPropertyPartitions).toHaveBeenNthCalledWith(1, 'ex:classPartition', 'store');
-    });
 
-    it('should discover partial class partitions', async() => {
-      jest.spyOn((<any> actor).queryEngine, 'queryBindings').mockResolvedValue(<any> {
-        toArray: () => Promise.resolve<RDF.Bindings[]>([
-          <any> new Map<string, RDF.Term>([
-            [ 'classPartition', DF.namedNode('ex:classPartition') ],
-            [ 'class', DF.namedNode('ex:class') ],
-          ]),
-        ]),
+      it('should parse datasets with void:propertyPartition', async() => {
+        const propertyPartition = DF.blankNode();
+        const propertyPartitionProperty = DF.namedNode('ex:p');
+        const propertyPartitionTriples = 5724;
+        const emptyPropertyPartition = DF.blankNode();
+        const metadata = streamifyArray([
+          DF.quad(sparqlEndpoint, DF.namedNode(RDF_TYPE), DF.namedNode(VOID_DATASET)),
+          DF.quad(sparqlEndpoint, DF.namedNode(VOID_TRIPLES), DF.literal('1234')),
+          DF.quad(sparqlEndpoint, DF.namedNode(VOID_PROPERTY_PARTITION), propertyPartition),
+          DF.quad(sparqlEndpoint, DF.namedNode(VOID_PROPERTY_PARTITION), emptyPropertyPartition),
+          DF.quad(propertyPartition, DF.namedNode(VOID_PROPERTY), propertyPartitionProperty),
+          DF.quad(propertyPartition, DF.namedNode(VOID_TRIPLES), DF.literal(propertyPartitionTriples.toString())),
+        ]);
+        await expect(actor.run(<any>{ metadata, url: sparqlEndpoint.value })).resolves.toEqual({
+          metadata: {
+            datasets: [
+              {
+                getCardinality: expect.any(Function),
+                source: sparqlEndpoint.value,
+                uri: sparqlEndpoint.value,
+              },
+            ],
+          },
+        });
       });
-      jest.spyOn(actor, 'getPropertyPartitions').mockResolvedValue(<any>'pp');
-      expect(actor.getPropertyPartitions).not.toHaveBeenCalled();
-      await expect(actor.getClassPartitions(<any>'ex:dataset', <any>'store')).resolves.toEqual({
-        'ex:class': {
-          entities: 0,
-          propertyPartitions: 'pp',
-        },
-      });
-      expect(actor.getPropertyPartitions).toHaveBeenCalledTimes(1);
-      expect(actor.getPropertyPartitions).toHaveBeenNthCalledWith(1, 'ex:classPartition', 'store');
-    });
-  });
 
-  describe('getPropertyPartitions', () => {
-    it('should discover complete property partitions', async() => {
-      jest.spyOn((<any> actor).queryEngine, 'queryBindings').mockResolvedValue(<any> {
-        toArray: () => Promise.resolve<RDF.Bindings[]>([
-          <any> new Map<string, RDF.Term>([
-            [ 'propertyPartition', DF.namedNode('ex:propertyPartition') ],
-            [ 'property', DF.namedNode('ex:property') ],
-            [ 'triples', DF.literal('30') ],
-            [ 'distinctSubjects', DF.literal('10') ],
-            [ 'distinctObjects', DF.literal('20') ],
-          ]),
-        ]),
+      it('should parse datasets with void:classPartition', async() => {
+        const classUri = DF.namedNode('ex:C');
+        const classPartition = DF.blankNode();
+        const classPartitionEntities = 4321;
+        const emptyClassPartition = DF.blankNode();
+        const metadata = streamifyArray([
+          DF.quad(sparqlEndpoint, DF.namedNode(RDF_TYPE), DF.namedNode(VOID_DATASET)),
+          DF.quad(sparqlEndpoint, DF.namedNode(VOID_TRIPLES), DF.literal('1234')),
+          DF.quad(sparqlEndpoint, DF.namedNode(VOID_CLASS_PARTITION), classPartition),
+          DF.quad(sparqlEndpoint, DF.namedNode(VOID_CLASS_PARTITION), emptyClassPartition),
+          DF.quad(classPartition, DF.namedNode(VOID_ENTITIES), DF.literal(classPartitionEntities.toString())),
+          DF.quad(classPartition, DF.namedNode(VOID_CLASS), classUri),
+        ]);
+        await expect(actor.run(<any>{ metadata, url: sparqlEndpoint.value })).resolves.toEqual({
+          metadata: {
+            datasets: [
+              {
+                getCardinality: expect.any(Function),
+                source: sparqlEndpoint.value,
+                uri: sparqlEndpoint.value,
+              },
+            ],
+          },
+        });
       });
-      await expect(actor.getPropertyPartitions(<any>'ex:dataset', <any>'store')).resolves.toEqual({
-        'ex:property': {
-          triples: 30,
-          distinctSubjects: 10,
-          distinctObjects: 20,
-        },
-      });
-    });
 
-    it('should discover partial property partitions', async() => {
-      jest.spyOn((<any> actor).queryEngine, 'queryBindings').mockResolvedValue(<any> {
-        toArray: () => Promise.resolve<RDF.Bindings[]>([
-          <any> new Map<string, RDF.Term>([
-            [ 'propertyPartition', DF.namedNode('ex:propertyPartition') ],
-            [ 'property', DF.namedNode('ex:property') ],
-          ]),
-        ]),
-      });
-      await expect(actor.getPropertyPartitions(<any>'ex:dataset', <any>'store')).resolves.toEqual({
-        'ex:property': {
-          triples: 0,
-          distinctSubjects: 0,
-          distinctObjects: 0,
-        },
+      it('should parse datasets with void:classPartition and nested void:propertyPartition', async() => {
+        const classUri = DF.namedNode('ex:C');
+        const classPartition = DF.blankNode();
+        const classPartitionEntities = 4321;
+        const emptyClassPartition = DF.blankNode();
+        const propertyPartition = DF.blankNode();
+        const propertyPartitionProperty = DF.namedNode('ex:p');
+        const metadata = streamifyArray([
+          DF.quad(sparqlEndpoint, DF.namedNode(RDF_TYPE), DF.namedNode(VOID_DATASET)),
+          DF.quad(sparqlEndpoint, DF.namedNode(VOID_TRIPLES), DF.literal('1234')),
+          DF.quad(sparqlEndpoint, DF.namedNode(VOID_CLASS_PARTITION), classPartition),
+          DF.quad(sparqlEndpoint, DF.namedNode(VOID_CLASS_PARTITION), emptyClassPartition),
+          DF.quad(classPartition, DF.namedNode(VOID_ENTITIES), DF.literal(classPartitionEntities.toString())),
+          DF.quad(classPartition, DF.namedNode(VOID_CLASS), classUri),
+          DF.quad(classPartition, DF.namedNode(VOID_PROPERTY_PARTITION), propertyPartition),
+          DF.quad(propertyPartition, DF.namedNode(VOID_PROPERTY), propertyPartitionProperty),
+          DF.quad(propertyPartition, DF.namedNode(VOID_TRIPLES), DF.literal('5678')),
+        ]);
+        await expect(actor.run(<any>{ metadata, url: sparqlEndpoint.value })).resolves.toEqual({
+          metadata: {
+            datasets: [
+              {
+                getCardinality: expect.any(Function),
+                source: sparqlEndpoint.value,
+                uri: sparqlEndpoint.value,
+              },
+            ],
+          },
+        });
       });
     });
   });

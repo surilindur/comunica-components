@@ -1,3 +1,4 @@
+import type { HashFunction } from '@comunica/bus-hash-bindings';
 import type { Bindings, BindingsStream } from '@comunica/types';
 import type { TransformIteratorOptions } from 'asynciterator';
 import { TransformIterator } from 'asynciterator';
@@ -11,18 +12,18 @@ import { TransformIterator } from 'asynciterator';
  */
 export class BindingsStreamAdaptiveHeuristics extends TransformIterator<Bindings> {
   private readonly createSource: () => Promise<BindingsStream>;
-  private readonly hashBindings: (item: Bindings) => string;
+  private readonly hashBindings: HashFunction;
   private readonly timeout?: number;
 
   private timeoutHandle?: NodeJS.Timeout;
-  private currentSourceBindings: Map<string, number>;
-  private previousSourceBindings?: Map<string, number>;
+  private currentSourceBindings: Map<number, number>;
+  private previousSourceBindings?: Map<number, number>;
 
   public constructor(
     source: BindingsStream,
     options: TransformIteratorOptions<Bindings> & { timeout?: number },
     createSource: () => Promise<BindingsStream>,
-    hashBindings: (item: Bindings) => string,
+    hashBindings: HashFunction,
   ) {
     super(source, options);
     this.timeout = options.timeout;
@@ -74,7 +75,7 @@ export class BindingsStreamAdaptiveHeuristics extends TransformIterator<Bindings
 
   // eslint-disable-next-line ts/naming-convention
   protected _push(item: Bindings): void {
-    const bindingsKey = this.hashBindings(item);
+    const bindingsKey = this.hashBindings(item, [ ...item.keys() ]);
     let shouldPushBinding = true;
     if (this.previousSourceBindings) {
       // If this binding has been pushed previously, do not push it again
