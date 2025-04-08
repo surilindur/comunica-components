@@ -9,18 +9,52 @@ import type { IVoidDataset } from './Types';
  */
 export function getCardinality(dataset: IVoidDataset, operation: Algebra.Operation): RDF.QueryResultCardinality {
   switch (operation.type) {
+    case Algebra.types.ASK:
+      return { type: 'exact', value: 1 };
+    case Algebra.types.DELETE_INSERT:
+    case Algebra.types.ADD:
+    case Algebra.types.COMPOSITE_UPDATE:
+    case Algebra.types.CLEAR:
+    case Algebra.types.NOP:
+    case Algebra.types.DROP:
+    case Algebra.types.CREATE:
+    case Algebra.types.MOVE:
+    case Algebra.types.COPY:
+      return { type: 'exact', value: 0 };
     case Algebra.types.PROJECT:
     case Algebra.types.FILTER:
     case Algebra.types.ORDER_BY:
     case Algebra.types.GROUP:
     case Algebra.types.CONSTRUCT:
-    case Algebra.types.ASK:
+    case Algebra.types.DISTINCT:
+    case Algebra.types.REDUCED:
+    case Algebra.types.EXTEND:
       return getCardinality(dataset, operation.input);
+    case Algebra.types.ZERO_OR_ONE_PATH:
+    case Algebra.types.ZERO_OR_MORE_PATH:
+    case Algebra.types.ONE_OR_MORE_PATH:
+      return getCardinality(dataset, operation.path);
+    case Algebra.types.PATH:
+      return getCardinality(dataset, operation.predicate);
+    case Algebra.types.SEQ:
+    case Algebra.types.ALT:
+      return getAltCardinality(dataset, operation.input);
+    case Algebra.types.NPS:
+      return getNpsCardinality(dataset, operation);
+    case Algebra.types.INV:
+      return getCardinality(dataset, operation.path);
     case Algebra.types.PATTERN:
       return getPatternCardinality(dataset, operation);
+    case Algebra.types.LINK:
+      return getPatternCardinality(dataset, <Algebra.Pattern>{
+        subject: { termType: 'Variable', value: 's' },
+        predicate: operation.iri,
+        object: { termType: 'Variable', value: 'o' },
+      });
     case Algebra.types.BGP:
       return getUnionCardinality(dataset, operation.patterns);
     case Algebra.types.JOIN:
+    case Algebra.types.LEFT_JOIN:
     case Algebra.types.UNION:
       return getUnionCardinality(dataset, operation.input);
     case Algebra.types.GRAPH:
@@ -33,7 +67,10 @@ export function getCardinality(dataset: IVoidDataset, operation: Algebra.Operati
       return getMinusCardinality(dataset, operation);
     case Algebra.types.VALUES:
       return { type: 'exact', value: operation.bindings.length };
-    default:
+    case Algebra.types.SERVICE:
+    case Algebra.types.LOAD:
+    case Algebra.types.DESCRIBE:
+    case Algebra.types.EXPRESSION:
       return { type: 'estimate', value: Number.POSITIVE_INFINITY };
   }
 }
@@ -112,6 +149,43 @@ export function getUnionCardinality(dataset: IVoidDataset, input: Algebra.Operat
       estimate.type = 'estimate';
       estimate.value += cardinality.value;
     }
+  }
+  return estimate;
+}
+
+/**
+ * Estimate the cardinality of an alternate property path.
+ */
+export function getAltCardinality(
+  dataset: IVoidDataset,
+  input: Algebra.PropertyPathSymbol[],
+): RDF.QueryResultCardinality {
+  const estimate: RDF.QueryResultCardinality = { type: 'exact', value: 0 };
+  for (const symbol of input) {
+    const cardinality = getCardinality(dataset, symbol);
+    if (cardinality.value > 0) {
+      estimate.type = 'estimate';
+      estimate.value += cardinality.value;
+    }
+  }
+  return estimate;
+}
+
+/**
+ * Estimate the cardinality of a negated property set.
+ */
+export function getNpsCardinality(dataset: IVoidDataset, nps: Algebra.Nps): RDF.QueryResultCardinality {
+  const estimate: RDF.QueryResultCardinality = { type: 'estimate', value: dataset.triples };
+  for (const predicate of nps.iris) {
+    const cardinality = getPatternCardinalityRaw(dataset, <Algebra.Pattern>{
+      subject: { termType: 'Variable', value: 's' },
+      predicate,
+      object: { termType: 'Variable', value: 'o' },
+    });
+    estimate.value -= cardinality;
+  }
+  if (estimate.value < 0) {
+    estimate.value = 0;
   }
   return estimate;
 }

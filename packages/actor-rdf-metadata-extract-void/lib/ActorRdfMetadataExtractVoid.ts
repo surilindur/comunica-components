@@ -4,9 +4,9 @@ import type {
   IActorRdfMetadataExtractArgs,
 } from '@comunica/bus-rdf-metadata-extract';
 import { ActorRdfMetadataExtract } from '@comunica/bus-rdf-metadata-extract';
-import { KeysQueryOperation } from '@comunica/context-entries';
 import type { IActorTest, TestResult } from '@comunica/core';
-import { passTestVoid, failTest } from '@comunica/core';
+import { passTestVoid } from '@comunica/core';
+import type { QueryResultCardinality } from '@comunica/types';
 import type * as RDF from '@rdfjs/types';
 import type { Algebra } from 'sparqlalgebrajs';
 import {
@@ -32,6 +32,7 @@ import {
 } from './Definitions';
 import { getCardinality } from './Estimators';
 import type {
+  IDataset,
   IVoidClassPartition,
   IVoidDataset,
   IVoidPropertyPartition,
@@ -45,10 +46,7 @@ export class ActorRdfMetadataExtractVoid extends ActorRdfMetadataExtract {
     super(args);
   }
 
-  public async test(action: IActionRdfMetadataExtract): Promise<TestResult<IActorTest>> {
-    if (!action.context.has(KeysQueryOperation.operation)) {
-      return failTest(`${this.name} requires a query operation to be present in context.`);
-    }
+  public async test(_action: IActionRdfMetadataExtract): Promise<TestResult<IActorTest>> {
     return passTestVoid();
   }
 
@@ -56,6 +54,7 @@ export class ActorRdfMetadataExtractVoid extends ActorRdfMetadataExtract {
     return new Promise<IActorRdfMetadataExtractOutput>((resolve, reject) => {
       // Track the URIs of identified datasets to extract
       const datasetUris = new Set<string>();
+      const ignoredDatasets = new Set<string>();
 
       // Track the other stats per-URI to allow arbitrary triple ordering in the stream
       const triples: Record<string, number> = {};
@@ -80,7 +79,10 @@ export class ActorRdfMetadataExtractVoid extends ActorRdfMetadataExtract {
         .on('data', (quad: RDF.Quad) => {
           switch (quad.predicate.value) {
             case RDF_TYPE:
-              if (quad.object.value === SD_GRAPH || quad.object.value === VOID_DATASET) {
+              if (
+                (quad.object.value === SD_GRAPH || quad.object.value === VOID_DATASET) &&
+                !ignoredDatasets.has(quad.subject.value)
+              ) {
                 datasetUris.add(quad.subject.value);
               }
               break;
@@ -121,6 +123,7 @@ export class ActorRdfMetadataExtractVoid extends ActorRdfMetadataExtract {
               uriRegexPatterns[quad.subject.value] = new RegExp(quad.object.value, 'u');
               break;
             case VOID_PROPERTY_PARTITION:
+              ignoredDatasets.add(quad.object.value);
               if (propertyPartitions[quad.subject.value]) {
                 propertyPartitions[quad.subject.value].push(quad.object.value);
               } else {
@@ -128,6 +131,7 @@ export class ActorRdfMetadataExtractVoid extends ActorRdfMetadataExtract {
               }
               break;
             case VOID_CLASS_PARTITION:
+              ignoredDatasets.add(quad.object.value);
               if (classPartitions[quad.subject.value]) {
                 classPartitions[quad.subject.value].push(quad.object.value);
               } else {
@@ -148,6 +152,8 @@ export class ActorRdfMetadataExtractVoid extends ActorRdfMetadataExtract {
           }
         })
         .on('end', () => {
+          const datasets: IDataset[] = [];
+
           // Helper function to extract property partitions into a map
           const getPropertyPartitions = (uri: string): Record<string, IVoidPropertyPartition> => {
             const partitions: Record<string, IVoidPropertyPartition> = {};
@@ -192,14 +198,12 @@ export class ActorRdfMetadataExtractVoid extends ActorRdfMetadataExtract {
             datasetUris.delete(defaultGraphUri);
           }
 
-          const datasets: Record<string, IVoidDataset> = {};
-
           for (const uri of datasetUris) {
             // Only the VoID descriptions with triple counts and class or property partitions are actually useful,
             // and any other ones would contain insufficient information to use in estimation, as the formulae
             // would go to 0 for most estimations.
             if (triples[uri]) {
-              datasets[uri] = {
+              const dataset: IVoidDataset = {
                 entities: entities[uri],
                 identifier: uri,
                 classes: classes[uri] ?? classPartitions[uri]?.length ?? 0,
@@ -211,30 +215,18 @@ export class ActorRdfMetadataExtractVoid extends ActorRdfMetadataExtract {
                 uriRegexPattern: uriRegexPatterns[uri],
                 vocabularies: vocabularies[uri],
               };
+              datasets.push({
+                getCardinality: async(operation: Algebra.Operation): Promise<QueryResultCardinality> => ({
+                  ...getCardinality(dataset, operation),
+                  dataset: action.url,
+                }),
+                source: action.url,
+                uri,
+              });
             }
           }
 
-          let cardinality: RDF.QueryResultCardinality | undefined;
-          const operation: Algebra.Operation = action.context.getSafe(KeysQueryOperation.operation);
-
-          if (unionDefaultGraph) {
-            cardinality = {
-              type: 'estimate',
-              value: Object.values(datasets)
-                .map(ds => getCardinality(ds, operation).value)
-                .reduce((acc, cur) => acc + cur, 0),
-            };
-          } else if (defaultGraphUri && defaultGraphUri in datasets) {
-            cardinality = getCardinality(datasets[defaultGraphUri], operation);
-          } else if (action.url in datasets) {
-            cardinality = getCardinality(datasets[action.url], operation);
-          }
-
-          if (cardinality) {
-            console.log('CARDINALITY', cardinality, operation);
-          }
-
-          resolve({ metadata: cardinality ? { cardinality } : {}});
+          resolve({ metadata: datasets.length > 0 ? { datasets } : {}});
         });
     });
   }

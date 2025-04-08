@@ -1,0 +1,20 @@
+{
+  "name": "@comunica/actor-rdf-metadata-accumulate-cardinality-void",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Comunica metadata accumulate actor for cardinalities based on VoID descriptions",
+  "author": "surilindur",
+  "license": "MIT",
+  "repository": "https://github.com/surilindur/comunica-components",
+  "main": "lib/index.js",
+  "types": "lib/index",
+  "lsd:module": true,
+  "dependencies": {
+    "@comunica/actor-rdf-metadata-accumulate-cardinality": "^4.1.0",
+    "@comunica/actor-rdf-metadata-extract-void": "^0.0.0",
+    "@comunica/bus-rdf-metadata-accumulate": "^4.1.0",
+    "@comunica/context-entries": "^4.1.0",
+    "@comunica/core": "^4.1.0",
+    "@comunica/types": "^4.1.0"
+  }
+}

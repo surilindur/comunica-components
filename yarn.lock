@@ -3252,7 +3252,20 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@comunica/actor-rdf-metadata-accumulate-cardinality@npm:^4.0.1":
+"@comunica/actor-rdf-metadata-accumulate-cardinality-void@npm:^0.0.0, @comunica/actor-rdf-metadata-accumulate-cardinality-void@workspace:packages/actor-rdf-metadata-accumulate-cardinality-void":
+  version: 0.0.0-use.local
+  resolution: "@comunica/actor-rdf-metadata-accumulate-cardinality-void@workspace:packages/actor-rdf-metadata-accumulate-cardinality-void"
+  dependencies:
+    "@comunica/actor-rdf-metadata-accumulate-cardinality": "npm:^4.1.0"
+    "@comunica/actor-rdf-metadata-extract-void": "npm:^0.0.0"
+    "@comunica/bus-rdf-metadata-accumulate": "npm:^4.1.0"
+    "@comunica/context-entries": "npm:^4.1.0"
+    "@comunica/core": "npm:^4.1.0"
+    "@comunica/types": "npm:^4.1.0"
+  languageName: unknown
+  linkType: soft
+
+"@comunica/actor-rdf-metadata-accumulate-cardinality@npm:^4.0.1, @comunica/actor-rdf-metadata-accumulate-cardinality@npm:^4.1.0":
   version: 4.1.0
   resolution: "@comunica/actor-rdf-metadata-accumulate-cardinality@npm:4.1.0"
   dependencies:
@@ -3390,7 +3403,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@comunica/actor-rdf-metadata-extract-void@npm:^4.0.0, @comunica/actor-rdf-metadata-extract-void@workspace:packages/actor-rdf-metadata-extract-void":
+"@comunica/actor-rdf-metadata-extract-void@npm:^0.0.0, @comunica/actor-rdf-metadata-extract-void@workspace:packages/actor-rdf-metadata-extract-void":
   version: 0.0.0-use.local
   resolution: "@comunica/actor-rdf-metadata-extract-void@workspace:packages/actor-rdf-metadata-extract-void"
   dependencies:
@@ -4537,7 +4550,8 @@ __metadata:
   dependencies:
     "@comunica/actor-init-query": "npm:^4.0.0"
     "@comunica/actor-rdf-join-inner-multi-adaptive-heuristics": "npm:^0.0.0"
-    "@comunica/actor-rdf-metadata-extract-void": "npm:^4.0.0"
+    "@comunica/actor-rdf-metadata-accumulate-cardinality-void": "npm:^0.0.0"
+    "@comunica/actor-rdf-metadata-extract-void": "npm:^0.0.0"
     "@comunica/config-query-sparql-components": "npm:^4.0.0"
     "@comunica/query-sparql-link-traversal-solid": "npm:^0.6.0"
     "@comunica/runner": "npm:^4.0.0"

@@ -1,6 +1,6 @@
 {
   "name": "@comunica/actor-rdf-metadata-extract-void",
-  "version": "4.1.0",
+  "version": "0.0.0",
   "description": "Comunica RDF metadata extract actor that parses VoID dataset descriptions",
   "license": "MIT",
   "homepage": "https://comunica.dev/",
