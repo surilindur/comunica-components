@@ -11,7 +11,6 @@
   "lsd:module": true,
   "dependencies": {
     "@comunica/actor-rdf-metadata-accumulate-cardinality": "^4.1.0",
-    "@comunica/actor-rdf-metadata-extract-void": "^0.0.0",
     "@comunica/bus-rdf-metadata-accumulate": "^4.1.0",
     "@comunica/context-entries": "^4.1.0",
     "@comunica/core": "^4.1.0",
