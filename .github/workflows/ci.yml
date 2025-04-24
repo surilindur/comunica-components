@@ -54,3 +54,15 @@ jobs:
         run: yarn install --immutable
       - name: Execute unit tests
         run: yarn run test --selectProjects packages
+  docker:
+    name: Docker
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Build Docker image
+        uses: docker/build-push-action@v6
+        with:
+          push: false
+          tags: comunica/query-sparql-prototype:dev
