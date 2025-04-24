@@ -2,6 +2,7 @@
 components/
 componentsjs-error-state.json
 coverage/
+documentation
 engines/**/*.d.ts
 engines/**/*.js
 engines/**/*.js.map

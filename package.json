@@ -15,6 +15,7 @@
     "build:engines": "yarn workspaces foreach --all --include 'engines/*' run prepare",
     "build:ts": "tsc",
     "clean": "git clean -dfx",
+    "doc": "typedoc",
     "lint": "eslint .",
     "postinstall": "yarn run build",
     "test": "yarn jest"
@@ -27,6 +28,7 @@
     "eslint": "^8.0.0",
     "jest": "^29.0.0",
     "ts-jest": "^29.0.0",
+    "typedoc": "^0.28.0",
     "typescript": "^5.0.0"
   },
   "resolutions": {

@@ -10,6 +10,7 @@ env:
   DEFAULT_NODE_VERSION: 23.x
 
 jobs:
+
   lint:
     name: Lint
     runs-on: ubuntu-latest
@@ -26,6 +27,7 @@ jobs:
         run: yarn install --immutable --mode skip-build
       - name: Run ESLint
         run: yarn run lint
+
   test:
     name: Test
     needs: lint
@@ -54,6 +56,7 @@ jobs:
         run: yarn install --immutable
       - name: Execute unit tests
         run: yarn run test --selectProjects packages
+
   docker:
     name: Docker
     needs: test
@@ -66,3 +69,26 @@ jobs:
         with:
           push: false
           tags: comunica/query-sparql-prototype:dev
+
+  documentation:
+    name: Documentation
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Use Node.js ${{ env.DEFAULT_NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.DEFAULT_NODE_VERSION }}
+      - name: Enable Corepack
+        run: corepack enable
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Install dependencies
+        run: yarn install --immutable
+      - name: Build documentation
+        run: yarn run doc
+      - name: Prepare artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: documentation
+          name: documentation
