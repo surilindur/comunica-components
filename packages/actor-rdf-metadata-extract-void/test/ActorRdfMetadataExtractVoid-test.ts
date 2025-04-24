@@ -1,5 +1,5 @@
 import { Bus } from '@comunica/core';
-import type { IDataset } from '@comunica/types';
+import type { IDataset } from '@comunica/utils-prototype';
 import { DataFactory } from 'rdf-data-factory';
 import { Factory } from 'sparqlalgebrajs';
 import { ActorRdfMetadataExtractVoid } from '../lib/ActorRdfMetadataExtractVoid';

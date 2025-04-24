@@ -1,10 +1,11 @@
-import type { IDataset, QueryResultCardinality } from '@comunica/types';
+import type { QueryResultCardinality } from '@comunica/types';
 import { DataFactory } from 'rdf-data-factory';
 import { Factory, Algebra } from 'sparqlalgebrajs';
 import {
   estimateCardinality,
   estimateUnionCardinality,
 } from '../lib/CardinalityEstimators';
+import type { IDataset } from '../lib/IDataset';
 
 const DF = new DataFactory();
 const AF = new Factory(DF);

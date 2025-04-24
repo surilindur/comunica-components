@@ -6,7 +6,8 @@ import type {
 import { ActorRdfMetadataExtract } from '@comunica/bus-rdf-metadata-extract';
 import type { IActorTest, TestResult } from '@comunica/core';
 import { passTestVoid } from '@comunica/core';
-import type { IDataset, QueryResultCardinality } from '@comunica/types';
+import type { QueryResultCardinality } from '@comunica/types';
+import type { IDataset } from '@comunica/utils-prototype';
 import type * as RDF from '@rdfjs/types';
 import { Algebra } from 'sparqlalgebrajs';
 import {

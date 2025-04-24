@@ -1,6 +1,7 @@
-import type { IDataset, QueryResultCardinality } from '@comunica/types';
+import type { QueryResultCardinality } from '@comunica/types';
 import { DataFactory } from 'rdf-data-factory';
 import { Algebra, Factory, Util } from 'sparqlalgebrajs';
+import type { IDataset } from './IDataset';
 
 // These are only used internally for estimates
 const DF = new DataFactory();

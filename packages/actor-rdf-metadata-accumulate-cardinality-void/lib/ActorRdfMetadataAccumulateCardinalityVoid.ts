@@ -7,8 +7,9 @@ import type {
 import { KeysQueryOperation } from '@comunica/context-entries';
 import { passTestVoid } from '@comunica/core';
 import type { IActorTest, TestResult } from '@comunica/core';
-import type { IDataset, QueryResultCardinality } from '@comunica/types';
-import { estimateCardinality } from '@comunica/utils-query-operation';
+import type { QueryResultCardinality } from '@comunica/types';
+import type { IDataset } from '@comunica/utils-prototype';
+import { estimateCardinality } from '@comunica/utils-prototype';
 
 /**
  * A comunica Predicate Count RDF Metadata Accumulate Actor.

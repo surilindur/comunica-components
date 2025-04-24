@@ -1,5 +1,5 @@
+import type { QueryResultCardinality } from '@comunica/types';
 import type { Algebra } from 'sparqlalgebrajs';
-import type { QueryResultCardinality } from './IMetadata';
 
 /**
  * Abstraction to allow grouping of metadata by dataset, in case multiple datasets

@@ -1,6 +1,6 @@
 # Comunica VoID Description RDF Metadata Extract Actor
 
-[![npm version](https://badge.fury.io/js/%40comunica%2Factor-rdf-metadata-extract-void.svg)](https://www.npmjs.com/package/@comunica/actor-rdf-metadata-extract-void)
+**Note: this is a copy of unreleased Comunica component, and will be removed when the actual release is made.**
 
 An [RDF Metadata Extract](https://github.com/comunica/comunica/tree/master/packages/bus-rdf-metadata-extract) actor that
 extracts [VoID dataset description metadata](https://www.w3.org/TR/void/).
