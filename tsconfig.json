@@ -17,11 +17,8 @@
     "forceConsistentCasingInFileNames": true
   },
   "include": [
-    "./engines/*/bin/*.ts",
-    "./engines/*/lib/*.ts",
-    "./packages/*/lib/*.ts"
-  ],
-  "exclude": [
-    "**/node_modules"
+    "engines/*/bin/*.ts",
+    "engines/*/lib/*.ts",
+    "packages/*/lib/*.ts"
   ]
 }

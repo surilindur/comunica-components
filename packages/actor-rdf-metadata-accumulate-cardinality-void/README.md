@@ -1,9 +1,7 @@
-# Comunica VoID Description RDF Metadata Accumulate Actor
-
-[![npm version](https://badge.fury.io/js/%40comunica%2Factor-rdf-metadata-accumulate-void-description.svg)](https://www.npmjs.com/package/@comunica/actor-rdf-metadata-accumulate-void-description)
+# Comunica RDF Metadata Accumulate Actor for Cardinalities from VoID Descriptions
 
 An [RDF Metadata Accumulate](https://github.com/comunica/comunica/tree/master/packages/bus-rdf-metadata-accumulate) actor
-that handles the `cardinality` and `voidDescription` fields.
+that performs cardinality estimation using discovered VoID dataset descriptions.
 
 This module is part of the [Comunica framework](https://github.com/comunica/comunica),
 and should only be used by [developers that want to build their own query engine](https://comunica.dev/docs/modify/).
@@ -27,7 +25,7 @@ After installing, this package can be added to your engine's configuration as fo
   "actors": [
     {
       "@id": "urn:comunica:default:rdf-metadata-accumulate/actors#cardinality-void",
-      "@type": "ActorRdfMetadataAccumulateCardinalityVoID"
+      "@type": "ActorRdfMetadataAccumulateCardinalityVoid"
     }
   ]
 }

@@ -11,12 +11,12 @@
   ],
   "scripts": {
     "build": "yarn run build:ts && yarn run build:components && yarn run build:engines",
-    "build:components": "componentsjs-generator 'engines/*' 'packages/*'",
+    "build:components": "componentsjs-generator 'packages/*' 'engines/*'",
     "build:engines": "yarn workspaces foreach --all --include 'engines/*' run prepare",
-    "build:engines-browser": "yarn workspaces foreach --all --include 'engines/*' run browser",
     "build:ts": "tsc",
     "clean": "git clean -dfx",
     "lint": "eslint .",
+    "postinstall": "yarn run build",
     "test": "yarn jest"
   },
   "devDependencies": {

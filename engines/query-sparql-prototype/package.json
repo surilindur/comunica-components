@@ -1,0 +1,27 @@
+{
+  "name": "@comunica/query-sparql-prototype",
+  "version": "0.0.0",
+  "private": true,
+  "license": "MIT",
+  "main": "lib/index.js",
+  "types": "lib/index",
+  "lsd:module": true,
+  "bin": {
+    "comunica-dynamic-sparql-prototype": "bin/query-dynamic.js",
+    "comunica-sparql-prototype": "bin/query.js",
+    "comunica-sparql-prototype-http": "bin/http.js"
+  },
+  "scripts": {
+    "prepare": "comunica-compile-config config/config-default.json > engine-default.js"
+  },
+  "dependencies": {
+    "@comunica/actor-init-query": "^4.1.0",
+    "@comunica/actor-rdf-join-inner-restart": "^0.0.0",
+    "@comunica/actor-rdf-metadata-accumulate-cardinality-void": "^0.0.0",
+    "@comunica/actor-rdf-metadata-extract-void": "^4.1.0",
+    "@comunica/config-query-sparql-prototype": "^0.0.0",
+    "@comunica/query-sparql-link-traversal-solid": "^0.6.0",
+    "@comunica/runner": "^4.1.0",
+    "@comunica/runner-cli": "^4.1.0"
+  }
+}

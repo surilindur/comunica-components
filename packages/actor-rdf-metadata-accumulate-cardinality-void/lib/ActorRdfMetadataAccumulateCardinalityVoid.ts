@@ -1,5 +1,4 @@
 import { ActorRdfMetadataAccumulateCardinality } from '@comunica/actor-rdf-metadata-accumulate-cardinality';
-import type { IDataset } from '@comunica/actor-rdf-metadata-extract-void';
 import type {
   IActionRdfMetadataAccumulate,
   IActorRdfMetadataAccumulateOutput,
@@ -8,7 +7,8 @@ import type {
 import { KeysQueryOperation } from '@comunica/context-entries';
 import { passTestVoid } from '@comunica/core';
 import type { IActorTest, TestResult } from '@comunica/core';
-import type { QueryResultCardinality } from '@comunica/types';
+import type { IDataset, QueryResultCardinality } from '@comunica/types';
+import { estimateCardinality } from '@comunica/utils-query-operation';
 
 /**
  * A comunica Predicate Count RDF Metadata Accumulate Actor.
@@ -29,13 +29,13 @@ export class ActorRdfMetadataAccumulateCardinalityVoid extends ActorRdfMetadataA
       const datasets: Record<string, IDataset> = {};
 
       if (action.accumulatedMetadata.datasets) {
-        for (const dataset of <IDataset[]>action.accumulatedMetadata.datasets) {
+        for (const dataset of (<IDataset[]> action.accumulatedMetadata.datasets)) {
           datasets[dataset.uri] = dataset;
         }
       }
 
       if (action.appendingMetadata.datasets) {
-        for (const dataset of <IDataset[]>action.appendingMetadata.datasets) {
+        for (const dataset of (<IDataset[]> action.appendingMetadata.datasets)) {
           datasets[dataset.uri] = dataset;
         }
       }
@@ -46,7 +46,7 @@ export class ActorRdfMetadataAccumulateCardinalityVoid extends ActorRdfMetadataA
 
         if (operation && datasets) {
           for (const dataset of Object.values(datasets)) {
-            const datasetCardinality = await dataset.getCardinality(operation);
+            const datasetCardinality = estimateCardinality(operation, dataset);
             if (cardinality) {
               cardinality.value += datasetCardinality.value;
               cardinality.type = 'estimate';

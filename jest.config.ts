@@ -3,7 +3,6 @@ import type { Config } from '@jest/types';
 const moduleFileExtensions: string[] = [ 'ts', 'js' ];
 
 const transform: Record<string, Config.TransformerConfig> = {
-  // eslint-disable-next-line ts/naming-convention
   '\\.ts$': [ 'ts-jest', {
     // Enabling this can fix issues when using prereleases of typings packages
     // isolatedModules: true
