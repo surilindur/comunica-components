@@ -18,7 +18,7 @@
   },
   "include": [
     "engines/*/bin/*.ts",
-    "engines/*/lib/*.ts",
-    "packages/*/lib/*.ts"
+    "engines/*/lib/**/*.ts",
+    "packages/*/lib/**/*.ts"
   ]
 }
