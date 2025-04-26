@@ -4,18 +4,15 @@ import type { TransformIteratorOptions } from 'asynciterator';
 import { TransformIterator } from 'asynciterator';
 
 /**
- * An iterator that starts by iterating over the first iterator, and switches to a second iterator
- * either after a timeout or when the swapSource function is called.
- *
- * If the currently running iterator ends before a swap, the swap will not happen.
- * The iterator tracks bindings that are output to avoid producing duplicates.
+ * An iterator that can be instructed to pull a new source at will,
+ * and automatically skips would-be-produced duplicates.
  */
 export class BindingsStreamRestart extends TransformIterator<Bindings> {
   private readonly createSource: () => Promise<BindingsStream>;
   private readonly hashBindings: HashFunction;
 
-  private currentSourceBindings: Map<number, number>;
-  private previousSourceBindings?: Map<number, number>;
+  private readonly bindingsProduced: Map<number, number>;
+  private readonly bindingsSkipped: Map<number, number>;
 
   public constructor(
     source: BindingsStream,
@@ -26,54 +23,28 @@ export class BindingsStreamRestart extends TransformIterator<Bindings> {
     super(source, options);
     this.createSource = createSource;
     this.hashBindings = hashBindings;
-    this.currentSourceBindings = new Map();
+    this.bindingsProduced = new Map();
+    this.bindingsSkipped = new Map();
   }
 
   public swapSource(): void {
-    if (this.source && !this.source.done) {
-      // This will stop the current iterator, however it might also propagate the destroy
-      // to all the other ones behind it, which has proven to be buggy. The source passed
-      // to this join should therefore take care not to destroy everything when it itself
-      // gets destroyed.
-      this.source.destroy();
-
-      // When swapping the source, make sure not to lose any pushed binding information from
-      // the already previous bindings by migrating them to the current one before assigning
-      // the current bindings as previous ones.
-      if (this.previousSourceBindings) {
-        for (const [ key, value ] of this.previousSourceBindings) {
-          if (value > 0) {
-            this.currentSourceBindings.set(key, (this.currentSourceBindings.get(key) ?? 0) + value);
-          }
-        }
-      }
-
-      this.previousSourceBindings = this.currentSourceBindings;
-      this.currentSourceBindings = new Map();
-
+    if (this._source && !this._source.done) {
+      this._source.destroy();
+      this.bindingsSkipped.clear();
       this._source = undefined;
       this._createSource = this.createSource;
       this._loadSourceAsync();
     }
   }
 
-  protected _push(item: Bindings): void {
+  protected override _push(item: Bindings): void {
     const bindingsKey = this.hashBindings(item, [ ...item.keys() ]);
-    let shouldPushBinding = true;
-    if (this.previousSourceBindings) {
-      // If this binding has been pushed previously, do not push it again
-      const previouslyPushed = this.previousSourceBindings.get(bindingsKey);
-      if (previouslyPushed !== undefined) {
-        if (previouslyPushed > 1) {
-          this.previousSourceBindings.set(bindingsKey, previouslyPushed - 1);
-        } else {
-          this.previousSourceBindings.delete(bindingsKey);
-        }
-        shouldPushBinding = false;
-      }
-    }
-    if (shouldPushBinding) {
-      this.currentSourceBindings.set(bindingsKey, (this.currentSourceBindings.get(bindingsKey) ?? 0) + 1);
+    const currentSkipped = this.bindingsSkipped.get(bindingsKey) ?? 0;
+    const currentProduced = this.bindingsProduced.get(bindingsKey) ?? 0;
+    if (currentSkipped < currentProduced) {
+      this.bindingsSkipped.set(bindingsKey, currentSkipped + 1);
+    } else {
+      this.bindingsProduced.set(bindingsKey, currentProduced + 1);
       super._push(item);
     }
   }

@@ -18,9 +18,8 @@ import type {
   IQueryOperationResultBindings,
   IJoinEntry,
   IJoinEntryWithMetadata,
-  MetadataBindings,
+  LogicalJoinType,
 } from '@comunica/types';
-import { TransformIterator } from 'asynciterator';
 import { BindingsStreamRestart } from './BindingsStreamRestart';
 
 /**
@@ -35,7 +34,7 @@ export class ActorRdfJoinInnerRestart extends ActorRdfJoin {
   protected readonly mediatorJoin: MediatorRdfJoin;
   protected readonly mediatorJoinEntriesSort: MediatorRdfJoinEntriesSort;
 
-  public constructor(args: IActorRdfJoinInnerMultiAdaptiveHeuristicsArgs) {
+  public constructor(args: IActorRdfJoinInnerRestartArgs) {
     super(args, { logicalType: 'inner', physicalName: 'restart', canHandleUndefs: true });
     this.mediatorHashBindings = args.mediatorHashBindings;
     this.mediatorJoin = args.mediatorJoin;
@@ -55,89 +54,79 @@ export class ActorRdfJoinInnerRestart extends ActorRdfJoin {
       return failTest(`${this.name} has no evaluation conditions enabled`);
     }
     if (this.restartLimit < 1) {
-      return failTest(`${this.name} cannot evaluate even once`);
+      return failTest(`${this.name} cannot restart even once`);
     }
     return super.test(action);
   }
 
-  protected async getOutput(action: IActionRdfJoin): Promise<IActorRdfJoinOutputInner> {
-    // Disable adaptive joins in recursive calls to this bus, to avoid infinite recursion on this actor.
-    const subContext: IActionContext = action.context.set(KeysRdfJoin.skipAdaptiveJoin, true);
+  public async getOutput(action: IActionRdfJoin): Promise<IActorRdfJoinOutputInner> {
+    const context = action.context.set(KeysRdfJoin.skipAdaptiveJoin, true);
 
-    let bindingsStream: BindingsStreamRestart | undefined;
-
-    const mediatorHashBindingsResult = await this.mediatorHashBindings.mediate({ context: action.context });
-
-    let currentJoinOrder: IJoinEntryWithMetadata[] = await this.getSortedJoinEntries(action);
+    let currentJoinOrder: IJoinEntryWithMetadata[] = await this.getSortedJoinEntries(action.entries, context);
     let currentJoinOrderUpdated = false;
-
     let currentRestartCount = 0;
 
-    const entries = action.entries.map((entry) => {
-      const addMetadataInvalidationListener = (metadata: MetadataBindings): void => {
-        const handleInvalidationEvent = (): void => {
-          if (currentRestartCount < this.restartLimit) {
-            entry.output.metadata().then((updatedMetadata) => {
-              addMetadataInvalidationListener(updatedMetadata);
-              if (bindingsStream && metadata.cardinality.value !== updatedMetadata.cardinality.value) {
-                this.getSortedJoinEntries(action).then((updatedJoinOrder) => {
-                  if (updatedJoinOrder.some((je, index) => currentJoinOrder[index].operation !== je.operation)) {
-                    this.logDebug(action.context, 'Current join order is sub-optimal', () => ({
-                      currentJoinOrder: currentJoinOrder.map(e => `${e.operation.type}:${e.metadata.cardinality.type === 'estimate' ? '~' : ''}${e.metadata.cardinality.value}`),
-                      updatedJoinOrder: updatedJoinOrder.map(e => `${e.operation.type}:${e.metadata.cardinality.type === 'estimate' ? '~' : ''}${e.metadata.cardinality.value}`),
-                    }));
-                    currentJoinOrder = updatedJoinOrder;
-                    currentJoinOrderUpdated = true;
-                    if (this.evaluationAfterMetadataUpdate) {
-                      this.logWarn(action.context, 'Swapping join order upon metadata cardinality update');
-                      bindingsStream!.swapSource();
-                    }
-                  }
-                }).catch((error: Error) => bindingsStream?.destroy(error));
-              }
-            }).catch((error: Error) => bindingsStream?.destroy(error));
-          }
-        };
-        metadata.state.addInvalidateListener(() => setTimeout(handleInvalidationEvent));
-      };
-      entry.output.metadata().then(addMetadataInvalidationListener).catch((error: Error) => {
-        throw error;
-      });
-      return entry;
-    });
+    // Execute the join with the metadata we have now
+    const firstJoinOutput = await this.getJoinOutput(action.type, action.entries, context);
 
-    const mediateJoin = (): Promise<IQueryOperationResultBindings> => this.mediatorJoin.mediate({
-      type: action.type,
-      entries: this.cloneEntries(entries),
-      context: subContext,
-    });
+    // Acquire the function used to hash bindings
+    const hashFunction = (await this.mediatorHashBindings.mediate({ context })).hashFunction;
 
+    // Helper function to create a new source stream via join bus
     const createSource = async(): Promise<BindingsStream> => {
       currentRestartCount++;
       currentJoinOrderUpdated = false;
-      const joinResult = await mediateJoin();
+      const joinResult = await this.getJoinOutput(action.type, action.entries, context);
       return joinResult.bindingsStream;
     };
 
-    // Execute the join with the metadata we have now
-    const firstOutput = await mediateJoin();
-
-    bindingsStream = new BindingsStreamRestart(
-      firstOutput.bindingsStream,
-      { autoStart: false },
+    const bindingsStream = new BindingsStreamRestart(
+      firstJoinOutput.bindingsStream,
+      { autoStart: false, maxBufferSize: 0 },
       createSource,
-      mediatorHashBindingsResult.hashFunction,
+      hashFunction,
     );
+
+    for (const entry of action.entries) {
+      const invalidateListener = (): void => {
+        entry.output.metadata().then((updatedMetadata) => {
+          updatedMetadata.state.addInvalidateListener(invalidateListener);
+          if (!currentJoinOrderUpdated) {
+            this.getSortedJoinEntries(action.entries, context).then((updatedJoinOrder) => {
+              if (updatedJoinOrder.some((e, i) => currentJoinOrder[i].operation !== e.operation)) {
+                this.logDebug(context, 'Current join order is sub-optimal', () => ({
+                  currentJoinOrder: currentJoinOrder.map(e => `${e.operation.type}:${e.metadata.cardinality.type === 'estimate' ? '~' : ''}${e.metadata.cardinality.value}`),
+                  updatedJoinOrder: updatedJoinOrder.map(e => `${e.operation.type}:${e.metadata.cardinality.type === 'estimate' ? '~' : ''}${e.metadata.cardinality.value}`),
+                }));
+                currentJoinOrder = updatedJoinOrder;
+                currentJoinOrderUpdated = true;
+                if (this.evaluationAfterMetadataUpdate && currentRestartCount < this.restartLimit) {
+                  this.logWarn(context, 'Swapping join order upon metadata cardinality update');
+                  bindingsStream.swapSource();
+                }
+              }
+            }).catch((error: Error) => entry.output.bindingsStream.destroy(error));
+          }
+        }).catch((error: Error) => entry.output.bindingsStream.destroy(error));
+      };
+
+      // Add the initial listener to the current metadata
+      entry.output.metadata()
+        .then(metadata => metadata.state.addInvalidateListener(invalidateListener))
+        .catch((error: Error) => entry.output.bindingsStream.destroy(error));
+    }
 
     let evaluationTimeout: NodeJS.Timeout | undefined;
 
     if (this.evaluationInterval) {
       const checkForRestart = (): void => {
-        if (currentJoinOrderUpdated) {
-          this.logWarn(action.context, 'Swapping join order upon timeout');
-          bindingsStream.swapSource();
+        if (currentRestartCount < this.restartLimit) {
+          if (currentJoinOrderUpdated) {
+            this.logWarn(context, 'Swapping join order upon timeout');
+            bindingsStream.swapSource();
+          }
+          evaluationTimeout = setTimeout(checkForRestart, this.evaluationInterval);
         }
-        evaluationTimeout = setTimeout(checkForRestart, this.evaluationInterval);
       };
       checkForRestart();
     }
@@ -150,9 +139,12 @@ export class ActorRdfJoinInnerRestart extends ActorRdfJoin {
       }
     });
 
-    return { result: { type: 'bindings', bindingsStream, metadata: firstOutput.metadata }};
+    return { result: { type: 'bindings', bindingsStream, metadata: firstJoinOutput.metadata }};
   }
 
+  /**
+   * The wrapper should produce lowest possible estimates for all coefficients.
+   */
   protected async getJoinCoefficients(
     _action: IActionRdfJoin,
     sideData: IActorRdfJoinTestSideData,
@@ -165,40 +157,44 @@ export class ActorRdfJoinInnerRestart extends ActorRdfJoin {
     }, { ...sideData });
   }
 
-  protected async getSortedJoinEntries(action: IActionRdfJoin): Promise<IJoinEntryWithMetadata[]> {
+  /**
+   * Acquire a sorted array of join entries with metadata through the join entry sort bus.
+   */
+  public async getSortedJoinEntries(entries: IJoinEntry[], context: IActionContext): Promise<IJoinEntryWithMetadata[]> {
     const entriesWithMetadata: IJoinEntryWithMetadata[] = [];
-
-    for (const entry of action.entries) {
+    for (const entry of entries) {
       entriesWithMetadata.push({
         ...entry,
         metadata: await entry.output.metadata(),
       });
     }
-
     const sortResult = await this.mediatorJoinEntriesSort.mediate({
-      context: action.context,
+      context,
       entries: entriesWithMetadata,
     });
-
     return sortResult.entries;
   }
 
-  protected cloneEntries(entries: IJoinEntry[]): IJoinEntry[] {
-    return entries.map((entry) => {
-      const clonedBindingsStream = entry.output.bindingsStream.clone();
-      const bindingsStream = new TransformIterator(clonedBindingsStream, { destroySource: true, autoStart: false });
-      return {
+  public async getJoinOutput(
+    type: LogicalJoinType,
+    entries: IJoinEntry[],
+    context: IActionContext,
+  ): Promise<IQueryOperationResultBindings> {
+    return this.mediatorJoin.mediate({
+      type,
+      entries: entries.map(entry => ({
         operation: entry.operation,
         output: {
           ...entry.output,
-          bindingsStream,
+          bindingsStream: entry.output.bindingsStream.clone(),
         },
-      };
+      })),
+      context,
     });
   }
 }
 
-export interface IActorRdfJoinInnerMultiAdaptiveHeuristicsArgs extends IActorRdfJoinArgs {
+export interface IActorRdfJoinInnerRestartArgs extends IActorRdfJoinArgs {
   /**
    * A mediator over the RDF Bindings Hash bus.
    */
