@@ -52,6 +52,8 @@ jobs:
         uses: actions/checkout@v4
       - name: Install dependencies
         run: yarn install --immutable
+      - name: Build project
+        run: yarn run build
       - name: Execute unit tests
         run: yarn run test --selectProjects packages
       - name: Submit coverage results
