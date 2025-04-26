@@ -8,15 +8,16 @@
 
 <p align="center">
   <a href="https://github.com/surilindur/comunica-components/actions/workflows/ci.yml"><img alt="Workflow: CI" src=https://github.com/surilindur/comunica-components/actions/workflows/ci.yml/badge.svg?branch=main"></a>
+  <a href="https://coveralls.io/github/surilindur/comunica-components?branch=main"><img alt="Coverage: main" src="https://coveralls.io/repos/github/surilindur/comunica-components/badge.svg?branch=main"></a>
   <a href="https://www.typescriptlang.org/"><img alt="TypeScript" src="https://img.shields.io/badge/%3C%2F%3E-TypeScript-%230074c1.svg"></a>
   <a href="https://opensource.org/licenses/MIT"><img alt="License: MIT" src="https://img.shields.io/badge/License-MIT-%23750014.svg"></a>
 </p>
 
 This is a collection of work-in-progress prototype components for the [Comunica](https://github.com/comunica/comunica) query engine,
 maintained separately for prototyping and experimentation purposes.
-If you wish to learn more about Comunica or actually use it, please refer to [its website](https://comunica.dev/).
-
 If a component was found here previous, but not anymore, it could have been merged into the engine itself, or deprecated in favour of another one.
+
+If you wish to learn more about Comunica or actually use it, please refer to [its website](https://comunica.dev/).
 
 ## Development Setup
 

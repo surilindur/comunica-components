@@ -54,6 +54,25 @@ jobs:
         run: yarn install --immutable
       - name: Execute unit tests
         run: yarn run test --selectProjects packages
+      - name: Submit coverage results
+        uses: coverallsapp/github-action@v2
+        with:
+          github-token: ${{ secrets.github_token }}
+          flag-name: ${{ matrix.os }}-${{ matrix.node-version }}
+          parallel: true
+          fail-on-error: true
+
+  coveralls:
+    name: Coverage check
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Consolidate test coverage from different jobs
+        uses: coverallsapp/github-action@v2
+        with:
+          github-token: ${{ secrets.github_token }}
+          parallel-finished: true
+          fail-on-error: true
 
   docker:
     name: Docker
