@@ -17,13 +17,14 @@
     "clean": "git clean -dfx",
     "doc": "typedoc",
     "lint": "eslint .",
-    "postinstall": "husky && yarn run build",
+    "prepare": "husky",
     "test": "yarn jest"
   },
   "devDependencies": {
     "@rdfjs/types": "*",
     "@rubensworks/eslint-config": "^3.0.0",
     "@types/jest": "^29.0.0",
+    "@types/node": "^22.0.0",
     "componentsjs-generator": "^4.0.0",
     "eslint": "^8.0.0",
     "husky": "^9.0.0",

@@ -33,6 +33,7 @@ const config: Config.InitialOptions = {
         '<rootDir>/packages/',
         'engine-default.js',
         'node_modules',
+        'index.js',
       ],
     },
     {
@@ -47,6 +48,7 @@ const config: Config.InitialOptions = {
         '<rootDir>/engines/',
         'node_modules',
         '<rootDir>/packages/actor-rdf-join-inner-restart/lib/ActorRdfJoinInnerRestart.ts',
+        'index.js',
       ],
     },
   ],

@@ -44,6 +44,7 @@ module.exports = config([
   },
   {
     ignores: [
+      '**/componentsjs-error-state.json',
       'packages/actor-rdf-metadata-extract-void',
       'packages/types',
       'packages/types-link-traversal',

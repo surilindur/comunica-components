@@ -7,6 +7,7 @@
   "types": "lib/index",
   "lsd:module": true,
   "dependencies": {
+    "@comunica/core": "^4.1.0",
     "@comunica/types": "^4.1.0",
     "rdf-data-factory": "^1.1.0",
     "sparqlalgebrajs": "^4.0.0"
