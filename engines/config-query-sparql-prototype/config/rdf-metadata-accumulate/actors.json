@@ -1,0 +1,16 @@
+{
+  "@context": [
+    "https://linkedsoftwaredependencies.org/bundles/npm/@comunica/runner/^4.0.0/components/context.jsonld",
+    "https://linkedsoftwaredependencies.org/bundles/npm/@comunica/actor-rdf-metadata-accumulate-cardinality-void/^0.0.0/components/context.jsonld"
+  ],
+  "@graph": [
+    {
+      "@id": "urn:comunica:default:rdf-metadata-accumulate/actors#cardinality-void",
+      "@type": "Override",
+      "overrideInstance": { "@id": "urn:comunica:default:rdf-metadata-accumulate/actors#cardinality" },
+      "overrideParameters": {
+        "@type": "ActorRdfMetadataAccumulateCardinalityVoid"
+      }
+    }
+  ]
+}

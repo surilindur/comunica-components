@@ -1,0 +1,11 @@
+{
+  "extends": "./tsconfig.json",
+  "include": [
+    "jest.config.ts",
+    "engines/*/bin/*.ts",
+    "engines/*/lib/**/*.ts",
+    "engines/*/test/**/*.ts",
+    "packages/*/lib/**/*.ts",
+    "packages/*/test/**/*.ts"
+  ]
+}

@@ -1,12 +1,9 @@
 {
+  "source": "lib",
   "ignorePackagePaths": [
-    "engines/query-sparql-components"
+    "engines/query-sparql"
   ],
   "ignoreComponents": [
-    "BindingsStreamAdaptiveHeuristics",
-    "Buffer",
-    "RegExp",
-    "Map",
-    "Set"
+    "Record"
   ]
 }
