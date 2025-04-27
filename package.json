@@ -17,7 +17,7 @@
     "clean": "git clean -dfx",
     "doc": "typedoc",
     "lint": "eslint .",
-    "prepare": "husky",
+    "postinstall": "husky && yarn run build",
     "test": "yarn jest"
   },
   "devDependencies": {
