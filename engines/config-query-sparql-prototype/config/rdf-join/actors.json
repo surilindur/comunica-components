@@ -1,4 +1,5 @@
 {
+  "comment": "This is a replacement for the original RDF join actors file, that allows the execution of queries with OPTIONAL in them",
   "@context": [
     "https://linkedsoftwaredependencies.org/bundles/npm/@comunica/runner/^4.0.0/components/context.jsonld",
     "https://linkedsoftwaredependencies.org/bundles/npm/@comunica/actor-rdf-join-inner-multi-bind/^4.0.0/components/context.jsonld",
