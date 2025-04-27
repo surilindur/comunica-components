@@ -1,4 +1,5 @@
 {
+  "comment": "This is the base config with none of the added components from this repository",
   "@context": [
     "https://linkedsoftwaredependencies.org/bundles/npm/@comunica/config-query-sparql/^4.0.0/components/context.jsonld",
     "https://linkedsoftwaredependencies.org/bundles/npm/@comunica/config-query-sparql-link-traversal/^0.0.0/components/context.jsonld",
@@ -51,7 +52,6 @@
     "ccqs:config/dereference-rdf/actors.json",
     "ccqs:config/dereference-rdf/mediators.json",
     "ccqsp:config/rdf-join/actors.json",
-    "ccqsp:config/rdf-join/actors-restart.json",
     "ccqs:config/rdf-join/mediators.json",
     "ccqslt:config/rdf-join-entries-sort/actors-adaptive.json",
     "ccqs:config/rdf-join-entries-sort/mediators.json",
@@ -60,10 +60,8 @@
     "ccqs:config/rdf-metadata/actors.json",
     "ccqs:config/rdf-metadata/mediators.json",
     "ccqs:config/rdf-metadata-accumulate/actors.json",
-    "ccqsp:config/rdf-metadata-accumulate/actors.json",
     "ccqs:config/rdf-metadata-accumulate/mediators.json",
     "ccqs:config/rdf-metadata-extract/actors.json",
-    "ccqsp:config/rdf-metadata-extract/actors.json",
     "ccqs:config/rdf-metadata-extract/mediators.json",
     "ccqslt:config/rdf-metadata-extract/actors/traverse.json",
     "ccqs:config/rdf-parse/actors.json",
@@ -73,7 +71,6 @@
     "ccqslt:config/rdf-resolve-hypermedia-links/actors/traverse.json",
     "ccqs:config/rdf-resolve-hypermedia-links/mediators.json",
     "ccqs:config/rdf-resolve-hypermedia-links-queue/actors.json",
-    "ccqsp:config/rdf-resolve-hypermedia-links-queue/actors.json",
     "ccqs:config/rdf-resolve-hypermedia-links-queue/mediators.json",
     "ccqs:config/rdf-serialize/actors.json",
     "ccqs:config/rdf-serialize/mediators.json",
