@@ -1,12 +1,11 @@
 {
-  "comment": "This is a replacement for the original RDF join actors file, that allows the execution of queries with OPTIONAL in them",
   "@context": [
     "https://linkedsoftwaredependencies.org/bundles/npm/@comunica/runner/^4.0.0/components/context.jsonld",
+
     "https://linkedsoftwaredependencies.org/bundles/npm/@comunica/actor-rdf-join-inner-multi-bind/^4.0.0/components/context.jsonld",
     "https://linkedsoftwaredependencies.org/bundles/npm/@comunica/actor-rdf-join-inner-multi-bind-source/^4.0.0/components/context.jsonld",
     "https://linkedsoftwaredependencies.org/bundles/npm/@comunica/actor-rdf-join-inner-multi-smallest/^4.0.0/components/context.jsonld",
     "https://linkedsoftwaredependencies.org/bundles/npm/@comunica/actor-rdf-join-inner-multi-smallest-filter-bindings/^4.0.0/components/context.jsonld",
-    "https://linkedsoftwaredependencies.org/bundles/npm/@comunica/actor-rdf-join-optional-hash/^4.0.0/components/context.jsonld",
     "https://linkedsoftwaredependencies.org/bundles/npm/@comunica/actor-rdf-join-inner-symmetrichash/^4.0.0/components/context.jsonld",
     "https://linkedsoftwaredependencies.org/bundles/npm/@comunica/actor-rdf-join-inner-nestedloop/^4.0.0/components/context.jsonld",
     "https://linkedsoftwaredependencies.org/bundles/npm/@comunica/actor-rdf-join-inner-none/^4.0.0/components/context.jsonld",
@@ -34,7 +33,6 @@
       "beforeActors": [
         { "@id": "urn:comunica:default:rdf-join/actors#inner-multi-smallest" },
         { "@id": "urn:comunica:default:rdf-join/actors#inner-multi-bind" },
-        { "@id": "urn:comunica:default:rdf-join/actors#optional-hash" },
         { "@id": "urn:comunica:default:rdf-join/actors#inner-symmetric-hash" },
         { "@id": "urn:comunica:default:rdf-join/actors#inner-nested-loop" }
       ]
@@ -42,23 +40,16 @@
     {
       "@id": "urn:comunica:default:rdf-join/actors#inner-multi-bind",
       "@type": "ActorRdfJoinMultiBind",
+      "bindOrder": "breadth-first",
       "mediatorJoinSelectivity": { "@id": "urn:comunica:default:rdf-join-selectivity/mediators#main" },
       "mediatorJoinEntriesSort": { "@id": "urn:comunica:default:rdf-join-entries-sort/mediators#main" },
       "mediatorQueryOperation": { "@id": "urn:comunica:default:query-operation/mediators#main" },
       "mediatorMergeBindingsContext": { "@id": "urn:comunica:default:merge-bindings-context/mediators#main" },
       "beforeActors": [
         { "@id": "urn:comunica:default:rdf-join/actors#inner-multi-smallest" },
-        { "@id": "urn:comunica:default:rdf-join/actors#optional-hash" },
         { "@id": "urn:comunica:default:rdf-join/actors#inner-symmetric-hash" },
         { "@id": "urn:comunica:default:rdf-join/actors#inner-nested-loop" }
       ]
-    },
-    {
-      "@id": "urn:comunica:default:rdf-join/actors#optional-hash",
-      "@type": "ActorRdfJoinOptionalHash",
-      "mediatorJoinSelectivity": { "@id": "urn:comunica:default:rdf-join-selectivity/mediators#main" },
-      "canHandleUndefs": true,
-      "blocking": false
     },
     {
       "@id": "urn:comunica:default:rdf-join/actors#inner-symmetric-hash",
@@ -86,7 +77,6 @@
       "mediatorJoin": { "@id": "urn:comunica:default:rdf-join/mediators#main" },
       "beforeActors": [
         { "@id": "urn:comunica:default:rdf-join/actors#inner-multi-smallest" },
-        { "@id": "urn:comunica:default:rdf-join/actors#optional-hash" },
         { "@id": "urn:comunica:default:rdf-join/actors#inner-symmetric-hash" },
         { "@id": "urn:comunica:default:rdf-join/actors#inner-nested-loop" }
       ]
