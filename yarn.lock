@@ -1807,6 +1807,18 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@comunica/actor-http-limit-rate@npm:^4.2.0":
+  version: 4.2.0
+  resolution: "@comunica/actor-http-limit-rate@npm:4.2.0"
+  dependencies:
+    "@comunica/bus-http": "npm:^4.2.0"
+    "@comunica/bus-http-invalidate": "npm:^4.2.0"
+    "@comunica/core": "npm:^4.2.0"
+    "@comunica/mediatortype-time": "npm:^4.2.0"
+  checksum: 10/099133f93510be210a374c36cd9055f663388fe89b97d464af70fc9db8867cdd786f7bbb947bdc860793f193a137d0d7b6c22ec22969714870e92a943494c185
+  languageName: node
+  linkType: hard
+
 "@comunica/actor-http-proxy@npm:^2.0.1":
   version: 2.10.2
   resolution: "@comunica/actor-http-proxy@npm:2.10.2"
@@ -2967,6 +2979,18 @@ __metadata:
     "@comunica/bus-rdf-join-entries-sort": "npm:^4.2.0"
     "@comunica/core": "npm:^4.2.0"
   checksum: 10/ef0579a875c31ea79d560a3ee9bbaa6b264cb37eea0e61b22b37520ae64c694d52c8cc3f28e738d0ada932055e0f63098a263acaf0b103f3fc7e5b3266ef4fbb
+  languageName: node
+  linkType: hard
+
+"@comunica/actor-rdf-join-entries-sort-selectivity@npm:^4.2.0":
+  version: 4.2.0
+  resolution: "@comunica/actor-rdf-join-entries-sort-selectivity@npm:4.2.0"
+  dependencies:
+    "@comunica/bus-rdf-join-entries-sort": "npm:^4.2.0"
+    "@comunica/bus-rdf-join-selectivity": "npm:^4.2.0"
+    "@comunica/core": "npm:^4.2.0"
+    "@comunica/types": "npm:^4.2.0"
+  checksum: 10/199de29969392761ce938407dd6ac555c72e752b4276227113af7457c7cc709fc16a182dd57650f0dfc4bbba2ef3fe2c3dcfe57fbab7133de9d0c4a8d2894578
   languageName: node
   linkType: hard
 
@@ -4810,7 +4834,9 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@comunica/query-sparql-prototype@workspace:engines/query-sparql-prototype"
   dependencies:
+    "@comunica/actor-http-limit-rate": "npm:^4.2.0"
     "@comunica/actor-init-query": "npm:^4.2.0"
+    "@comunica/actor-rdf-join-entries-sort-selectivity": "npm:^4.2.0"
     "@comunica/actor-rdf-join-inner-restart": "npm:^0.0.0"
     "@comunica/actor-rdf-metadata-accumulate-cardinality-void": "npm:^0.0.0"
     "@comunica/actor-rdf-metadata-extract-link-filter-bloom": "npm:^0.0.0"
