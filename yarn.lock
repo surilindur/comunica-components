@@ -5203,6 +5203,22 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@comunica/utils-jest@npm:^4.2.0":
+  version: 4.2.0
+  resolution: "@comunica/utils-jest@npm:4.2.0"
+  dependencies:
+    "@comunica/core": "npm:^4.2.0"
+    "@comunica/types": "npm:^4.2.0"
+    "@comunica/utils-bindings-factory": "npm:^4.2.0"
+    "@jest/expect-utils": "npm:^29.7.0"
+    "@rdfjs/types": "npm:*"
+    "@types/object-inspect": "npm:^1.13.0"
+    arrayify-stream: "npm:^2.0.1"
+    object-inspect: "npm:^1.13.2"
+  checksum: 10/b45baafaffa1ff383db9b8b187e2ee2ba1c64a9e65d529adeba8249215f1a5d93873607f3aada7dfdb6eb186dc59233e2d086863c09f8db19f2f951e1dc0be03
+  languageName: node
+  linkType: hard
+
 "@comunica/utils-metadata@npm:^4.2.0":
   version: 4.2.0
   resolution: "@comunica/utils-metadata@npm:4.2.0"
@@ -6395,6 +6411,13 @@ __metadata:
   version: 2.4.4
   resolution: "@types/normalize-package-data@npm:2.4.4"
   checksum: 10/65dff72b543997b7be8b0265eca7ace0e34b75c3e5fee31de11179d08fa7124a7a5587265d53d0409532ecb7f7fba662c2012807963e1f9b059653ec2c83ee05
+  languageName: node
+  linkType: hard
+
+"@types/object-inspect@npm:^1.13.0":
+  version: 1.13.0
+  resolution: "@types/object-inspect@npm:1.13.0"
+  checksum: 10/8caf52c815947540b5246e0b5b2d455a2183791fe9427537eab8a40b465392400cee6ce50beaeb35465e167e9cb405ccfde90eb5317ee2c9df85af7508f0a320
   languageName: node
   linkType: hard
 
@@ -7716,6 +7739,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "comunica-components@workspace:."
   dependencies:
+    "@comunica/utils-jest": "npm:^4.2.0"
     "@rdfjs/types": "npm:*"
     "@rubensworks/eslint-config": "npm:^3.0.0"
     "@types/jest": "npm:^29.0.0"
@@ -11537,7 +11561,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"object-inspect@npm:^1.12.2, object-inspect@npm:^1.13.3":
+"object-inspect@npm:^1.12.2, object-inspect@npm:^1.13.2, object-inspect@npm:^1.13.3":
   version: 1.13.4
   resolution: "object-inspect@npm:1.13.4"
   checksum: 10/aa13b1190ad3e366f6c83ad8a16ed37a19ed57d267385aa4bfdccda833d7b90465c057ff6c55d035a6b2e52c1a2295582b294217a0a3a1ae7abdd6877ef781fb
