@@ -1,4 +1,4 @@
-import { ActorRdfMetadataAccumulateCardinality } from '@comunica/actor-rdf-metadata-accumulate-cardinality';
+import { ActorRdfMetadataAccumulate } from '@comunica/bus-rdf-metadata-accumulate';
 import type {
   IActionRdfMetadataAccumulate,
   IActorRdfMetadataAccumulateOutput,
@@ -7,14 +7,13 @@ import type {
 import { KeysQueryOperation } from '@comunica/context-entries';
 import { passTestVoid } from '@comunica/core';
 import type { IActorTest, TestResult } from '@comunica/core';
-import type { QueryResultCardinality } from '@comunica/types';
-import type { IDataset } from '@comunica/utils-prototype';
-import { estimateCardinality } from '@comunica/utils-prototype';
+import type { IDataset, QueryResultCardinality } from '@comunica/types';
+import { estimateCardinality } from '@comunica/utils-query-operation';
 
 /**
  * A comunica Predicate Count RDF Metadata Accumulate Actor.
  */
-export class ActorRdfMetadataAccumulateCardinalityVoid extends ActorRdfMetadataAccumulateCardinality {
+export class ActorRdfMetadataAccumulateCardinalityVoid extends ActorRdfMetadataAccumulate {
   public constructor(args: IActorRdfMetadataAccumulateArgs) {
     super(args);
   }
@@ -24,7 +23,7 @@ export class ActorRdfMetadataAccumulateCardinalityVoid extends ActorRdfMetadataA
   }
 
   public async run(action: IActionRdfMetadataAccumulate): Promise<IActorRdfMetadataAccumulateOutput> {
-    const output: IActorRdfMetadataAccumulateOutput = await super.run(action);
+    const metadata: Record<string, any> = {};
 
     if (action.mode === 'append') {
       const datasets: Record<string, IDataset> = {};
@@ -59,14 +58,14 @@ export class ActorRdfMetadataAccumulateCardinalityVoid extends ActorRdfMetadataA
           }
         }
 
-        output.metadata.datasets = Object.values(datasets);
+        metadata.datasets = Object.values(datasets);
 
         if (cardinality) {
-          output.metadata.cardinality = cardinality;
+          metadata.cardinality = cardinality;
         }
       }
     }
 
-    return output;
+    return { metadata };
   }
 }

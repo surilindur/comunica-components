@@ -15,15 +15,15 @@
     "prepare": "comunica-compile-config config/config-default.json > engine-default.js"
   },
   "dependencies": {
-    "@comunica/actor-init-query": "^4.1.0",
+    "@comunica/actor-init-query": "^4.2.0",
     "@comunica/actor-rdf-join-inner-restart": "^0.0.0",
     "@comunica/actor-rdf-metadata-accumulate-cardinality-void": "^0.0.0",
     "@comunica/actor-rdf-metadata-extract-link-filter-bloom": "^0.0.0",
-    "@comunica/actor-rdf-metadata-extract-void": "^4.1.0",
+    "@comunica/actor-rdf-metadata-extract-void": "^4.2.0",
     "@comunica/actor-rdf-resolve-hypermedia-links-queue-wrapper-filter": "^0.6.0",
     "@comunica/config-query-sparql-prototype": "^0.0.0",
     "@comunica/query-sparql-link-traversal-solid": "^0.6.0",
-    "@comunica/runner": "^4.1.0",
-    "@comunica/runner-cli": "^4.1.0"
+    "@comunica/runner": "^4.2.0",
+    "@comunica/runner-cli": "^4.2.0"
   }
 }
