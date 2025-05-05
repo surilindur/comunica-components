@@ -3271,6 +3271,7 @@ __metadata:
     "@comunica/core": "npm:^4.2.0"
     "@comunica/types": "npm:^4.2.0"
     "@comunica/utils-query-operation": "npm:^4.2.0"
+    sparqlalgebrajs: "npm:^4.0.0"
   languageName: unknown
   linkType: soft
 
