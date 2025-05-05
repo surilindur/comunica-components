@@ -30,3 +30,7 @@ After installing, this package can be added to your engine's configuration as fo
   ]
 }
 ```
+
+### Config Parameters
+
+* `predicateBasedEstimation`: Whether the actor should only perform predicate-based estimation over triple patterns. Defaults to `false`.

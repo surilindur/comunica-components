@@ -11,6 +11,7 @@ module.exports = config([
     },
     rules: {
       'ts/naming-convention': 'off',
+      'jest/no-untyped-mock-factory': 'off',
     },
   },
   {
