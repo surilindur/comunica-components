@@ -74,8 +74,6 @@ export class ActorRdfJoinInnerRestart extends ActorRdfJoin {
 
     // Helper function to create a new source stream via join bus
     const createSource = async(): Promise<BindingsStream> => {
-      currentRestartCount++;
-      currentJoinOrderUpdated = false;
       const joinResult = await this.getJoinOutput(action.type, action.entries, context);
       return joinResult.bindingsStream;
     };
@@ -86,6 +84,12 @@ export class ActorRdfJoinInnerRestart extends ActorRdfJoin {
       createSource,
       hashFunction,
     );
+
+    const swapJoinOrder = (): void => {
+      bindingsStream.swapSource();
+      currentRestartCount++;
+      currentJoinOrderUpdated = false;
+    };
 
     for (const entry of action.entries) {
       const invalidateListener = (): void => {
@@ -102,7 +106,7 @@ export class ActorRdfJoinInnerRestart extends ActorRdfJoin {
                 currentJoinOrderUpdated = true;
                 if (this.evaluationAfterMetadataUpdate && currentRestartCount < this.restartLimit) {
                   this.logWarn(context, 'Swapping join order upon metadata cardinality update');
-                  bindingsStream.swapSource();
+                  swapJoinOrder();
                 }
               }
             }).catch((error: Error) => entry.output.bindingsStream.destroy(error));
@@ -123,7 +127,7 @@ export class ActorRdfJoinInnerRestart extends ActorRdfJoin {
         if (currentRestartCount < this.restartLimit) {
           if (currentJoinOrderUpdated) {
             this.logWarn(context, 'Swapping join order upon timeout');
-            bindingsStream.swapSource();
+            swapJoinOrder();
           }
           evaluationTimeout = setTimeout(checkForRestart, this.evaluationInterval);
         }
