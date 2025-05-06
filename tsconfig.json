@@ -6,7 +6,6 @@
       "DOM"
     ],
     "module": "CommonJS",
-    "resolveJsonModule": true,
     "allowJs": false,
     "strict": true,
     "strictFunctionTypes": true,
