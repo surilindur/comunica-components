@@ -5,9 +5,10 @@
   ],
   "import": [
     "ccqsp:config/config-base.json",
-    "ccqsp:config/rdf-join/restart.json",
-    "ccqsp:config/rdf-metadata-accumulate/cardinality-void.json",
-    "ccqsp:config/rdf-metadata-extract/link-filter-bloom.json",
-    "ccqsp:config/rdf-resolve-hypermedia-links-queue/wrapper-filter.json"
+    "ccqsp:config/rdf-join/actors-restart.json",
+    "ccqsp:config/rdf-join-entries-sort/actors-full.json",
+    "ccqsp:config/rdf-metadata-accumulate/actors-cardinality-void.json",
+    "ccqsp:config/rdf-metadata-extract/actors-link-filter-bloom.json",
+    "ccqsp:config/rdf-resolve-hypermedia-links-queue/actors-wrapper-filter.json"
   ]
 }
