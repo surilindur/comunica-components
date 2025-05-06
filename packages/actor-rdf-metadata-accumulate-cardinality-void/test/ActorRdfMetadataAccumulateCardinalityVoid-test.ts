@@ -85,15 +85,15 @@ describe('ActorRdfMetadataAccumulateCardinalityVoid', () => {
 
   describe('estimateOperationCardinality', () => {
     it('returns undefined without datasets', () => {
-      expect(actor.estimateOperationCardinality(operation, DF, AF, [])).toBeUndefined();
+      expect(actor.estimateOperationCardinality(operation, DF, [])).toBeUndefined();
     });
 
     it('returns estimate with a dataset', () => {
-      expect(actor.estimateOperationCardinality(operation, DF, AF, [ dataset ])).toEqual(datasetCardinality);
+      expect(actor.estimateOperationCardinality(operation, DF, [ dataset ])).toEqual(datasetCardinality);
     });
 
     it('returns estimate with multiple datasets', () => {
-      expect(actor.estimateOperationCardinality(operation, DF, AF, [ dataset, dataset ])).toEqual({
+      expect(actor.estimateOperationCardinality(operation, DF, [ dataset, dataset ])).toEqual({
         value: datasetCardinality.value * 2,
         type: 'estimate',
       });
@@ -101,12 +101,12 @@ describe('ActorRdfMetadataAccumulateCardinalityVoid', () => {
 
     it('returns estimate for pattern using predicate-based estimation', () => {
       (<any>actor).predicateBasedEstimation = true;
-      expect(actor.estimateOperationCardinality(operation.input[0], DF, AF, [ dataset ])).toEqual(datasetCardinality);
+      expect(actor.estimateOperationCardinality(operation.input[0], DF, [ dataset ])).toEqual(datasetCardinality);
     });
 
     it('returns undefined for non-pattern using predicate-based estimation', () => {
       (<any>actor).predicateBasedEstimation = true;
-      expect(actor.estimateOperationCardinality(operation, DF, AF, [ dataset ])).toBeUndefined();
+      expect(actor.estimateOperationCardinality(operation, DF, [ dataset ])).toBeUndefined();
     });
   });
 });
