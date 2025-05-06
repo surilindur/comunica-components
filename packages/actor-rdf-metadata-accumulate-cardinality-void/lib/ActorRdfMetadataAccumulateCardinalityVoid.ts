@@ -10,7 +10,7 @@ import { passTestVoid } from '@comunica/core';
 import type { IActorTest, TestResult } from '@comunica/core';
 import type { ComunicaDataFactory, IDataset, QueryResultCardinality } from '@comunica/types';
 import { estimateCardinality } from '@comunica/utils-query-operation';
-import { Algebra, Factory } from 'sparqlalgebrajs';
+import { Algebra } from 'sparqlalgebrajs';
 
 /**
  * A comunica Predicate Count RDF Metadata Accumulate Actor.
@@ -31,16 +31,20 @@ export class ActorRdfMetadataAccumulateCardinalityVoid extends ActorRdfMetadataA
     const metadata: Record<string, any> = {};
 
     if (action.mode === 'append') {
-      const operation = action.context.getSafe(KeysQueryOperation.operation);
-      const dataFactory = action.context.getSafe(KeysInitQuery.dataFactory);
-      const algebraFactory = new Factory(dataFactory);
       const datasets = this.accumulateDatasets(action);
-      const cardinality = this.estimateOperationCardinality(operation, dataFactory, algebraFactory, datasets);
+      // Accumulate the datasets
       if (datasets.length > 0) {
         metadata.datasets = datasets;
       }
-      if (cardinality) {
-        metadata.cardinality = cardinality;
+
+      // Estimate the cardinality if possible
+      const operation = action.context.get(KeysQueryOperation.operation);
+      if (operation) {
+        const dataFactory = action.context.getSafe(KeysInitQuery.dataFactory);
+        const cardinality = this.estimateOperationCardinality(operation, dataFactory, datasets);
+        if (cardinality) {
+          metadata.cardinality = cardinality;
+        }
       }
     }
 
@@ -71,18 +75,17 @@ export class ActorRdfMetadataAccumulateCardinalityVoid extends ActorRdfMetadataA
   public estimateOperationCardinality(
     operation: Algebra.Operation,
     dataFactory: ComunicaDataFactory,
-    algebraFactory: Factory,
     datasets: IDataset[],
   ): QueryResultCardinality | undefined {
     let operationToEstimate = operation;
 
     if (this.predicateBasedEstimation) {
       if (operation.type === Algebra.types.PATTERN) {
-        operationToEstimate = algebraFactory.createPattern(
-          dataFactory.variable('s'),
-          operation.predicate,
-          dataFactory.variable('o'),
-        );
+        operationToEstimate = {
+          ...operation,
+          subject: dataFactory.variable('s'),
+          object: dataFactory.variable('o'),
+        };
       } else {
         return undefined;
       }
