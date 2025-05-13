@@ -41,7 +41,9 @@ After installing, this package can be added to your engine's configuration as fo
       "mediatorJoin": { "@id": "urn:comunica:default:rdf-join/mediators#main" },
       "evaluationAfterMetadataUpdate": true,
       "evaluationInterval": null,
-      "restartLimit": null
+      "restartLimit": null,
+      "restartThreshold": 0.5,
+      "wrapAllJoins": false
     }
   ]
 }
@@ -56,3 +58,5 @@ After installing, this package can be added to your engine's configuration as fo
 * `evaluationAfterMetadataUpdate`: Whether the actor should evaluate join plans upon metadata updates. Defaults to `false`.
 * `evaluationInterval`: When specified, the actor will evaluate join plans every *n* milliseconds specified by this value. Defaults to `undefined`.
 * `restartLimit`: When specified, limits the number of join restarts to this value. Defaults to `undefined`.
+* `restartThreshold`: When specified, restarts to query plan are only allowed when the number of bindings produced is below this share of the total estimage. Defaults to `0.5`.
+* `wrapAllJoins`: Whether all joins should be wrapped. When set to `false`, only the topmost join is wrapped. Defaults to `false`.

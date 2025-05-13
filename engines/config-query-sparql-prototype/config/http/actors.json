@@ -1,16 +1,13 @@
 {
-  "comment": "This is a temporary copy of the HTTP bus actor setup across base, Solid and link traversal",
+  "comment": "Setup of HTTP bus actors for Solid pods and link traversal without Wayback Machine fallback",
   "@context": [
     "https://linkedsoftwaredependencies.org/bundles/npm/@comunica/runner/^4.0.0/components/context.jsonld",
     "https://linkedsoftwaredependencies.org/bundles/npm/@comunica/config-query-sparql/^4.0.0/components/context.jsonld",
-    "https://linkedsoftwaredependencies.org/bundles/npm/@comunica/actor-http-inrupt-solid-client-authn/^4.0.0/components/context.jsonld",
     "https://linkedsoftwaredependencies.org/bundles/npm/@comunica/actor-http-fetch/^4.0.0/components/context.jsonld",
+    "https://linkedsoftwaredependencies.org/bundles/npm/@comunica/actor-http-inrupt-solid-client-authn/^4.0.0/components/context.jsonld",
+    "https://linkedsoftwaredependencies.org/bundles/npm/@comunica/actor-http-limit-rate/^4.0.0/components/context.jsonld",
     "https://linkedsoftwaredependencies.org/bundles/npm/@comunica/actor-http-proxy/^4.0.0/components/context.jsonld",
     "https://linkedsoftwaredependencies.org/bundles/npm/@comunica/actor-http-retry/^4.0.0/components/context.jsonld"
-  ],
-  "import": [
-    "ccqs:config/http/actors-limit-rate.json",
-    "ccqs:config/http/actors-wayback.json"
   ],
   "@id": "urn:comunica:default:Runner",
   "@type": "Runner",
@@ -19,16 +16,20 @@
       "@id": "urn:comunica:default:http/actors#retry",
       "@type": "ActorHttpRetry",
       "mediatorHttp": { "@id": "urn:comunica:default:http/mediators#main" },
-      "beforeActors": { "@id": "urn:comunica:default:http/actors#proxy" }
+      "beforeActors": { "@id": "urn:comunica:default:http/actors#limit-rate" }
+    },
+    {
+      "@id": "urn:comunica:default:http/actors#limit-rate",
+      "@type": "ActorHttpLimitRate",
+      "mediatorHttp": { "@id": "urn:comunica:default:http/mediators#main" },
+      "beforeActors": { "@id": "urn:comunica:default:http/actors#proxy" },
+      "limitByDefault": true
     },
     {
       "@id": "urn:comunica:default:http/actors#proxy",
       "@type": "ActorHttpProxy",
       "mediatorHttp": { "@id": "urn:comunica:default:http/mediators#main" },
-      "beforeActors": [
-        { "@id": "urn:comunica:default:http/actors#fetch" },
-        { "@id": "urn:comunica:default:http/actors#inrupt-solid-client-authn" }
-      ]
+      "beforeActors": { "@id": "urn:comunica:default:http/actors#inrupt-solid-client-authn" }
     },
     {
       "@id": "urn:comunica:default:http/actors#inrupt-solid-client-authn",
