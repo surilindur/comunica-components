@@ -146,7 +146,7 @@ describe('ActorRdfJoinInnerRestart', () => {
     });
 
     it('should fail when called with a subset of previously wrapped join entries', async() => {
-      context = context.set(ActorRdfJoinInnerRestart.keyWrappedEntries, [ joinEntries[0].operation ]);
+      context = context.set(ActorRdfJoinInnerRestart.keyWrappedOperations, [ joinEntries[0].operation ]);
       await expect(actor.test({ context, entries: joinEntries, type })).resolves
         .toFailTest('actor can only wrap a single set of join entries once');
     });
