@@ -1807,7 +1807,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@comunica/actor-http-limit-rate@npm:^4.0.0":
+"@comunica/actor-http-limit-rate@npm:^4.2.0":
   version: 4.2.0
   resolution: "@comunica/actor-http-limit-rate@npm:4.2.0"
   dependencies:
@@ -1869,7 +1869,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@comunica/actor-init-query@npm:^4.0.0, @comunica/actor-init-query@npm:^4.0.1, @comunica/actor-init-query@npm:^4.2.0":
+"@comunica/actor-init-query@npm:^4.0.1, @comunica/actor-init-query@npm:^4.2.0":
   version: 4.2.0
   resolution: "@comunica/actor-init-query@npm:4.2.0"
   dependencies:
@@ -2983,7 +2983,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@comunica/actor-rdf-join-entries-sort-selectivity@npm:^4.0.0":
+"@comunica/actor-rdf-join-entries-sort-selectivity@npm:^4.2.0":
   version: 4.2.0
   resolution: "@comunica/actor-rdf-join-entries-sort-selectivity@npm:4.2.0"
   dependencies:
@@ -3151,14 +3151,14 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@comunica/actor-rdf-join-inner-restart@workspace:packages/actor-rdf-join-inner-restart"
   dependencies:
-    "@comunica/bus-hash-bindings": "npm:^4.0.0"
-    "@comunica/bus-query-operation": "npm:^4.0.0"
-    "@comunica/bus-rdf-join": "npm:^4.0.0"
-    "@comunica/bus-rdf-join-entries-sort": "npm:^4.0.0"
-    "@comunica/context-entries": "npm:^4.0.0"
+    "@comunica/bus-hash-bindings": "npm:^4.2.0"
+    "@comunica/bus-query-operation": "npm:^4.2.0"
+    "@comunica/bus-rdf-join": "npm:^4.2.0"
+    "@comunica/bus-rdf-join-entries-sort": "npm:^4.2.0"
+    "@comunica/context-entries": "npm:^4.2.0"
     "@comunica/context-entries-link-traversal": "npm:^0.7.0"
-    "@comunica/core": "npm:^4.0.0"
-    "@comunica/types": "npm:^4.0.0"
+    "@comunica/core": "npm:^4.2.0"
+    "@comunica/types": "npm:^4.2.0"
     asynciterator: "npm:^3.9.0"
     sparqlalgebrajs: "npm:^4.0.0"
   languageName: unknown
@@ -3269,11 +3269,11 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@comunica/actor-rdf-metadata-accumulate-cardinality-void@workspace:packages/actor-rdf-metadata-accumulate-cardinality-void"
   dependencies:
-    "@comunica/bus-rdf-metadata-accumulate": "npm:^4.0.0"
-    "@comunica/context-entries": "npm:^4.0.0"
-    "@comunica/core": "npm:^4.0.0"
-    "@comunica/types": "npm:^4.0.0"
-    "@comunica/utils-query-operation": "npm:^4.0.0"
+    "@comunica/bus-rdf-metadata-accumulate": "npm:^4.2.0"
+    "@comunica/context-entries": "npm:^4.2.0"
+    "@comunica/core": "npm:^4.2.0"
+    "@comunica/types": "npm:^4.2.0"
+    "@comunica/utils-query-operation": "npm:^4.2.0"
     sparqlalgebrajs: "npm:^4.0.0"
   languageName: unknown
   linkType: soft
@@ -3367,10 +3367,10 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@comunica/actor-rdf-metadata-extract-link-filter-bloom@workspace:packages/actor-rdf-metadata-extract-link-filter-bloom"
   dependencies:
-    "@comunica/bus-rdf-metadata-extract": "npm:^4.0.0"
-    "@comunica/context-entries": "npm:^4.0.0"
+    "@comunica/bus-rdf-metadata-extract": "npm:^4.2.0"
+    "@comunica/context-entries": "npm:^4.2.0"
     "@comunica/context-entries-link-traversal": "npm:^0.7.0"
-    "@comunica/core": "npm:^4.0.0"
+    "@comunica/core": "npm:^4.2.0"
     "@types/bloem": "npm:^0.2.0"
     bloem: "npm:^0.2.0"
     sparqlalgebrajs: "npm:^4.0.0"
@@ -3430,7 +3430,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@comunica/actor-rdf-metadata-extract-void@npm:^4.0.0":
+"@comunica/actor-rdf-metadata-extract-void@npm:^4.2.0":
   version: 4.2.0
   resolution: "@comunica/actor-rdf-metadata-extract-void@npm:4.2.0"
   dependencies:
@@ -3964,7 +3964,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@comunica/bus-hash-bindings@npm:^4.0.0, @comunica/bus-hash-bindings@npm:^4.2.0":
+"@comunica/bus-hash-bindings@npm:^4.2.0":
   version: 4.2.0
   resolution: "@comunica/bus-hash-bindings@npm:4.2.0"
   dependencies:
@@ -4061,7 +4061,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@comunica/bus-query-operation@npm:^4.0.0, @comunica/bus-query-operation@npm:^4.0.1, @comunica/bus-query-operation@npm:^4.2.0":
+"@comunica/bus-query-operation@npm:^4.0.1, @comunica/bus-query-operation@npm:^4.2.0":
   version: 4.2.0
   resolution: "@comunica/bus-query-operation@npm:4.2.0"
   dependencies:
@@ -4137,7 +4137,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@comunica/bus-rdf-join-entries-sort@npm:^4.0.0, @comunica/bus-rdf-join-entries-sort@npm:^4.2.0":
+"@comunica/bus-rdf-join-entries-sort@npm:^4.2.0":
   version: 4.2.0
   resolution: "@comunica/bus-rdf-join-entries-sort@npm:4.2.0"
   dependencies:
@@ -4158,7 +4158,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@comunica/bus-rdf-join@npm:^4.0.0, @comunica/bus-rdf-join@npm:^4.2.0":
+"@comunica/bus-rdf-join@npm:^4.2.0":
   version: 4.2.0
   resolution: "@comunica/bus-rdf-join@npm:4.2.0"
   dependencies:
@@ -4175,7 +4175,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@comunica/bus-rdf-metadata-accumulate@npm:^4.0.0, @comunica/bus-rdf-metadata-accumulate@npm:^4.2.0":
+"@comunica/bus-rdf-metadata-accumulate@npm:^4.2.0":
   version: 4.2.0
   resolution: "@comunica/bus-rdf-metadata-accumulate@npm:4.2.0"
   dependencies:
@@ -4185,7 +4185,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@comunica/bus-rdf-metadata-extract@npm:^4.0.0, @comunica/bus-rdf-metadata-extract@npm:^4.2.0":
+"@comunica/bus-rdf-metadata-extract@npm:^4.2.0":
   version: 4.2.0
   resolution: "@comunica/bus-rdf-metadata-extract@npm:4.2.0"
   dependencies:
@@ -4344,7 +4344,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@comunica/config-query-sparql@npm:^4.0.0":
+"@comunica/config-query-sparql@npm:^4.2.0":
   version: 4.2.0
   resolution: "@comunica/config-query-sparql@npm:4.2.0"
   checksum: 10/32822bbb7eedead2e4a4b6b9784baf0447c74ba978a7d8019ec6e4bf5634a9e7a07683f1abfc5dab898795db0e226aca7a31860f4e3ee334b340d71b173baead
@@ -4374,7 +4374,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@comunica/context-entries@npm:^4.0.0, @comunica/context-entries@npm:^4.0.1, @comunica/context-entries@npm:^4.2.0":
+"@comunica/context-entries@npm:^4.0.1, @comunica/context-entries@npm:^4.2.0":
   version: 4.2.0
   resolution: "@comunica/context-entries@npm:4.2.0"
   dependencies:
@@ -4397,7 +4397,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@comunica/core@npm:^4.0.0, @comunica/core@npm:^4.0.1, @comunica/core@npm:^4.2.0":
+"@comunica/core@npm:^4.0.1, @comunica/core@npm:^4.2.0":
   version: 4.2.0
   resolution: "@comunica/core@npm:4.2.0"
   dependencies:
@@ -4838,18 +4838,18 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@comunica/query-sparql-prototype@workspace:engines/query-sparql-prototype"
   dependencies:
-    "@comunica/actor-http-limit-rate": "npm:^4.0.0"
-    "@comunica/actor-init-query": "npm:^4.0.0"
-    "@comunica/actor-rdf-join-entries-sort-selectivity": "npm:^4.0.0"
+    "@comunica/actor-http-limit-rate": "npm:^4.2.0"
+    "@comunica/actor-init-query": "npm:^4.2.0"
+    "@comunica/actor-rdf-join-entries-sort-selectivity": "npm:^4.2.0"
     "@comunica/actor-rdf-join-inner-restart": "npm:^0.0.0"
     "@comunica/actor-rdf-metadata-accumulate-cardinality-void": "npm:^0.0.0"
     "@comunica/actor-rdf-metadata-extract-link-filter-bloom": "npm:^0.0.0"
-    "@comunica/actor-rdf-metadata-extract-void": "npm:^4.0.0"
+    "@comunica/actor-rdf-metadata-extract-void": "npm:^4.2.0"
     "@comunica/actor-rdf-resolve-hypermedia-links-queue-wrapper-filter": "npm:^0.7.0"
     "@comunica/config-query-sparql-prototype": "npm:^0.0.0"
     "@comunica/query-sparql-link-traversal-solid": "npm:^0.7.0"
-    "@comunica/runner": "npm:^4.0.0"
-    "@comunica/runner-cli": "npm:^4.0.0"
+    "@comunica/runner": "npm:^4.2.0"
+    "@comunica/runner-cli": "npm:^4.2.0"
   bin:
     comunica-dynamic-sparql-prototype: bin/query-dynamic.js
     comunica-sparql-prototype: bin/query.js
@@ -5116,7 +5116,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@comunica/runner-cli@npm:^4.0.0, @comunica/runner-cli@npm:^4.0.1, @comunica/runner-cli@npm:^4.2.0":
+"@comunica/runner-cli@npm:^4.0.1, @comunica/runner-cli@npm:^4.2.0":
   version: 4.2.0
   resolution: "@comunica/runner-cli@npm:4.2.0"
   dependencies:
@@ -5130,7 +5130,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@comunica/runner@npm:^4.0.0, @comunica/runner@npm:^4.0.1, @comunica/runner@npm:^4.2.0":
+"@comunica/runner@npm:^4.0.1, @comunica/runner@npm:^4.2.0":
   version: 4.2.0
   resolution: "@comunica/runner@npm:4.2.0"
   dependencies:
@@ -5186,7 +5186,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@comunica/types@npm:^4.0.0, @comunica/types@npm:^4.0.1, @comunica/types@npm:^4.2.0":
+"@comunica/types@npm:^4.0.1, @comunica/types@npm:^4.2.0":
   version: 4.2.0
   resolution: "@comunica/types@npm:4.2.0"
   dependencies:
@@ -5256,7 +5256,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@comunica/utils-jest@npm:^4.0.0":
+"@comunica/utils-jest@npm:^4.2.0":
   version: 4.2.0
   resolution: "@comunica/utils-jest@npm:4.2.0"
   dependencies:
@@ -5289,7 +5289,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@comunica/utils-query-operation@npm:^4.0.0, @comunica/utils-query-operation@npm:^4.2.0":
+"@comunica/utils-query-operation@npm:^4.2.0":
   version: 4.2.0
   resolution: "@comunica/utils-query-operation@npm:4.2.0"
   dependencies:
@@ -7787,7 +7787,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "comunica-components@workspace:."
   dependencies:
-    "@comunica/utils-jest": "npm:^4.0.0"
+    "@comunica/utils-jest": "npm:^4.2.0"
     "@rdfjs/types": "npm:*"
     "@rubensworks/eslint-config": "npm:^3.0.0"
     "@types/jest": "npm:^29.0.0"

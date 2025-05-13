@@ -21,7 +21,7 @@
     "test": "yarn jest"
   },
   "devDependencies": {
-    "@comunica/utils-jest": "^4.0.0",
+    "@comunica/utils-jest": "^4.2.0",
     "@rdfjs/types": "*",
     "@rubensworks/eslint-config": "^3.0.0",
     "@types/jest": "^29.0.0",
@@ -36,8 +36,8 @@
     "typescript": "^5.0.0"
   },
   "resolutions": {
-    "@comunica/config-query-sparql": "^4.0.0",
-    "@comunica/query-sparql": "^4.0.0",
+    "@comunica/config-query-sparql": "^4.2.0",
+    "@comunica/query-sparql": "^4.2.0",
     "@rdfjs/types": "1.1.2",
     "typescript": "5.5.4"
   }
