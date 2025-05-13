@@ -5,9 +5,9 @@ import type {
 } from '@comunica/bus-rdf-metadata-extract';
 import { ActorRdfMetadataExtract } from '@comunica/bus-rdf-metadata-extract';
 import { KeysInitQuery } from '@comunica/context-entries';
+import { KeysRdfResolveHypermediaLinks } from '@comunica/context-entries-link-traversal';
 import type { IActorTest, TestResult } from '@comunica/core';
 import { failTest, passTestVoid } from '@comunica/core';
-import { KeysPrototype } from '@comunica/utils-prototype';
 import type * as RDF from '@rdfjs/types';
 import { Bloem } from 'bloem';
 import { Algebra, Util } from 'sparqlalgebrajs';
@@ -28,7 +28,7 @@ export class ActorRdfMetadataExtractLinkFilterBloom extends ActorRdfMetadataExtr
   }
 
   public async test(action: IActionRdfMetadataExtract): Promise<TestResult<IActorTest>> {
-    if (!action.context.has(KeysPrototype.linkFilters)) {
+    if (!action.context.has(KeysRdfResolveHypermediaLinks.linkFilters)) {
       return failTest('Unable to extract filters without filter output array in context');
     }
     return passTestVoid();
@@ -76,7 +76,7 @@ export class ActorRdfMetadataExtractLinkFilterBloom extends ActorRdfMetadataExtr
           }
         })
         .on('end', () => {
-          const filters = action.context.getSafe(KeysPrototype.linkFilters);
+          const filters = action.context.getSafe(KeysRdfResolveHypermediaLinks.linkFilters);
           const query = action.context.getSafe(KeysInitQuery.query);
           const patterns = ActorRdfMetadataExtractLinkFilterBloom.extractPatterns(query);
 

@@ -9,7 +9,7 @@ import type {
 import { ActorRdfJoin } from '@comunica/bus-rdf-join';
 import type { MediatorRdfJoinEntriesSort } from '@comunica/bus-rdf-join-entries-sort';
 import { KeysRdfJoin } from '@comunica/context-entries-link-traversal';
-import { failTest, passTestWithSideData } from '@comunica/core';
+import { ActionContextKey, failTest, passTestWithSideData } from '@comunica/core';
 import type { TestResult } from '@comunica/core';
 import type { IMediatorTypeJoinCoefficients } from '@comunica/mediatortype-join-coefficients';
 import type {
@@ -20,6 +20,7 @@ import type {
   IJoinEntryWithMetadata,
   LogicalJoinType,
 } from '@comunica/types';
+import type { Algebra } from 'sparqlalgebrajs';
 import { BindingsStreamRestart } from './BindingsStreamRestart';
 
 /**
@@ -33,6 +34,10 @@ export class ActorRdfJoinInnerRestart extends ActorRdfJoin {
   protected readonly mediatorHashBindings: MediatorHashBindings;
   protected readonly mediatorJoin: MediatorRdfJoin;
   protected readonly mediatorJoinEntriesSort: MediatorRdfJoinEntriesSort;
+
+  public static readonly keyWrappedOperations = new ActionContextKey<Algebra.Operation[]>(
+    'urn:comunica:actor-rdf-join-inner-restart#operations',
+  );
 
   public constructor(args: IActorRdfJoinInnerRestartArgs) {
     super(args, { logicalType: 'inner', physicalName: 'restart', canHandleUndefs: true });
@@ -48,7 +53,11 @@ export class ActorRdfJoinInnerRestart extends ActorRdfJoin {
     action: IActionRdfJoin,
   ): Promise<TestResult<IMediatorTypeJoinCoefficients, IActorRdfJoinTestSideData>> {
     if (action.context.has(KeysRdfJoin.skipAdaptiveJoin)) {
-      return failTest(`${this.name} can only wrap a join once`);
+      return failTest(`${this.name} cannot run due to adaptive join being disabled`);
+    }
+    const previousEntries = action.context.get(ActorRdfJoinInnerRestart.keyWrappedOperations);
+    if (previousEntries && action.entries.some(e => previousEntries.includes(e.operation))) {
+      return failTest(`${this.name} can only wrap a single set of join entries once`);
     }
     if (!this.evaluationAfterMetadataUpdate && !this.evaluationInterval) {
       return failTest(`${this.name} has no evaluation conditions enabled`);
@@ -60,7 +69,11 @@ export class ActorRdfJoinInnerRestart extends ActorRdfJoin {
   }
 
   public async getOutput(action: IActionRdfJoin): Promise<IActorRdfJoinOutputInner> {
-    const context = action.context.set(KeysRdfJoin.skipAdaptiveJoin, true);
+    // This will avoid wrapping the same join multiple times
+    const context = action.context.set(
+      ActorRdfJoinInnerRestart.keyWrappedOperations,
+      action.entries.map(e => e.operation),
+    );
 
     let currentJoinOrder: IJoinEntryWithMetadata[] = await this.getSortedJoinEntries(action.entries, context);
     let currentJoinOrderUpdated = false;

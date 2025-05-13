@@ -22,9 +22,9 @@
     "@comunica/actor-rdf-metadata-accumulate-cardinality-void": "^0.0.0",
     "@comunica/actor-rdf-metadata-extract-link-filter-bloom": "^0.0.0",
     "@comunica/actor-rdf-metadata-extract-void": "^4.2.0",
-    "@comunica/actor-rdf-resolve-hypermedia-links-queue-wrapper-filter": "^0.6.0",
+    "@comunica/actor-rdf-resolve-hypermedia-links-queue-wrapper-filter": "^0.7.0",
     "@comunica/config-query-sparql-prototype": "^0.0.0",
-    "@comunica/query-sparql-link-traversal-solid": "^0.6.0",
+    "@comunica/query-sparql-link-traversal-solid": "^0.7.0",
     "@comunica/runner": "^4.2.0",
     "@comunica/runner-cli": "^4.2.0"
   }

@@ -7,6 +7,6 @@
   "types": "lib/index",
   "lsd:module": true,
   "dependencies": {
-    "@comunica/config-query-sparql-link-traversal": "^0.6.0"
+    "@comunica/config-query-sparql-link-traversal": "^0.7.0"
   }
 }

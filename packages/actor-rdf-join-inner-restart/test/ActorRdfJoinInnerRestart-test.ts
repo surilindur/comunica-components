@@ -142,7 +142,13 @@ describe('ActorRdfJoinInnerRestart', () => {
     it('should fail with adaptive join disabled', async() => {
       context = context.set(KeysRdfJoin.skipAdaptiveJoin, true);
       await expect(actor.test({ context, entries: joinEntries, type })).resolves
-        .toFailTest('actor can only wrap a join once');
+        .toFailTest('actor cannot run due to adaptive join being disabled');
+    });
+
+    it('should fail when called with a subset of previously wrapped join entries', async() => {
+      context = context.set(ActorRdfJoinInnerRestart.keyWrappedOperations, [ joinEntries[0].operation ]);
+      await expect(actor.test({ context, entries: joinEntries, type })).resolves
+        .toFailTest('actor can only wrap a single set of join entries once');
     });
   });
 
