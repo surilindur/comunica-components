@@ -11,3 +11,5 @@ node_modules/
 packages/**/*.d.ts
 packages/**/*.js
 packages/**/*.js.map
+*.rq
+*.sh
