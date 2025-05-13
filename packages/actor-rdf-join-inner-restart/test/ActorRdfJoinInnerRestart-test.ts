@@ -100,6 +100,8 @@ describe('ActorRdfJoinInnerRestart', () => {
       evaluationAfterMetadataUpdate: false,
       evaluationInterval: undefined,
       restartLimit: 1,
+      restartThreshold: 0.5,
+      wrapAllJoins: false,
     });
     // These make sure the log extra data functions are called
     (<any>actor).logDebug = (_context: any, _message: string, _extra: Function) => _extra();
@@ -145,7 +147,14 @@ describe('ActorRdfJoinInnerRestart', () => {
         .toFailTest('actor cannot run due to adaptive join being disabled');
     });
 
+    it('should fail when attempting to wrap lower-level joins without flag enabled', async() => {
+      context = context.set(ActorRdfJoinInnerRestart.keyWrappedOperations, [ joinEntries[0].operation ]);
+      await expect(actor.test({ context, entries: joinEntries, type })).resolves
+        .toFailTest('actor can only wrap the topmost join');
+    });
+
     it('should fail when called with a subset of previously wrapped join entries', async() => {
+      (<any>actor).wrapAllJoins = true;
       context = context.set(ActorRdfJoinInnerRestart.keyWrappedOperations, [ joinEntries[0].operation ]);
       await expect(actor.test({ context, entries: joinEntries, type })).resolves
         .toFailTest('actor can only wrap a single set of join entries once');

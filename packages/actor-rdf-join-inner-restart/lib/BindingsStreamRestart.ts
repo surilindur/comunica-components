@@ -14,6 +14,14 @@ export class BindingsStreamRestart extends TransformIterator<Bindings> {
   private readonly bindingsProduced: Map<number, number>;
   private readonly bindingsSkipped: Map<number, number>;
 
+  public get totalBindingsProduced(): number {
+    let total = 0;
+    for (const count of this.bindingsProduced.values()) {
+      total += count;
+    }
+    return total;
+  }
+
   public constructor(
     source: BindingsStream,
     options: TransformIteratorOptions<Bindings>,

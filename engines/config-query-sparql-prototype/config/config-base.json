@@ -3,7 +3,6 @@
   "@context": [
     "https://linkedsoftwaredependencies.org/bundles/npm/@comunica/config-query-sparql/^4.0.0/components/context.jsonld",
     "https://linkedsoftwaredependencies.org/bundles/npm/@comunica/config-query-sparql-link-traversal/^0.0.0/components/context.jsonld",
-    "https://linkedsoftwaredependencies.org/bundles/npm/@comunica/config-query-sparql-solid/^4.0.0/components/context.jsonld",
     "https://linkedsoftwaredependencies.org/bundles/npm/@comunica/config-query-sparql-prototype/^0.0.0/components/context.jsonld"
   ],
   "import": [
@@ -27,7 +26,7 @@
     "ccqs:config/hash-quads/actors.json",
     "ccqs:config/hash-quads/mediators.json",
     "ccqsp:config/http/actors.json",
-    "ccqs:config/http/mediators.json",
+    "ccqsp:config/http/mediators.json",
     "ccqs:config/http-invalidate/actors.json",
     "ccqs:config/http-invalidate/mediators.json",
     "ccqslt:config/init/actors.json",

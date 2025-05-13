@@ -24,12 +24,14 @@ import type { Algebra } from 'sparqlalgebrajs';
 import { BindingsStreamRestart } from './BindingsStreamRestart';
 
 /**
- * A comunica Inner Multi Adaptive Heuristics RDF Join Actor.
+ * Comunica inner join actor for restarting join subtrees in a query plan.
  */
 export class ActorRdfJoinInnerRestart extends ActorRdfJoin {
   protected readonly evaluationAfterMetadataUpdate: boolean;
   protected readonly evaluationInterval: number | undefined;
   protected readonly restartLimit: number;
+  protected readonly restartThreshold: number;
+  protected readonly wrapAllJoins: boolean;
 
   protected readonly mediatorHashBindings: MediatorHashBindings;
   protected readonly mediatorJoin: MediatorRdfJoin;
@@ -47,6 +49,8 @@ export class ActorRdfJoinInnerRestart extends ActorRdfJoin {
     this.evaluationAfterMetadataUpdate = args.evaluationAfterMetadataUpdate;
     this.evaluationInterval = args.evaluationInterval;
     this.restartLimit = args.restartLimit ?? Number.POSITIVE_INFINITY;
+    this.restartThreshold = args.restartThreshold;
+    this.wrapAllJoins = args.wrapAllJoins;
   }
 
   public async test(
@@ -55,29 +59,41 @@ export class ActorRdfJoinInnerRestart extends ActorRdfJoin {
     if (action.context.has(KeysRdfJoin.skipAdaptiveJoin)) {
       return failTest(`${this.name} cannot run due to adaptive join being disabled`);
     }
-    const previousEntries = action.context.get(ActorRdfJoinInnerRestart.keyWrappedOperations);
-    if (previousEntries && action.entries.some(e => previousEntries.includes(e.operation))) {
-      return failTest(`${this.name} can only wrap a single set of join entries once`);
+    const previouslyWrappedOperations = action.context.get(ActorRdfJoinInnerRestart.keyWrappedOperations);
+    if (previouslyWrappedOperations) {
+      if (!this.wrapAllJoins) {
+        return failTest(`${this.name} can only wrap the topmost join`);
+      }
+      if (action.entries.some(e => previouslyWrappedOperations.includes(e.operation))) {
+        return failTest(`${this.name} can only wrap a single set of join entries once`);
+      }
     }
     if (!this.evaluationAfterMetadataUpdate && !this.evaluationInterval) {
       return failTest(`${this.name} has no evaluation conditions enabled`);
     }
-    if (this.restartLimit < 1) {
+    if (this.restartLimit < 1 || this.restartThreshold <= 0) {
       return failTest(`${this.name} cannot restart even once`);
     }
     return super.test(action);
   }
 
   public async getOutput(action: IActionRdfJoin): Promise<IActorRdfJoinOutputInner> {
-    // This will avoid wrapping the same join multiple times
+    // Update the list of previously wrapped entries to include the current operations
     const context = action.context.set(
       ActorRdfJoinInnerRestart.keyWrappedOperations,
-      action.entries.map(e => e.operation),
+      [
+        ...action.entries.map(e => e.operation),
+        ...action.context.get(ActorRdfJoinInnerRestart.keyWrappedOperations) ?? [],
+      ],
     );
 
     let currentJoinOrder: IJoinEntryWithMetadata[] = await this.getSortedJoinEntries(action.entries, context);
     let currentJoinOrderUpdated = false;
     let currentRestartCount = 0;
+
+    // The total join output side needs to be estimated for using the restart threshold
+    const joinSelectivity = await this.mediatorJoinSelectivity.mediate({ context, entries: action.entries });
+    const currentOperationCardinalities = new Map<Algebra.Operation, number>();
 
     // Execute the join with the metadata we have now
     const firstJoinOutput = await this.getJoinOutput(action.type, action.entries, context);
@@ -86,7 +102,7 @@ export class ActorRdfJoinInnerRestart extends ActorRdfJoin {
     const hashFunction = (await this.mediatorHashBindings.mediate({ context })).hashFunction;
 
     // Helper function to create a new source stream via join bus
-    const createSource = async(): Promise<BindingsStream> => {
+    const createJoinOutputBindingsStream = async(): Promise<BindingsStream> => {
       const joinResult = await this.getJoinOutput(action.type, action.entries, context);
       return joinResult.bindingsStream;
     };
@@ -94,19 +110,46 @@ export class ActorRdfJoinInnerRestart extends ActorRdfJoin {
     const bindingsStream = new BindingsStreamRestart(
       firstJoinOutput.bindingsStream,
       { autoStart: false, maxBufferSize: 0 },
-      createSource,
+      createJoinOutputBindingsStream,
       hashFunction,
     );
 
-    const swapJoinOrder = (): void => {
-      bindingsStream.swapSource();
-      currentRestartCount++;
-      currentJoinOrderUpdated = false;
+    const estimateJoinOutputCardinality = (): number => {
+      let total = 0;
+      for (const value of currentOperationCardinalities.values()) {
+        total += value;
+      }
+      // Return the ceiling to avoid issues when estimate is over 0 but close to it
+      return Math.ceil(total * joinSelectivity.selectivity);
+    };
+
+    const attemptJoinPlanRestart = (): void => {
+      if (currentRestartCount < this.restartLimit) {
+        const expectedBindings = estimateJoinOutputCardinality();
+        const restartThreshold = Math.ceil(this.restartThreshold * expectedBindings);
+        if (bindingsStream.totalBindingsProduced < restartThreshold) {
+          this.logWarn(context, 'Swapping join order', () => ({
+            expectedBindings,
+            producedBindings: bindingsStream.totalBindingsProduced,
+            restartThreshold,
+          }));
+          bindingsStream.swapSource();
+          currentRestartCount++;
+          currentJoinOrderUpdated = false;
+        } else {
+          this.logWarn(context, 'Skipping join order swap', () => ({
+            expectedBindings,
+            producedBindings: bindingsStream.totalBindingsProduced,
+            restartThreshold,
+          }));
+        }
+      }
     };
 
     for (const entry of action.entries) {
       const invalidateListener = (): void => {
         entry.output.metadata().then((updatedMetadata) => {
+          currentOperationCardinalities.set(entry.operation, updatedMetadata.cardinality.value);
           updatedMetadata.state.addInvalidateListener(invalidateListener);
           if (!currentJoinOrderUpdated) {
             this.getSortedJoinEntries(action.entries, context).then((updatedJoinOrder) => {
@@ -117,9 +160,8 @@ export class ActorRdfJoinInnerRestart extends ActorRdfJoin {
                 }));
                 currentJoinOrder = updatedJoinOrder;
                 currentJoinOrderUpdated = true;
-                if (this.evaluationAfterMetadataUpdate && currentRestartCount < this.restartLimit) {
-                  this.logWarn(context, 'Swapping join order upon metadata cardinality update');
-                  swapJoinOrder();
+                if (this.evaluationAfterMetadataUpdate) {
+                  attemptJoinPlanRestart();
                 }
               }
             }).catch((error: Error) => entry.output.bindingsStream.destroy(error));
@@ -127,9 +169,13 @@ export class ActorRdfJoinInnerRestart extends ActorRdfJoin {
         }).catch((error: Error) => entry.output.bindingsStream.destroy(error));
       };
 
-      // Add the initial listener to the current metadata
+      // Add the initial listener to the current metadata entries, and also record the total
+      // cardinality sum of all join inputs for use in join restart threshold calculations.
       entry.output.metadata()
-        .then(metadata => metadata.state.addInvalidateListener(invalidateListener))
+        .then((metadata) => {
+          metadata.state.addInvalidateListener(invalidateListener);
+          currentOperationCardinalities.set(entry.operation, metadata.cardinality.value);
+        })
         .catch((error: Error) => entry.output.bindingsStream.destroy(error));
     }
 
@@ -139,8 +185,7 @@ export class ActorRdfJoinInnerRestart extends ActorRdfJoin {
       const checkForRestart = (): void => {
         if (currentRestartCount < this.restartLimit) {
           if (currentJoinOrderUpdated) {
-            this.logWarn(context, 'Swapping join order upon timeout');
-            swapJoinOrder();
+            attemptJoinPlanRestart();
           }
           evaluationTimeout = setTimeout(checkForRestart, this.evaluationInterval);
         }
@@ -226,6 +271,7 @@ export interface IActorRdfJoinInnerRestartArgs extends IActorRdfJoinArgs {
   mediatorJoinEntriesSort: MediatorRdfJoinEntriesSort;
   /**
    * Whether the join should be evaluated when join entry metadata is updated.
+   * @range {boolean}
    * @default {false}
    */
   evaluationAfterMetadataUpdate: boolean;
@@ -239,4 +285,18 @@ export interface IActorRdfJoinInnerRestartArgs extends IActorRdfJoinArgs {
    * @range {integer}
    */
   restartLimit?: number;
+  /**
+   * The threshold for restarting the joins, presented as decimal in [0, 1] relative to the total estimated
+   * bindings count produced by a join. When the join plan appears sub-optimal and the work already done is below
+   * the threshold, then the join plan will be restarted.
+   * @range {float}
+   * @default {0.5}
+   */
+  restartThreshold: number;
+  /**
+   * Whether all joins should be wrapped, or only the topmost one. Wrapping all joins will impact performance.
+   * @range {boolean}
+   * @default {false}
+   */
+  wrapAllJoins: boolean;
 }

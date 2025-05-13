@@ -62,6 +62,12 @@ describe('BindingsStreamRestart', () => {
     await expect(bindingsStream.toArray()).resolves.toEqualBindingsArray(bindingsHashes);
   });
 
+  it('reports the number of bindings produced', async() => {
+    expect(createSource).toHaveBeenCalledTimes(1);
+    await expect(bindingsStream.toArray()).resolves.toEqualBindingsArray(bindingsHashes);
+    expect(bindingsStream.totalBindingsProduced).toBe(bindingsHashes.length);
+  });
+
   it('changes the source when swapSource is called', async() => {
     expect(createSource).toHaveBeenCalledTimes(1);
     await expect(takeBindings(bindingsStream, 2)).resolves.toEqualBindingsArray(bindingsHashes.slice(0, 2));
