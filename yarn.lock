@@ -1770,6 +1770,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@comunica/actor-http-delay@npm:^0.0.0, @comunica/actor-http-delay@workspace:packages/actor-http-delay":
+  version: 0.0.0-use.local
+  resolution: "@comunica/actor-http-delay@workspace:packages/actor-http-delay"
+  dependencies:
+    "@comunica/bus-http": "npm:^4.2.0"
+    "@comunica/core": "npm:^4.2.0"
+  languageName: unknown
+  linkType: soft
+
 "@comunica/actor-http-fetch@npm:^2.0.1":
   version: 2.10.2
   resolution: "@comunica/actor-http-fetch@npm:2.10.2"
@@ -4838,6 +4847,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@comunica/query-sparql-prototype@workspace:engines/query-sparql-prototype"
   dependencies:
+    "@comunica/actor-http-delay": "npm:^0.0.0"
     "@comunica/actor-http-limit-rate": "npm:^4.2.0"
     "@comunica/actor-init-query": "npm:^4.2.0"
     "@comunica/actor-rdf-join-entries-sort-selectivity": "npm:^4.2.0"
