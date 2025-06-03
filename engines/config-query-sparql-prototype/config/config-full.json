@@ -10,6 +10,7 @@
     "ccqsp:config/rdf-join-entries-sort/actors-selectivity.json",
     "ccqsp:config/rdf-metadata-accumulate/actors-cardinality-void.json",
     "ccqsp:config/rdf-metadata-extract/actors-link-filter-bloom.json",
+    "ccqsp:config/rdf-metadata-extract/actors-link-filter-void.json",
     "ccqsp:config/rdf-resolve-hypermedia-links-queue/actors-wrapper-filter.json"
   ]
 }
