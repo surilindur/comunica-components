@@ -670,6 +670,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@comunica/actor-context-preprocess-prototype@npm:^0.0.0, @comunica/actor-context-preprocess-prototype@workspace:packages/actor-context-preprocess-prototype":
+  version: 0.0.0-use.local
+  resolution: "@comunica/actor-context-preprocess-prototype@workspace:packages/actor-context-preprocess-prototype"
+  dependencies:
+    "@comunica/bus-context-preprocess": "npm:^4.2.0"
+    "@comunica/context-entries-link-traversal": "npm:^0.7.0"
+    "@comunica/core": "npm:^4.2.0"
+  languageName: unknown
+  linkType: soft
+
 "@comunica/actor-context-preprocess-query-source-identify@npm:^4.0.1, @comunica/actor-context-preprocess-query-source-identify@npm:^4.2.0":
   version: 4.2.0
   resolution: "@comunica/actor-context-preprocess-query-source-identify@npm:4.2.0"
@@ -4858,6 +4868,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@comunica/query-sparql-prototype@workspace:engines/query-sparql-prototype"
   dependencies:
+    "@comunica/actor-context-preprocess-prototype": "npm:^0.0.0"
     "@comunica/actor-http-delay": "npm:^0.0.0"
     "@comunica/actor-http-limit-rate": "npm:^4.2.0"
     "@comunica/actor-init-query": "npm:^4.2.0"
