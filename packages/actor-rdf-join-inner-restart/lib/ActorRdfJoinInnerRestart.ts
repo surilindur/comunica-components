@@ -169,6 +169,9 @@ export class ActorRdfJoinInnerRestart extends ActorRdfJoin {
         }).catch((error: Error) => entry.output.bindingsStream.destroy(error));
       };
 
+      // Workaround to silence warnings about error listener counts
+      entry.output.bindingsStream.setMaxListeners(Number.POSITIVE_INFINITY);
+
       // Add the initial listener to the current metadata entries, and also record the total
       // cardinality sum of all join inputs for use in join restart threshold calculations.
       entry.output.metadata()

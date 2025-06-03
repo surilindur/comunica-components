@@ -25,6 +25,7 @@ module.exports = config([
   {
     files: [
       'engines/*/bin/http.ts',
+      'engines/*/bin/query.ts',
       'engines/*/bin/query-dynamic.ts',
       'engines/*/lib/QueryEngineFactory.ts',
     ],

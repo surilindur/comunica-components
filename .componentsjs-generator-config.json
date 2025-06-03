@@ -3,7 +3,5 @@
   "ignorePackagePaths": [
     "engines/query-sparql"
   ],
-  "ignoreComponents": [
-    "Record"
-  ]
+  "ignoreComponents": []
 }
