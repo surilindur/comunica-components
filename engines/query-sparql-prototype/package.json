@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "@comunica/actor-context-preprocess-prototype": "^0.0.0",
+    "@comunica/actor-extract-links-sparql": "^0.0.0",
     "@comunica/actor-http-delay": "^0.0.0",
     "@comunica/actor-http-limit-rate": "^4.2.0",
     "@comunica/actor-init-query": "^4.2.0",

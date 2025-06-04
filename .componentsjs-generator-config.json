@@ -4,6 +4,8 @@
     "engines/query-sparql"
   ],
   "ignoreComponents": [
-    "Record"
+    "Factory",
+    "FragmentSelectorShape",
+    "IQuerySource"
   ]
 }
