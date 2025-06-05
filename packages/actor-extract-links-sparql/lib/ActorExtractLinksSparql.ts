@@ -49,10 +49,21 @@ export class ActorExtractLinksSparql extends ActorExtractLinks<ExtractLinksSparq
     const linkPatterns: Algebra.Pattern[] = [];
     const linkVariable = dataFactory.variable('link');
 
-    for (const pattern of sideData.patterns) {
-      if (pattern.subject.termType === 'NamedNode' && pattern.object.termType === 'Variable') {
+    for (const [ index, pattern ] of sideData.patterns.entries()) {
+      if (pattern.subject.termType === 'Variable' || pattern.subject.termType === 'BlankNode') {
         linkPatterns.push(algebraFactory.createPattern(
-          pattern.subject,
+          linkVariable,
+          pattern.predicate,
+          pattern.object.termType === 'BlankNode' || pattern.object.termType === 'Variable' ?
+            dataFactory.variable(`o${index}`) :
+            pattern.object,
+        ));
+      }
+      if (pattern.object.termType === 'Variable' || pattern.object.termType === 'BlankNode') {
+        linkPatterns.push(algebraFactory.createPattern(
+          pattern.subject.termType === 'BlankNode' || pattern.subject.termType === 'Variable' ?
+            dataFactory.variable(`o${index}`) :
+            pattern.subject,
           pattern.predicate,
           linkVariable,
         ));
@@ -96,10 +107,6 @@ export class ActorExtractLinksSparql extends ActorExtractLinks<ExtractLinksSparq
     return new Promise<string[]>((resolve, reject) => {
       const endpoints = new Set<string>();
 
-      if (action.url.endsWith('/sparql')) {
-        endpoints.add(action.url);
-      }
-
       action.metadata
         .on('data', (quad: RDF.Quad) => {
           if (quad.predicate.termType === 'NamedNode' && quad.predicate.value === 'http://rdfs.org/ns/void#sparqlEndpoint') {
@@ -112,10 +119,10 @@ export class ActorExtractLinksSparql extends ActorExtractLinks<ExtractLinksSparq
   }
 
   public static getCurrentQuadPatterns(context: IActionContext): Algebra.Pattern[] {
-    const currentQueryOperation = context.get(KeysQueryOperation.operation);
+    const operation = context.get(KeysQueryOperation.operation);
     const quadPatterns: Algebra.Pattern[] = [];
-    if (currentQueryOperation) {
-      Util.recurseOperation(currentQueryOperation, {
+    if (operation) {
+      Util.recurseOperation(operation, {
         [Algebra.types.PATTERN]: (op: Algebra.Pattern) => {
           quadPatterns.push(op);
           return false;

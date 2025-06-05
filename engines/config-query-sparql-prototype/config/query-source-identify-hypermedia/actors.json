@@ -21,7 +21,7 @@
       "@type": "ActorQuerySourceIdentifyHypermediaSparql",
       "mediatorHttp": { "@id": "urn:comunica:default:http/mediators#main" },
       "mediatorMergeBindingsContext": { "@id": "urn:comunica:default:merge-bindings-context/mediators#main" },
-      "cardinalityEstimateConstruction": true,
+      "cardinalityEstimateConstruction": false,
       "cardinalityCountQueries": true
     },
     {

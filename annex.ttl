@@ -1,0 +1,104 @@
+prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+prefix sio: <http://semanticscience.org/resource/>
+<#0> rdfs:label "1,1-Dichloroethene" ;
+    sio:SIO_000300 "75-35-4" .
+<#1> rdfs:label "1,1,1-Trichloroethane" ;
+    sio:SIO_000300 "71-55-6" .
+<#2> rdfs:label "1,1,2-Trichloroethane" ;
+    sio:SIO_000300 "79-00-5" .
+<#3> rdfs:label "1,1,1,2-Tetrachloroethane" ;
+    sio:SIO_000300 "630-20-6" .
+<#4> rdfs:label "1,1,2,2-Tetrachloroethane" ;
+    sio:SIO_000300 "79-34-5" .
+<#5> rdfs:label "1,2-Dibromoethane (Ethylene dibromide) ((#))" ;
+    sio:SIO_000300 "106-93-4" .
+<#6> rdfs:label "1,2-Dichloroethane (ethylene dichloride) ((#))" ;
+    sio:SIO_000300 "107-06-2" .
+<#7> rdfs:label "1,3-Dichloropropene (1)  ((+))" ;
+    sio:SIO_000300 "542-75-6" .
+<#8> rdfs:label "1,3-Dichloropropene (cis) ((Z)-1,3-dichloropropene)" ;
+    sio:SIO_000300 "10061-01-5" .
+<#9> rdfs:label "2-Aminobutane" ;
+    sio:SIO_000300 "13952-84-6" .
+<#10> rdfs:label "2-Naphthylamine and its salts ((+))" ;
+    sio:SIO_000300 "91-59-8", "553-00-4", "612-52-2" .
+<#11> rdfs:label "2-Naphthyloxyacetic acid ((+))" ;
+    sio:SIO_000300 "120-23-0" .
+<#12> rdfs:label "2,4-Dinitrotoluene (2,4-DNT) ((+))" ;
+    sio:SIO_000300 "121-14-2" .
+<#13> rdfs:label "2,4,5-T and its salts and esters ((#))" ;
+    sio:SIO_000300 "93-76-5" .
+<#14> rdfs:label "3-Decen-2-one ((+))" ;
+    sio:SIO_000300 "10519-33-2" .
+<#15> rdfs:label "4-Aminobiphenyl (biphenyl-4-amine) and its salts ((+))" ;
+    sio:SIO_000300 "92-67-1", "2113-61-3" .
+<#16> rdfs:label "4-Nitrobiphenyl ((+))" ;
+    sio:SIO_000300 "92-93-3" .
+<#17> rdfs:label "4,4'-Diaminodiphenylmethane (MDA) ((+))" ;
+    sio:SIO_000300 "101-77-9" .
+<#18> rdfs:label "5-Tert-butyl-2,4,6-trinitro-m-xylene ((+))" ;
+    sio:SIO_000300 "81-15-2" .
+<#19> rdfs:label "Acephate ((+))" ;
+    sio:SIO_000300 "30560-19-1" .
+<#20> rdfs:label "Acetochlor ((+))" ;
+    sio:SIO_000300 "34256-82-1" .
+<#21> rdfs:label "Acifluorfen" ;
+    sio:SIO_000300 "50594-66-6" .
+<#22> rdfs:label "Alachlor ((#))" ;
+    sio:SIO_000300 "15972-60-8" .
+<#23> rdfs:label "Aldicarb ((#))" ;
+    sio:SIO_000300 "116-06-3" .
+<#24> rdfs:label "Ametryn" ;
+    sio:SIO_000300 "834-12-8" .
+<#25> rdfs:label "Amitraz ((+))" ;
+    sio:SIO_000300 "33089-61-1" .
+<#26> rdfs:label "Amitrole ((+))" ;
+    sio:SIO_000300 "61-82-5" .
+<#27> rdfs:label "Anthraquinone ((+))" ;
+    sio:SIO_000300 "84-65-1" .
+<#28> rdfs:label "Arsenic compounds" ;
+    sio:SIO_000300 " " .
+<#29> rdfs:label "Asbestos Fibres ((+)):" ;
+    sio:SIO_000300 "1332-21-4" .
+<#30> rdfs:label "Actinolite ((#))" ;
+    sio:SIO_000300 "77536-66-4" .
+<#31> rdfs:label "Antophyllite ((#))" ;
+    sio:SIO_000300 "77536-67-5" .
+<#32> rdfs:label "Amosite ((#))" ;
+    sio:SIO_000300 "12172-73-5" .
+<#33> rdfs:label "Crocidolite ((#))" ;
+    sio:SIO_000300 "12001-28-4" .
+<#34> rdfs:label "Tremolite ((#))" ;
+    sio:SIO_000300 "77536-68-6" .
+<#35> rdfs:label "Chrysotile ((+))" ;
+    sio:SIO_000300 "12001-29-5", "132207-32-0" .
+<#36> rdfs:label "Asulam ((+))" ;
+    sio:SIO_000300 "3337-71-1", "2302-17-2" .
+<#37> rdfs:label "Atrazine ((+))" ;
+    sio:SIO_000300 "1912-24-9" .
+<#38> rdfs:label "Azinphos-ethyl ((+))" ;
+    sio:SIO_000300 "2642-71-9" .
+<#39> rdfs:label "Azinphos-methyl ((#))" ;
+    sio:SIO_000300 "86-50-0" .
+<#40> rdfs:label "Azocyclotin ((+))" ;
+    sio:SIO_000300 "41083-11-8" .
+<#41> rdfs:label "Benalaxyl ((+))" ;
+    sio:SIO_000300 "71626-11-4" .
+<#42> rdfs:label "Benfuracarb ((+))" ;
+    sio:SIO_000300 "82560-54-1" .
+<#43> rdfs:label "Bensultap" ;
+    sio:SIO_000300 "17606-31-4" .
+<#44> rdfs:label "Benzene (2)" ;
+    sio:SIO_000300 "71-43-2" .
+<#45> rdfs:label "Benzidine and its salts ((+)) Benzidine derivatives ((+))" ;
+    sio:SIO_000300 "92-87-5", "36341-27-2" .
+<#46> rdfs:label "Benzyl butyl phthalate ((+))" ;
+    sio:SIO_000300 "85-68-7" .
+<#47> rdfs:label "Beta-cyfluthrin ((+))" ;
+    sio:SIO_000300 "1820573-27-0" .
+<#48> rdfs:label "Beta-cypermethrin ((+))" ;
+    sio:SIO_000300 "65731-84-2" .
+<#49> rdfs:label "Bifenthrin ((+))" ;
+    sio:SIO_000300 "82657-04-3" .
+<#50> rdfs:label "Binapacryl ((#))" ;
+    sio:SIO_000300 "485-31-4" .
