@@ -5,6 +5,7 @@
   ],
   "import": [
     "ccqsp:config/config-base.json",
+    "ccqsp:config/http/actors-limit-rate.json",
     "ccqsp:config/extract-links/actors-void.json",
     "ccqsp:config/context-preprocess/actors-prototype.json",
     "ccqsp:config/rdf-join/actors-restart.json",
