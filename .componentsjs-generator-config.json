@@ -3,9 +3,5 @@
   "ignorePackagePaths": [
     "engines/query-sparql"
   ],
-  "ignoreComponents": [
-    "Factory",
-    "FragmentSelectorShape",
-    "IQuerySource"
-  ]
+  "ignoreComponents": []
 }
