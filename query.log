@@ -1,0 +1,127 @@
+[33m[2025-06-11T21:42:01.512Z]  WARN: Could not retrieve http://localhost:3030/sparql (HTTP status 404):
+Service Description: /sparql
+ { url: 'http://localhost:3030/sparql', actor: 'urn:comunica:default:dereference/actors#http' }
+[0m{
+  "type": "project",
+  "input": {
+    "type": "join",
+    "input": [
+      {
+        "type": "union",
+        "input": [
+          {
+            "termType": "Quad",
+            "value": "",
+            "subject": {
+              "termType": "Variable",
+              "value": "forum"
+            },
+            "predicate": {
+              "termType": "NamedNode",
+              "value": "http://localhost:3000/www.ldbc.eu/ldbc_socialnet/1.0/vocabulary/hasMember"
+            },
+            "object": {
+              "termType": "Variable",
+              "value": "forumMember"
+            },
+            "graph": {
+              "termType": "DefaultGraph",
+              "value": ""
+            },
+            "type": "pattern",
+            "metadata": {
+              "scopedSource": "QuerySourceHypermedia(http://localhost:3000/pods/0000000000000000025/)(SkolemID:0)"
+            }
+          },
+          {
+            "termType": "Quad",
+            "value": "",
+            "subject": {
+              "termType": "Variable",
+              "value": "forum"
+            },
+            "predicate": {
+              "termType": "NamedNode",
+              "value": "http://localhost:3000/www.ldbc.eu/ldbc_socialnet/1.0/vocabulary/hasMember"
+            },
+            "object": {
+              "termType": "Variable",
+              "value": "forumMember"
+            },
+            "graph": {
+              "termType": "DefaultGraph",
+              "value": ""
+            },
+            "type": "pattern",
+            "metadata": {
+              "scopedSource": "QuerySourceHypermedia(http://localhost:3030/sparql)(SkolemID:1)"
+            }
+          }
+        ]
+      },
+      {
+        "type": "union",
+        "input": [
+          {
+            "termType": "Quad",
+            "value": "",
+            "subject": {
+              "termType": "Variable",
+              "value": "forumMember"
+            },
+            "predicate": {
+              "termType": "NamedNode",
+              "value": "http://localhost:3000/www.ldbc.eu/ldbc_socialnet/1.0/vocabulary/hasPerson"
+            },
+            "object": {
+              "termType": "NamedNode",
+              "value": "http://localhost:3000/pods/0000000000000000025/profile/card#me"
+            },
+            "graph": {
+              "termType": "DefaultGraph",
+              "value": ""
+            },
+            "type": "pattern",
+            "metadata": {
+              "scopedSource": "QuerySourceHypermedia(http://localhost:3000/pods/0000000000000000025/)(SkolemID:0)"
+            }
+          },
+          {
+            "termType": "Quad",
+            "value": "",
+            "subject": {
+              "termType": "Variable",
+              "value": "forumMember"
+            },
+            "predicate": {
+              "termType": "NamedNode",
+              "value": "http://localhost:3000/www.ldbc.eu/ldbc_socialnet/1.0/vocabulary/hasPerson"
+            },
+            "object": {
+              "termType": "NamedNode",
+              "value": "http://localhost:3000/pods/0000000000000000025/profile/card#me"
+            },
+            "graph": {
+              "termType": "DefaultGraph",
+              "value": ""
+            },
+            "type": "pattern",
+            "metadata": {
+              "scopedSource": "QuerySourceHypermedia(http://localhost:3030/sparql)(SkolemID:1)"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "variables": [
+    {
+      "termType": "Variable",
+      "value": "forum"
+    },
+    {
+      "termType": "Variable",
+      "value": "forumMember"
+    }
+  ]
+}

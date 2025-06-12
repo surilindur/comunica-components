@@ -1,0 +1,13 @@
+project (forum,forumMember)
+  join
+    join-inner(symmetric-hash) cardReal:78 timeSelf:159.347ms timeLife:4,275.747ms
+      union cardEst:~26
+        pattern (?forumMember http://localhost:3000/www.ldbc.eu/ldbc_socialnet/1.0/vocabulary/hasPerson http://localhost:3000/pods/0000000000000000025/profile/card#me) src:0
+        pattern (?forumMember http://localhost:3000/www.ldbc.eu/ldbc_socialnet/1.0/vocabulary/hasPerson http://localhost:3000/pods/0000000000000000025/profile/card#me) src:1
+      union cardEst:~123,268
+        pattern (?forum http://localhost:3000/www.ldbc.eu/ldbc_socialnet/1.0/vocabulary/hasMember ?forumMember) src:0
+        pattern (?forum http://localhost:3000/www.ldbc.eu/ldbc_socialnet/1.0/vocabulary/hasMember ?forumMember) src:1
+
+sources:
+  0: QuerySourceHypermedia(http://localhost:3000/pods/0000000000000000025/)(SkolemID:0)
+  1: QuerySourceHypermedia(http://localhost:3030/sparql)(SkolemID:1)
