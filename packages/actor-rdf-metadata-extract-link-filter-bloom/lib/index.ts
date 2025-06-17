@@ -1,2 +1,2 @@
-export * from './ActorRdfParseLinkFilterBloom';
+export * from './ActorRdfMetadataExtractLinkFilterBloom';
 export * from './Vocabulary';

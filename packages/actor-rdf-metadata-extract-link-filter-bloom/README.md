@@ -1,7 +1,7 @@
-# Comunica RDF Metadata Extract Actor for Bloom Filters
+# Comunica RDF Metadata Extract Actor for Link Filters from Bloom Filters
 
-An [RDF Metadata Extract](https://github.com/comunica/comunica/tree/master/packages/bus-rdf-metadata-extract) actor that
-collects Bloom filters from the metadata stream using a [custom vocabulary](http://semweb.mmlab.be/ns/membership).
+An [RDF Metadata Extract](https://github.com/comunica/comunica/tree/master/packages/bus-rdf-metadata-extract) actor
+that collects Bloom filters from the metadata stream using a [custom vocabulary](http://semweb.mmlab.be/ns/membership).
 These filters can be generated using the Bloom filter summary generator in [rdf-dataset-fragmenter.js](https://github.com/SolidBench/rdf-dataset-fragmenter.js).
 
 This module is part of the [Comunica framework](https://github.com/comunica/comunica),
