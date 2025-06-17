@@ -1,0 +1,15 @@
+{
+  "comment": "Experimental link extractor for SPARQL endpoints",
+  "@context": [
+    "https://linkedsoftwaredependencies.org/bundles/npm/@comunica/runner/^4.0.0/components/context.jsonld",
+    "https://linkedsoftwaredependencies.org/bundles/npm/@comunica/actor-extract-links-sparql/^0.0.0/components/context.jsonld"
+  ],
+  "@id": "urn:comunica:default:Runner",
+  "@type": "Runner",
+  "actors": [
+    {
+      "@id": "urn:comunica:default:extract-links/actors#sparql",
+      "@type": "ActorExtractLinksSparql"
+    }
+  ]
+}

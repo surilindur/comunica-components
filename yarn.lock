@@ -849,6 +849,19 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@comunica/actor-extract-links-sparql@npm:^0.0.0, @comunica/actor-extract-links-sparql@workspace:packages/actor-extract-links-sparql":
+  version: 0.0.0-use.local
+  resolution: "@comunica/actor-extract-links-sparql@workspace:packages/actor-extract-links-sparql"
+  dependencies:
+    "@comunica/bus-extract-links": "npm:^0.7.0"
+    "@comunica/context-entries": "npm:^4.2.0"
+    "@comunica/core": "npm:^4.2.0"
+    "@comunica/types": "npm:^4.2.0"
+    fetch-sparql-endpoint: "npm:^6.0.0"
+    sparqlalgebrajs: "npm:^4.0.0"
+  languageName: unknown
+  linkType: soft
+
 "@comunica/actor-function-factory-expression-bnode@npm:^4.0.1, @comunica/actor-function-factory-expression-bnode@npm:^4.2.0":
   version: 4.2.0
   resolution: "@comunica/actor-function-factory-expression-bnode@npm:4.2.0"
@@ -4847,6 +4860,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@comunica/query-sparql-prototype@workspace:engines/query-sparql-prototype"
   dependencies:
+    "@comunica/actor-extract-links-sparql": "npm:^0.0.0"
     "@comunica/actor-http-delay": "npm:^0.0.0"
     "@comunica/actor-http-limit-rate": "npm:^4.2.0"
     "@comunica/actor-init-query": "npm:^4.2.0"
@@ -9218,6 +9232,28 @@ __metadata:
   languageName: node
   linkType: hard
 
+"fetch-sparql-endpoint@npm:^6.0.0":
+  version: 6.0.0
+  resolution: "fetch-sparql-endpoint@npm:6.0.0"
+  dependencies:
+    "@types/n3": "npm:^1.0.0"
+    "@types/readable-stream": "npm:^4.0.0"
+    "@types/sparqljs": "npm:^3.0.0"
+    is-stream: "npm:^2.0.0"
+    n3: "npm:^1.0.0"
+    rdf-string: "npm:^2.0.0"
+    readable-from-web: "npm:^1.0.0"
+    sparqljs: "npm:^3.0.0"
+    sparqljson-parse: "npm:^3.0.0"
+    sparqlxml-parse: "npm:^3.0.0"
+    stream-to-string: "npm:^1.0.0"
+    yargs: "npm:^17.0.0"
+  bin:
+    fetch-sparql-endpoint: bin/fetch-sparql-endpoint.js
+  checksum: 10/c288137962b8881da9296461b342c150b9ce747ca43a6dc8292cf417759dfddf163351455a957adac3670442af0ef2cd849701bad9caa80fb5ac7142a57ba5c4
+  languageName: node
+  linkType: hard
+
 "file-entry-cache@npm:^6.0.1":
   version: 6.0.1
   resolution: "file-entry-cache@npm:6.0.1"
@@ -13018,6 +13054,18 @@ __metadata:
   languageName: node
   linkType: hard
 
+"sparqljson-parse@npm:^3.0.0":
+  version: 3.0.0
+  resolution: "sparqljson-parse@npm:3.0.0"
+  dependencies:
+    "@bergos/jsonparse": "npm:^1.4.1"
+    "@types/readable-stream": "npm:^4.0.0"
+    rdf-data-factory: "npm:^2.0.0"
+    readable-stream: "npm:^4.0.0"
+  checksum: 10/49968a6e3c88ad4c72c664c11a0fdb984ec02de2ad95d2cacf2056b257c27e5f375e54735c2929e214afd41d0794d6ef7bc7dad2d3a0b9edf4f1325bb3df4213
+  languageName: node
+  linkType: hard
+
 "sparqljson-to-tree@npm:^3.0.1":
   version: 3.0.2
   resolution: "sparqljson-to-tree@npm:3.0.2"
@@ -13040,6 +13088,19 @@ __metadata:
     rdf-data-factory: "npm:^1.1.0"
     readable-stream: "npm:^4.0.0"
   checksum: 10/1da4ae71548ec9f0cce6bb41c8dbf17bfc9c55f6b98f82772ec2ab78c3f164a6c992f9cc3889ee0c0f0d142319d862e77aba6381c1521c60e88f033494009b0e
+  languageName: node
+  linkType: hard
+
+"sparqlxml-parse@npm:^3.0.0":
+  version: 3.0.0
+  resolution: "sparqlxml-parse@npm:3.0.0"
+  dependencies:
+    "@rubensworks/saxes": "npm:^6.0.1"
+    "@types/readable-stream": "npm:^4.0.0"
+    buffer: "npm:^6.0.3"
+    rdf-data-factory: "npm:^2.0.0"
+    readable-stream: "npm:^4.5.2"
+  checksum: 10/4f6862c886e28d4b481bd4e2ed7927a6e95ab0f63719e41d4f52db60388e80122f09d1ea1b47ab42e5faadaa4bd762bf907c3fb7f829f16b98408c3b390a1e0a
   languageName: node
   linkType: hard
 
