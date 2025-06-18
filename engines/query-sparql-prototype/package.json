@@ -18,7 +18,7 @@
     "@comunica/actor-context-preprocess-prototype": "^0.0.0",
     "@comunica/actor-http-delay": "^0.0.0",
     "@comunica/actor-http-limit-rate": "^4.2.0",
-    "@comunica/actor-init-query": "^4.2.0",
+    "@comunica/actor-init-query": "^4.3.0",
     "@comunica/actor-rdf-join-entries-sort-selectivity": "^4.2.0",
     "@comunica/actor-rdf-join-inner-restart": "^0.0.0",
     "@comunica/actor-rdf-metadata-accumulate-cardinality-void": "^0.0.0",
