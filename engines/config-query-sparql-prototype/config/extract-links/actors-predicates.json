@@ -1,0 +1,21 @@
+{
+  "@context": [
+    "https://linkedsoftwaredependencies.org/bundles/npm/@comunica/runner/^4.0.0/components/context.jsonld",
+    "https://linkedsoftwaredependencies.org/bundles/npm/@comunica/actor-extract-links-predicates/^0.0.0/components/context.jsonld"
+  ],
+  "@id": "urn:comunica:default:Runner",
+  "@type": "Runner",
+  "actors": [
+    {
+      "comment": "This is a reduced combined version of the original actors to follow only links that make sense, while also checking the subject.",
+      "@id": "urn:comunica:default:extract-links/actors#predicates",
+      "@type": "ActorExtractLinksPredicates",
+      "checkSubject": true,
+      "predicateRegexes": [
+        "http://www.w3.org/2000/01/rdf-schema#seeAlso",
+        "http://www.w3.org/ns/ldp#contains",
+        "http://www.w3.org/ns/pim/space#storage"
+      ]
+    }
+  ]
+}
