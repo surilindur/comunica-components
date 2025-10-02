@@ -41,7 +41,7 @@ jobs:
         os:
           - macos-latest
           - ubuntu-latest
-          - windows-latest
+          # - windows-latest <- disabled due to Components.js errors
         node-version:
           - 22.x
           - 23.x
