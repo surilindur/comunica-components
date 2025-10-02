@@ -4,7 +4,7 @@ ADD . /opt/comunica-prototype
 
 WORKDIR /opt/comunica-prototype
 
-RUN corepack enable && yarn install --immutable
+RUN yarn install --frozen-lockfile --ignore-engines --ignore-optional
 
 WORKDIR /opt/comunica-prototype/engines/query-sparql-prototype
 
