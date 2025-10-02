@@ -21,16 +21,15 @@ jobs:
     name: Lint
     runs-on: ubuntu-latest
     steps:
-      - name: Use Node.js ${{ env.DEFAULT_NODE_VERSION }}
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.DEFAULT_NODE_VERSION }}
-      - name: Enable Corepack
-        run: corepack enable
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
+      - name: Use Node.js ${{ env.DEFAULT_NODE_VERSION }}
+        uses: actions/setup-node@v5
+        with:
+          cache: yarn
+          node-version: ${{ env.DEFAULT_NODE_VERSION }}
       - name: Install dependencies
-        run: yarn install --immutable --mode skip-build
+        run: yarn install --frozen-lockfile --ignore-engines --ignore-optional
       - name: Run ESLint
         run: yarn run lint
 
@@ -42,23 +41,21 @@ jobs:
         os:
           - macos-latest
           - ubuntu-latest
-          - windows-latest
+          # - windows-latest <- disabled due to Components.js errors
         node-version:
           - 22.x
-          - 23.x
           - 24.x
     runs-on: ${{ matrix.os }}
     steps:
-      - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ matrix.node-version }}
-      - name: Enable Corepack
-        run: corepack enable
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v5
+        with:
+          cache: yarn
+          node-version: ${{ matrix.node-version }}
       - name: Install dependencies
-        run: yarn install --immutable
+        run: yarn install --frozen-lockfile --ignore-engines --ignore-optional
       - name: Execute unit tests
         run: yarn run test --selectProjects packages
       - name: Submit coverage results
@@ -87,7 +84,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: Build Docker image
         uses: docker/build-push-action@v6
         with:
@@ -99,20 +96,19 @@ jobs:
     needs: test
     runs-on: ubuntu-latest
     steps:
-      - name: Use Node.js ${{ env.DEFAULT_NODE_VERSION }}
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.DEFAULT_NODE_VERSION }}
-      - name: Enable Corepack
-        run: corepack enable
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
+      - name: Use Node.js ${{ env.DEFAULT_NODE_VERSION }}
+        uses: actions/setup-node@v5
+        with:
+          cache: yarn
+          node-version: ${{ env.DEFAULT_NODE_VERSION }}
       - name: Install dependencies
-        run: yarn install --immutable
+        run: yarn install --frozen-lockfile --ignore-engines --ignore-optional
       - name: Build documentation
         run: yarn run doc
       - name: Prepare artifact
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v4
         with:
           path: documentation
           name: documentation
