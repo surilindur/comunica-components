@@ -27,7 +27,11 @@ After installing, this package can be added to your engine's configuration as fo
   "actors": [
     {
       "@id": "urn:comunica:default:http/actors#delay",
-      "@type": "ActorHttpDelay"
+      "@type": "ActorHttpDelay",
+      "mediatorHttp": { "@id": "urn:comunica:default:http/mediators#main" },
+      "beforeActors": { "@id": "urn:comunica:default:http/actors#fetch" },
+      "average": 40,
+      "delta": 10
     }
   ]
 }

@@ -17,6 +17,7 @@
   "dependencies": {
     "@comunica/actor-context-preprocess-prototype": "^0.0.0",
     "@comunica/actor-http-delay": "^0.0.0",
+    "@comunica/actor-http-ignore": "^0.0.0",
     "@comunica/actor-http-limit-rate": "^4.4.0",
     "@comunica/actor-init-query": "^4.4.0",
     "@comunica/actor-rdf-join-entries-sort-selectivity": "^4.4.0",
