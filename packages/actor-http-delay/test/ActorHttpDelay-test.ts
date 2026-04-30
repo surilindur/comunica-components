@@ -60,7 +60,7 @@ describe('ActorHttpDelay', () => {
       const duration = 100;
       jest.spyOn(Date, 'now').mockReturnValueOnce(0).mockReturnValueOnce(duration);
       jest.spyOn(mediatorHttp, 'mediate').mockResolvedValue(<any>response);
-      jest.spyOn(globalThis, 'setTimeout').mockImplementation(callback => <any>callback());
+      jest.spyOn(globalThis, 'setTimeout').mockImplementation(callback => callback());
       const action = { context: new ActionContext({}), input: url };
       await expect(actor.run(action)).resolves.toEqual(response);
       expect(globalThis.setTimeout).toHaveBeenCalledTimes(1);
@@ -72,7 +72,7 @@ describe('ActorHttpDelay', () => {
       jest.spyOn(Date, 'now').mockReturnValueOnce(0);
       jest.spyOn(Date, 'now').mockReturnValueOnce(100);
       jest.spyOn(mediatorHttp, 'mediate').mockRejectedValue(new Error(errorMessage));
-      jest.spyOn(globalThis, 'setTimeout').mockImplementation(callback => <any>callback());
+      jest.spyOn(globalThis, 'setTimeout').mockImplementation(callback => callback());
       const action = { context: new ActionContext({}), input: url };
       await expect(actor.run(action)).rejects.toThrow(errorMessage);
       expect(globalThis.setTimeout).toHaveBeenCalledTimes(1);

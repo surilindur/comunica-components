@@ -15,6 +15,7 @@
     "@comunica/context-entries-link-traversal": "^0.8.0",
     "@comunica/core": "^5.0.0",
     "@comunica/types": "^5.0.0",
+    "@comunica/utils-algebra": "^5.0.0",
     "asynciterator": "^3.0.0"
   }
 }

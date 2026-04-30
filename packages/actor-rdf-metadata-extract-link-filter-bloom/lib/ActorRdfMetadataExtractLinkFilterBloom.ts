@@ -8,7 +8,8 @@ import { KeysInitQuery } from '@comunica/context-entries';
 import { KeysRdfResolveHypermediaLinks } from '@comunica/context-entries-link-traversal';
 import type { IActorTest, TestResult } from '@comunica/core';
 import { failTest, passTestVoid } from '@comunica/core';
-import { Algebra, algebraUtils } from '@comunica/utils-algebra'
+import type { Algebra } from '@comunica/utils-algebra';
+import { algebraUtils } from '@comunica/utils-algebra';
 import type * as RDF from '@rdfjs/types';
 import { Bloem } from 'bloem';
 import {
@@ -178,9 +179,9 @@ export class ActorRdfMetadataExtractLinkFilterBloom extends ActorRdfMetadataExtr
     algebraUtils.visitOperation(operation, {
       pattern: {
         preVisitor: () => ({ continue: false }),
-        visitor: (op) => patterns.push(op)
-      }
-    })
+        visitor: op => patterns.push(op),
+      },
+    });
     return patterns;
   }
 }

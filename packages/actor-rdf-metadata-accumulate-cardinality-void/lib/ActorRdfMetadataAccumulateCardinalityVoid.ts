@@ -9,8 +9,8 @@ import { KeysInitQuery, KeysQueryOperation } from '@comunica/context-entries';
 import { passTestVoid } from '@comunica/core';
 import type { IActorTest, TestResult } from '@comunica/core';
 import type { ComunicaDataFactory, IDataset, QueryResultCardinality } from '@comunica/types';
+import { Algebra } from '@comunica/utils-algebra';
 import { estimateCardinality } from '@comunica/utils-query-operation';
-import { Algebra } from '@comunica/utils-algebra'
 
 /**
  * A comunica Predicate Count RDF Metadata Accumulate Actor.
@@ -42,7 +42,7 @@ export class ActorRdfMetadataAccumulateCardinalityVoid extends ActorRdfMetadataA
       if (operation) {
         const dataFactory = action.context.getSafe(KeysInitQuery.dataFactory);
         const cardinality = this.estimateOperationCardinality(operation, dataFactory, datasets);
-        if (cardinality) {
+        if (cardinality !== undefined) {
           metadata.cardinality = cardinality;
         }
       }
@@ -77,7 +77,7 @@ export class ActorRdfMetadataAccumulateCardinalityVoid extends ActorRdfMetadataA
     dataFactory: ComunicaDataFactory,
     datasets: IDataset[],
   ): Promise<QueryResultCardinality | undefined> {
-    let operationToEstimate = operation;
+    const operationToEstimate = operation;
 
     if (this.predicateBasedEstimation) {
       if (operation.type === Algebra.Types.PATTERN) {
@@ -93,7 +93,7 @@ export class ActorRdfMetadataAccumulateCardinalityVoid extends ActorRdfMetadataA
     for (const dataset of datasets) {
       const datasetCardinality = await estimateCardinality(operationToEstimate, dataset);
       if (cardinality) {
-        cardinality.value += datasetCardinality.value
+        cardinality.value += datasetCardinality.value;
         cardinality.type = 'estimate';
         delete cardinality.dataset;
       } else {

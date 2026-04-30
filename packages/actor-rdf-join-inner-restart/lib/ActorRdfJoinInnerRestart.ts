@@ -20,7 +20,7 @@ import type {
   IJoinEntryWithMetadata,
   LogicalJoinType,
 } from '@comunica/types';
-import { Algebra } from '@comunica/utils-algebra'
+import type { Algebra } from '@comunica/utils-algebra';
 import { BindingsStreamRestart } from './BindingsStreamRestart';
 
 /**
