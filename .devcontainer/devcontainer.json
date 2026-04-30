@@ -5,7 +5,8 @@
     "vscode": {
       "extensions": [
         "dbaeumer.vscode-eslint",
-        "github.vscode-github-actions"
+        "github.vscode-github-actions",
+        "rdfox.rdfox-rdf"
       ],
       "settings": {
         "editor.formatOnSave": true,

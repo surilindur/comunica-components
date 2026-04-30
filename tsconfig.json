@@ -8,6 +8,7 @@
     "module": "CommonJS",
     "allowJs": false,
     "strict": true,
+    "skipLibCheck": true,
     "strictFunctionTypes": true,
     "strictPropertyInitialization": true,
     "alwaysStrict": true,

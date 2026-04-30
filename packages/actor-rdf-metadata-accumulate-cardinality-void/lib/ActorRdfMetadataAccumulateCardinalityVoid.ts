@@ -10,7 +10,7 @@ import { passTestVoid } from '@comunica/core';
 import type { IActorTest, TestResult } from '@comunica/core';
 import type { ComunicaDataFactory, IDataset, QueryResultCardinality } from '@comunica/types';
 import { estimateCardinality } from '@comunica/utils-query-operation';
-import { Algebra } from 'sparqlalgebrajs';
+import { Algebra } from '@comunica/utils-algebra'
 
 /**
  * A comunica Predicate Count RDF Metadata Accumulate Actor.
@@ -72,20 +72,17 @@ export class ActorRdfMetadataAccumulateCardinalityVoid extends ActorRdfMetadataA
     return Object.values(datasets);
   }
 
-  public estimateOperationCardinality(
+  public async estimateOperationCardinality(
     operation: Algebra.Operation,
     dataFactory: ComunicaDataFactory,
     datasets: IDataset[],
-  ): QueryResultCardinality | undefined {
+  ): Promise<QueryResultCardinality | undefined> {
     let operationToEstimate = operation;
 
     if (this.predicateBasedEstimation) {
-      if (operation.type === Algebra.types.PATTERN) {
-        operationToEstimate = {
-          ...operation,
-          subject: dataFactory.variable('s'),
-          object: dataFactory.variable('o'),
-        };
+      if (operation.type === Algebra.Types.PATTERN) {
+        (<Algebra.Pattern>operation).subject = dataFactory.variable('s');
+        (<Algebra.Pattern>operation).object = dataFactory.variable('o');
       } else {
         return undefined;
       }
@@ -94,9 +91,9 @@ export class ActorRdfMetadataAccumulateCardinalityVoid extends ActorRdfMetadataA
     let cardinality: QueryResultCardinality | undefined;
 
     for (const dataset of datasets) {
-      const datasetCardinality = estimateCardinality(operationToEstimate, dataset);
+      const datasetCardinality = await estimateCardinality(operationToEstimate, dataset);
       if (cardinality) {
-        cardinality.value += datasetCardinality.value;
+        cardinality.value += datasetCardinality.value
         cardinality.type = 'estimate';
         delete cardinality.dataset;
       } else {
