@@ -8,9 +8,10 @@ import { KeysInitQuery } from '@comunica/context-entries';
 import { KeysRdfResolveHypermediaLinks } from '@comunica/context-entries-link-traversal';
 import type { IActorTest, TestResult } from '@comunica/core';
 import { failTest, passTestVoid } from '@comunica/core';
+import type { Algebra } from '@comunica/utils-algebra';
+import { algebraUtils } from '@comunica/utils-algebra';
 import type * as RDF from '@rdfjs/types';
 import { Bloem } from 'bloem';
-import { Algebra, Util } from 'sparqlalgebrajs';
 import {
   mem_binaryRepresentation,
   mem_bitSize,
@@ -175,10 +176,10 @@ export class ActorRdfMetadataExtractLinkFilterBloom extends ActorRdfMetadataExtr
 
   public static extractPatterns(operation: Algebra.Operation): Algebra.Pattern[] {
     const patterns: Algebra.Pattern[] = [];
-    Util.recurseOperation(operation, {
-      [Algebra.types.PATTERN]: (pattern) => {
-        patterns.push(pattern);
-        return false;
+    algebraUtils.visitOperation(operation, {
+      pattern: {
+        preVisitor: () => ({ continue: false }),
+        visitor: op => patterns.push(op),
       },
     });
     return patterns;

@@ -1,8 +1,8 @@
 {
   "comment": "Setup of HTTP mediators without fallback bus.",
   "@context": [
-    "https://linkedsoftwaredependencies.org/bundles/npm/@comunica/bus-http/^4.0.0/components/context.jsonld",
-    "https://linkedsoftwaredependencies.org/bundles/npm/@comunica/mediator-number/^4.0.0/components/context.jsonld"
+    "https://linkedsoftwaredependencies.org/bundles/npm/@comunica/bus-http/^5.0.0/components/context.jsonld",
+    "https://linkedsoftwaredependencies.org/bundles/npm/@comunica/mediator-number/^5.0.0/components/context.jsonld"
   ],
   "@graph": [
     {

@@ -6,6 +6,7 @@
       "DOM"
     ],
     "module": "CommonJS",
+    "types": ["node", "jest"],
     "allowJs": false,
     "strict": true,
     "strictFunctionTypes": true,
@@ -13,11 +14,19 @@
     "alwaysStrict": true,
     "declaration": true,
     "sourceMap": true,
-    "forceConsistentCasingInFileNames": true
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true
   },
   "include": [
+    "jest.config.ts",
     "engines/*/bin/*.ts",
-    "engines/*/lib/**/*.ts",
-    "packages/*/lib/**/*.ts"
+    "engines/*/lib/*.ts",
+    "engines/*/test/*.ts",
+    "packages/*/bin/*.ts",
+    "packages/*/lib/*.ts",
+    "packages/*/test/*.ts"
+  ],
+  "exclude": [
+    "**/node_modules"
   ]
 }

@@ -5,7 +5,9 @@
     "vscode": {
       "extensions": [
         "dbaeumer.vscode-eslint",
-        "github.vscode-github-actions"
+        "github.vscode-github-actions",
+        "ms-azuretools.vscode-containers",
+        "rdfox.rdfox-rdf"
       ],
       "settings": {
         "editor.formatOnSave": true,
@@ -13,7 +15,10 @@
         "eslint.validate": [
           "javascript",
           "json",
-          "typescript"
+          "jsonc",
+          "jsonl",
+          "typescript",
+          "yaml"
         ],
         "[javascript]": {
           "editor.defaultFormatter": "dbaeumer.vscode-eslint"
@@ -21,7 +26,16 @@
         "[json]": {
           "editor.defaultFormatter": "dbaeumer.vscode-eslint"
         },
+        "[jsonc]": {
+          "editor.defaultFormatter": "dbaeumer.vscode-eslint"
+        },
+        "[jsonl]": {
+          "editor.defaultFormatter": "dbaeumer.vscode-eslint"
+        },
         "[typescript]": {
+          "editor.defaultFormatter": "dbaeumer.vscode-eslint"
+        },
+        "[yaml]": {
           "editor.defaultFormatter": "dbaeumer.vscode-eslint"
         }
       }

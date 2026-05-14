@@ -53,7 +53,7 @@ describe('BindingsStreamRestart', () => {
       source,
       { autoStart: false, maxBufferSize: 0 },
       createSource,
-      (bindings: Bindings, _variables: RDF.Variable[]) => bindingsHashes.indexOf(bindings),
+      (bindings: Bindings, _variables: Iterable<RDF.Variable>) => bindingsHashes.indexOf(bindings),
     );
   });
 
@@ -77,5 +77,8 @@ describe('BindingsStreamRestart', () => {
     expect(() => bindingsStream.swapSource()).not.toThrow();
     expect(createSource).toHaveBeenCalledTimes(3);
     await expect(takeBindings(bindingsStream, 2)).resolves.toEqualBindingsArray(bindingsHashes.slice(6, 8));
+    // Stops swapping when the source is exhausted
+    expect(() => bindingsStream.swapSource()).not.toThrow();
+    expect(createSource).toHaveBeenCalledTimes(3);
   });
 });
