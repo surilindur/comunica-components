@@ -6,7 +6,7 @@ module.exports = config([
     languageOptions: {
       parserOptions: {
         tsconfigRootDir: __dirname,
-        project: [ './tsconfig.eslint.json' ],
+        project: [ 'tsconfig.json' ],
       },
     },
     rules: {

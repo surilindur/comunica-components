@@ -13,12 +13,12 @@
     "build": "yarn run build:ts && yarn run build:components && yarn run build:engines",
     "build:components": "componentsjs-generator 'packages/*' 'engines/*'",
     "build:engines": "yarn workspace @comunica/query-sparql-prototype run prepare",
-    "build:ts": "tsc",
+    "build:ts": "tsc --project tsconfig.build.json",
     "clean": "git clean -dfx",
     "doc": "typedoc",
     "lint": "eslint .",
     "postinstall": "husky && yarn run build",
-    "test": "yarn jest"
+    "test": "jest"
   },
   "devDependencies": {
     "@comunica/utils-jest": "^5.0.0",
