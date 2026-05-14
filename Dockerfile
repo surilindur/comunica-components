@@ -4,7 +4,7 @@ ADD . /opt/comunica-prototype
 
 WORKDIR /opt/comunica-prototype
 
-RUN yarn install --frozen-lockfile --ignore-engines --ignore-optional
+RUN apk add yarn && yarn install --frozen-lockfile --ignore-engines --ignore-optional
 
 WORKDIR /opt/comunica-prototype/engines/query-sparql-prototype
 

@@ -16,6 +16,14 @@ module.exports = config([
   },
   {
     files: [
+      '.github/workflows/ci.yml',
+    ],
+    rules: {
+      'capitalized-comments': 'off',
+    },
+  },
+  {
+    files: [
       'engines/*/lib/index-browser.ts',
     ],
     rules: {
