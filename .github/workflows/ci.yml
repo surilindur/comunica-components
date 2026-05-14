@@ -13,7 +13,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  DEFAULT_NODE_VERSION: 24.x
+  DEFAULT_NODE_VERSION: 26.x
 
 jobs:
 
@@ -45,6 +45,7 @@ jobs:
         node-version:
           - 22.x
           - 24.x
+          - 26.x
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout repository
