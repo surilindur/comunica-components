@@ -94,6 +94,8 @@ jobs:
           push: false
           file: Containerfile
           tags: comunica/query-sparql-prototype:dev
+        env:
+          DOCKER_BUILDKIT: 1
 
   documentation:
     name: Documentation
