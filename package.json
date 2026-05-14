@@ -38,7 +38,11 @@
     "@comunica/query-sparql": "^5.0.0",
     "@rdfjs/types": "^2.0.0",
     "@types/jest": "^30.0.0",
+    "@types/node": "^24.0.0",
     "jest": "^30.0.0",
+    "minimatch": "^10.0.0",
+    "serialize-javascript": "^7.0.0",
+    "undici": "^8.0.0",
     "typescript": "^6.0.0"
   }
 }
