@@ -17,7 +17,6 @@
     "clean": "git clean -dfx",
     "doc": "typedoc",
     "lint": "eslint .",
-    "postinstall": "husky && yarn run build",
     "test": "jest"
   },
   "devDependencies": {
@@ -28,7 +27,6 @@
     "@types/node": "^24.0.0",
     "componentsjs-generator": "^4.0.0",
     "eslint": "^8.0.0",
-    "husky": "^9.0.0",
     "jest": "^30.0.0",
     "ts-jest": "^29.0.0",
     "ts-node": "^10.0.0",
