@@ -6,7 +6,7 @@ import type {
   IActorRdfMetadataAccumulateArgs,
 } from '@comunica/bus-rdf-metadata-accumulate';
 import { KeysInitQuery, KeysQueryOperation } from '@comunica/context-entries';
-import { passTestVoid } from '@comunica/core';
+import { failTest, passTestVoid } from '@comunica/core';
 import type { IActorTest, TestResult } from '@comunica/core';
 import type { ComunicaDataFactory, IDataset, QueryResultCardinality } from '@comunica/types';
 import { Algebra } from '@comunica/utils-algebra';
@@ -23,25 +23,25 @@ export class ActorRdfMetadataAccumulateCardinalityVoid extends ActorRdfMetadataA
     this.predicateBasedEstimation = args.predicateBasedEstimation;
   }
 
-  public async test(_action: IActionRdfMetadataAccumulate): Promise<TestResult<IActorTest>> {
+  public async test(action: IActionRdfMetadataAccumulate): Promise<TestResult<IActorTest>> {
+    if (!action.context.has(KeysInitQuery.dataFactory)) {
+      return failTest('Cardinality estimation requires a data factory in action context.');
+    }
+    if (!action.context.has(KeysQueryOperation.operation)) {
+      return failTest('Cardinality estimation requires a query operation in action context.');
+    }
     return passTestVoid();
   }
 
   public async run(action: IActionRdfMetadataAccumulate): Promise<IActorRdfMetadataAccumulateOutput> {
     const metadata: Record<string, any> = {};
-
     if (action.mode === 'append') {
       const datasets = this.accumulateDatasets(action);
-      // Accumulate the datasets
       if (datasets.length > 0) {
         metadata.datasets = datasets;
-      }
-
-      // Estimate the cardinality if possible
-      const operation = action.context.get(KeysQueryOperation.operation);
-      if (operation) {
+        const operation = action.context.getSafe(KeysQueryOperation.operation);
         const dataFactory = action.context.getSafe(KeysInitQuery.dataFactory);
-        const cardinality = this.estimateOperationCardinality(operation, dataFactory, datasets);
+        const cardinality = await this.estimateOperationCardinality(operation, dataFactory, datasets);
         if (cardinality !== undefined) {
           metadata.cardinality = cardinality;
         }
