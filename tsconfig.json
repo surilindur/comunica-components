@@ -15,7 +15,7 @@
     "declaration": true,
     "sourceMap": true,
     "forceConsistentCasingInFileNames": true,
-    "skipLibCheck": false
+    "skipLibCheck": true
   },
   "include": [
     "jest.config.ts",
