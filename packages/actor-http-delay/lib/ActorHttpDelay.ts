@@ -33,13 +33,11 @@ export class ActorHttpDelay extends ActorHttp {
     const requestUrl = ActorHttp.getInputUrl(action.input);
     const requestDelay = Math.round(this.minimum + Math.random() * this.range);
 
-    if (requestDelay > 0) {
-      this.logDebug(action.context, 'Delaying request', () => ({
-        url: requestUrl.href,
-        delay: requestDelay,
-      }));
-      await new Promise(resolve => setTimeout(resolve, requestDelay));
-    }
+    this.logDebug(action.context, 'Delaying request', () => ({
+      url: requestUrl.href,
+      delay: requestDelay,
+    }));
+    await new Promise(resolve => setTimeout(resolve, requestDelay));
 
     return this.mediatorHttp.mediate({
       ...action,

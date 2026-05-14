@@ -26,7 +26,7 @@ describe('ActorHttpDelay', () => {
       average,
       delta,
     });
-    jest.spyOn((<any>actor), 'logDebug').mockImplementation((...args) => (<() => unknown>args[2])());
+    jest.spyOn((<any>actor), 'logDebug').mockImplementation((...args: unknown[]) => (<() => unknown>args[2])());
   });
 
   describe('test', () => {
@@ -44,7 +44,7 @@ describe('ActorHttpDelay', () => {
       })).resolves.toFailTest(`${actor.name} can only wrap a request once`);
     });
 
-    it('should refuse to run with no latency range', async() => {
+    it('should not wrap without latency range', async() => {
       (<any>actor).minimum = 0;
       (<any>actor).maximum = 0;
       await expect(actor.test({
@@ -60,7 +60,7 @@ describe('ActorHttpDelay', () => {
       const duration = 100;
       jest.spyOn(Date, 'now').mockReturnValueOnce(0).mockReturnValueOnce(duration);
       jest.spyOn(mediatorHttp, 'mediate').mockResolvedValue(<any>response);
-      jest.spyOn(globalThis, 'setTimeout').mockImplementation(callback => callback());
+      jest.spyOn(globalThis, 'setTimeout').mockImplementation((callback: Function) => <NodeJS.Timeout>callback());
       const action = { context: new ActionContext({}), input: url };
       await expect(actor.run(action)).resolves.toEqual(response);
       expect(globalThis.setTimeout).toHaveBeenCalledTimes(1);
@@ -72,7 +72,7 @@ describe('ActorHttpDelay', () => {
       jest.spyOn(Date, 'now').mockReturnValueOnce(0);
       jest.spyOn(Date, 'now').mockReturnValueOnce(100);
       jest.spyOn(mediatorHttp, 'mediate').mockRejectedValue(new Error(errorMessage));
-      jest.spyOn(globalThis, 'setTimeout').mockImplementation(callback => callback());
+      jest.spyOn(globalThis, 'setTimeout').mockImplementation((callback: Function) => <NodeJS.Timeout>callback());
       const action = { context: new ActionContext({}), input: url };
       await expect(actor.run(action)).rejects.toThrow(errorMessage);
       expect(globalThis.setTimeout).toHaveBeenCalledTimes(1);
