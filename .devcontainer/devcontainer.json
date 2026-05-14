@@ -6,6 +6,7 @@
       "extensions": [
         "dbaeumer.vscode-eslint",
         "github.vscode-github-actions",
+        "ms-azuretools.vscode-containers",
         "rdfox.rdfox-rdf"
       ],
       "settings": {
