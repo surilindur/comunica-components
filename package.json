@@ -1,7 +1,7 @@
 {
   "name": "comunica-components",
   "private": true,
-  "packageManager": "yarn@4.14.1",
+  "packageManager": "yarn@4.15.0",
   "description": "Experimental components for Comunica",
   "license": "MIT",
   "repository": "https://github.com/surilindur/comunica-components",
