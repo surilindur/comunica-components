@@ -12,7 +12,7 @@ import { passTestVoid } from '@comunica/core';
  * A comunica Set Defaults Context Preprocess Actor.
  */
 export class ActorContextPreprocessPrototype extends ActorContextPreprocess {
-  private readonly filters: boolean;
+  public readonly filters: boolean;
 
   public constructor(args: IActorContextPreprocessPrototypeArgs) {
     super(args);
@@ -26,7 +26,7 @@ export class ActorContextPreprocessPrototype extends ActorContextPreprocess {
   public async run(action: IActionContextPreprocess): Promise<IActorContextPreprocessOutput> {
     let context = action.context;
 
-    if (action.initialize) {
+    if (action.initialize && this.filters) {
       context = context.setDefault(KeysRdfResolveHypermediaLinks.linkFilters, []);
     }
 
