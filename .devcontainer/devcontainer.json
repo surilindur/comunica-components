@@ -1,13 +1,12 @@
 {
   "name": "Node.js & TypeScript",
-  "image": "mcr.microsoft.com/devcontainers/typescript-node:latest",
+  "image": "mcr.microsoft.com/devcontainers/typescript-node:dev-24",
   "customizations": {
     "vscode": {
       "extensions": [
         "dbaeumer.vscode-eslint",
         "github.vscode-github-actions",
-        "ms-azuretools.vscode-containers",
-        "rdfox.rdfox-rdf"
+        "ms-azuretools.vscode-containers"
       ],
       "settings": {
         "editor.formatOnSave": true,
