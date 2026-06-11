@@ -12,16 +12,7 @@ import type { Algebra } from '@comunica/utils-algebra';
 import { algebraUtils } from '@comunica/utils-algebra';
 import type * as RDF from '@rdfjs/types';
 import { Bloem } from 'bloem';
-import {
-  mem_binaryRepresentation,
-  mem_bitSize,
-  mem_hashFunction,
-  mem_hashSize,
-  mem_memberCollection,
-  mem_projectedProperty,
-  mem_projectedResource,
-  mem_sourceCollection,
-} from './Vocabulary';
+import { mem } from './vocabularies';
 
 export class ActorRdfMetadataExtractLinkFilterBloom extends ActorRdfMetadataExtract {
   public constructor(args: IActorRdfMetadataExtractArgs) {
@@ -50,28 +41,28 @@ export class ActorRdfMetadataExtractLinkFilterBloom extends ActorRdfMetadataExtr
         .on('error', reject)
         .on('data', (quad: RDF.Quad) => {
           switch (quad.predicate.value) {
-            case mem_sourceCollection:
+            case mem.sourceCollection:
               sourceCollections[quad.subject.value] = quad.object.value;
               break;
-            case mem_memberCollection:
+            case mem.memberCollection:
               memberCollections[quad.subject.value] = quad.object.value;
               break;
-            case mem_bitSize:
+            case mem.bitSize:
               hashBits[quad.subject.value] = Number.parseInt(quad.object.value, 10);
               break;
-            case mem_hashSize:
+            case mem.hashSize:
               hashSize[quad.subject.value] = Number.parseInt(quad.object.value, 10);
               break;
-            case mem_hashFunction:
+            case mem.hashFunction:
               hashFunctions[quad.subject.value] = quad.object.value;
               break;
-            case mem_projectedProperty:
+            case mem.projectedProperty:
               projectedProperties[quad.subject.value] = quad.object.value;
               break;
-            case mem_projectedResource:
+            case mem.projectedResource:
               projectedResources[quad.subject.value] = quad.object.value;
               break;
-            case mem_binaryRepresentation:
+            case mem.binaryRepresentation:
               hashBuffer[quad.subject.value] = Buffer.from(quad.object.value, 'base64');
               break;
           }
