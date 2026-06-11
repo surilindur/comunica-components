@@ -47,7 +47,6 @@ const config: Config.InitialOptions = {
       coveragePathIgnorePatterns: [
         '<rootDir>/engines/',
         'node_modules',
-        '<rootDir>/packages/actor-rdf-join-inner-restart/lib/ActorRdfJoinInnerRestart.ts',
         'index.js',
       ],
     },
