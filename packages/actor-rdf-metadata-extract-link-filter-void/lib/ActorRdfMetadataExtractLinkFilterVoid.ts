@@ -8,7 +8,7 @@ import { KeysRdfResolveHypermediaLinks } from '@comunica/context-entries-link-tr
 import type { IActorTest, TestResult } from '@comunica/core';
 import { failTest, passTestVoid } from '@comunica/core';
 import type * as RDF from '@rdfjs/types';
-import { void_sparqlEndpoint, void_uriRegexPattern, void_uriSpace } from './Vocabulary';
+import { rdf_void } from './vocabularies';
 
 export class ActorRdfMetadataExtractLinkFilterVoid extends ActorRdfMetadataExtract {
   public constructor(args: IActorRdfMetadataExtractArgs) {
@@ -32,13 +32,13 @@ export class ActorRdfMetadataExtractLinkFilterVoid extends ActorRdfMetadataExtra
         .on('error', reject)
         .on('data', (quad: RDF.Quad) => {
           switch (quad.predicate.value) {
-            case void_sparqlEndpoint:
+            case rdf_void.sparqlEndpoint:
               datasetsWithEndpoints.add(quad.subject.value);
               break;
-            case void_uriRegexPattern:
+            case rdf_void.uriRegexPattern:
               uriRegexPatterns[quad.subject.value] = new RegExp(quad.object.value, 'u');
               break;
-            case void_uriSpace:
+            case rdf_void.uriSpace:
               uriSpaces[quad.subject.value] = quad.object.value;
               break;
           }
