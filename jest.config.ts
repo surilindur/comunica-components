@@ -3,10 +3,7 @@ import type { Config } from '@jest/types';
 const moduleFileExtensions: string[] = [ 'ts', 'js' ];
 
 const transform: Record<string, Config.TransformerConfig> = {
-  '\\.ts$': [ 'ts-jest', {
-    // Enabling this can fix issues when using prereleases of typings packages
-    // isolatedModules: true
-  }],
+  '\\.ts$': [ 'ts-jest', {}],
 };
 
 const config: Config.InitialOptions = {
@@ -51,6 +48,7 @@ const config: Config.InitialOptions = {
       ],
     },
   ],
+  resetMocks: true,
 };
 
 export default config;
