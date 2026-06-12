@@ -23,12 +23,13 @@ export class BindingsStreamRestart extends TransformIterator<Bindings> implement
   }
 
   public constructor(
-    source: () => Promise<BindingsStream>,
+    initialSource: BindingsStream,
     options: TransformIteratorOptions<Bindings>,
+    createSource: () => Promise<BindingsStream>,
     hashBindings: HashFunction,
   ) {
-    super(source, options);
-    this.createSource = source;
+    super(initialSource, options);
+    this.createSource = createSource;
     this.hashBindings = hashBindings;
     this.bindingsProduced = new Map();
     this.bindingsSkipped = new Map();
