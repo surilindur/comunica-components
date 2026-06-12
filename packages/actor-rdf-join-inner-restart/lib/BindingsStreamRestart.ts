@@ -1,6 +1,5 @@
 import type { HashFunction } from '@comunica/bus-hash-bindings';
 import type { Bindings, BindingsStream } from '@comunica/types';
-import type * as RDF from '@rdfjs/types';
 import type { TransformIteratorOptions } from 'asynciterator';
 import { TransformIterator } from 'asynciterator';
 
@@ -8,9 +7,9 @@ import { TransformIterator } from 'asynciterator';
  * An iterator that can be instructed to pull a new source at will,
  * and automatically skips would-be-produced duplicates.
  */
-export class BindingsStreamRestart extends TransformIterator<RDF.Bindings> implements BindingsStream {
-  private readonly createSource: () => Promise<BindingsStream>;
+export class BindingsStreamRestart extends TransformIterator<Bindings> implements BindingsStream {
   private readonly hashBindings: HashFunction;
+  private readonly createSource: () => Promise<BindingsStream>;
 
   private readonly bindingsProduced: Map<number, number>;
   private readonly bindingsSkipped: Map<number, number>;
@@ -24,13 +23,12 @@ export class BindingsStreamRestart extends TransformIterator<RDF.Bindings> imple
   }
 
   public constructor(
-    source: BindingsStream,
+    source: () => Promise<BindingsStream>,
     options: TransformIteratorOptions<Bindings>,
-    createSource: () => Promise<BindingsStream>,
     hashBindings: HashFunction,
   ) {
     super(source, options);
-    this.createSource = createSource;
+    this.createSource = source;
     this.hashBindings = hashBindings;
     this.bindingsProduced = new Map();
     this.bindingsSkipped = new Map();
@@ -39,8 +37,8 @@ export class BindingsStreamRestart extends TransformIterator<RDF.Bindings> imple
   public swapSource(): void {
     if (this._source && !this._source.done) {
       this._source.destroy();
-      this.bindingsSkipped.clear();
       this._source = undefined;
+      this.bindingsSkipped.clear();
       this._createSource = this.createSource;
       this._loadSourceAsync();
     }
