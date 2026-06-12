@@ -11,8 +11,14 @@ export class BindingsStreamRestart extends TransformIterator<Bindings> implement
   private readonly hashBindings: HashFunction;
   private readonly createSource: () => Promise<BindingsStream>;
 
+  // Tracks the total number of bindings produced by the binding hash.
+  // This matches the 'output bindings bag' contents.
   private readonly bindingsProduced: Map<number, number>;
-  private readonly bindingsSkipped: Map<number, number>;
+
+  // Tracks the number of bindings that must be skipped from the current source.
+  // When swapping sources, the contents of bindingsProduces must be copied here.
+  // This map acts as a countdown, and forces the skipping of output.
+  private readonly bindingsToSkip: Map<number, number>;
 
   public get totalBindingsProduced(): number {
     let total = 0;
@@ -29,31 +35,40 @@ export class BindingsStreamRestart extends TransformIterator<Bindings> implement
     hashBindings: HashFunction,
   ) {
     super(initialSource, options);
-    this.createSource = createSource;
-    this.hashBindings = hashBindings;
     this.bindingsProduced = new Map();
-    this.bindingsSkipped = new Map();
+    this.bindingsToSkip = new Map();
+    this.hashBindings = hashBindings;
+    this.createSource = () => {
+      // Copy currently produced bindings into skip map, so they are dropped
+      // from the next source, and produce no unintended duplicates.
+      this.bindingsToSkip.clear();
+      for (const [ key, value ] of this.bindingsProduced) {
+        this.bindingsToSkip.set(key, value);
+      }
+      return createSource();
+    };
   }
 
   public swapSource(): void {
     if (this._source && !this._source.done) {
       this._source.destroy();
       this._source = undefined;
-      this.bindingsSkipped.clear();
       this._createSource = this.createSource;
       this._loadSourceAsync();
     }
   }
 
   protected override _push(item: Bindings): void {
-    const bindingsKey = this.hashBindings(item, [ ...item.keys() ]);
-    const currentSkipped = this.bindingsSkipped.get(bindingsKey) ?? 0;
-    const currentProduced = this.bindingsProduced.get(bindingsKey) ?? 0;
-    if (currentSkipped < currentProduced) {
-      this.bindingsSkipped.set(bindingsKey, currentSkipped + 1);
-    } else {
-      this.bindingsProduced.set(bindingsKey, currentProduced + 1);
+    const bindingsHash = this.hashBindings(item, [ ...item.keys() ]);
+    const bindingsToSkip = this.bindingsToSkip.get(bindingsHash);
+    if (bindingsToSkip === undefined) {
+      const bindingsProduced = this.bindingsProduced.get(bindingsHash) ?? 0;
+      this.bindingsProduced.set(bindingsHash, bindingsProduced + 1);
       super._push(item);
+    } else if (bindingsToSkip > 1) {
+      this.bindingsToSkip.set(bindingsHash, bindingsToSkip - 1);
+    } else {
+      this.bindingsToSkip.delete(bindingsHash);
     }
   }
 }
