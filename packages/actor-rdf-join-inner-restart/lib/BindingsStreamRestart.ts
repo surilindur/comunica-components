@@ -1,5 +1,6 @@
 import type { HashFunction } from '@comunica/bus-hash-bindings';
 import type { Bindings, BindingsStream } from '@comunica/types';
+import type * as RDF from '@rdfjs/types';
 import type { TransformIteratorOptions } from 'asynciterator';
 import { TransformIterator } from 'asynciterator';
 
@@ -7,7 +8,7 @@ import { TransformIterator } from 'asynciterator';
  * An iterator that can be instructed to pull a new source at will,
  * and automatically skips would-be-produced duplicates.
  */
-export class BindingsStreamRestart extends TransformIterator<Bindings> {
+export class BindingsStreamRestart extends TransformIterator<RDF.Bindings> implements BindingsStream {
   private readonly createSource: () => Promise<BindingsStream>;
   private readonly hashBindings: HashFunction;
 
