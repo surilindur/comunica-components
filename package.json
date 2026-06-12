@@ -1,5 +1,6 @@
 {
   "name": "comunica-components",
+  "type": "commonjs",
   "private": true,
   "packageManager": "yarn@4.15.0",
   "description": "Experimental components for Comunica",
