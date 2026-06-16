@@ -37,7 +37,7 @@ export class ActorRdfJoinInnerRestart extends ActorRdfJoin {
   protected readonly mediatorJoin: MediatorRdfJoin;
   protected readonly mediatorJoinEntriesSort: MediatorRdfJoinEntriesSort;
 
-  public static readonly keyWrappedOperations = new ActionContextKey<Algebra.Operation[]>(
+  public static readonly keyWrapped = new ActionContextKey<Algebra.Operation[]>(
     'urn:comunica:actor-rdf-join-inner-restart#operations',
   );
 
@@ -59,7 +59,7 @@ export class ActorRdfJoinInnerRestart extends ActorRdfJoin {
     if (action.context.has(KeysRdfJoin.skipAdaptiveJoin)) {
       return failTest(`${this.name} cannot run due to adaptive join being disabled`);
     }
-    const previouslyWrappedOperations = action.context.get(ActorRdfJoinInnerRestart.keyWrappedOperations);
+    const previouslyWrappedOperations = action.context.get(ActorRdfJoinInnerRestart.keyWrapped);
     if (previouslyWrappedOperations) {
       if (!this.wrapAllJoins) {
         return failTest(`${this.name} can only wrap the topmost join`);
@@ -80,10 +80,10 @@ export class ActorRdfJoinInnerRestart extends ActorRdfJoin {
   public async getOutput(action: IActionRdfJoin): Promise<IActorRdfJoinOutputInner> {
     // Update the list of previously wrapped entries to include the current operations
     const context = action.context.set(
-      ActorRdfJoinInnerRestart.keyWrappedOperations,
+      ActorRdfJoinInnerRestart.keyWrapped,
       [
         ...action.entries.map(e => e.operation),
-        ...action.context.get(ActorRdfJoinInnerRestart.keyWrappedOperations) ?? [],
+        ...action.context.get(ActorRdfJoinInnerRestart.keyWrapped) ?? [],
       ],
     );
 
