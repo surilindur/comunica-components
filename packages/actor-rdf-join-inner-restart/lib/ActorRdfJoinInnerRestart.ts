@@ -13,7 +13,6 @@ import { ActionContextKey, failTest, passTestWithSideData } from '@comunica/core
 import type { TestResult } from '@comunica/core';
 import type { IMediatorTypeJoinCoefficients } from '@comunica/mediatortype-join-coefficients';
 import type {
-  BindingsStream,
   IActionContext,
   IQueryOperationResultBindings,
   IJoinEntry,
@@ -95,22 +94,22 @@ export class ActorRdfJoinInnerRestart extends ActorRdfJoin {
     const joinSelectivity = await this.mediatorJoinSelectivity.mediate({ context, entries: action.entries });
     const currentOperationCardinalities = new Map<Algebra.Operation, number>();
 
+    // Helper function to get join output
+    const getJoinOutputHelper = async(): Promise<IQueryOperationResultBindings> => {
+      const joinResult = await this.getJoinOutput(action.type, action.entries, context);
+      return joinResult;
+    };
+
     // Execute the join with the metadata we have now
-    const firstJoinOutput = await this.getJoinOutput(action.type, action.entries, context);
+    const firstJoinOutput = await getJoinOutputHelper();
 
     // Acquire the function used to hash bindings
     const hashFunction = (await this.mediatorHashBindings.mediate({ context })).hashFunction;
 
-    // Helper function to create a new source stream via join bus
-    const createJoinOutputBindingsStream = async(): Promise<BindingsStream> => {
-      const joinResult = await this.getJoinOutput(action.type, action.entries, context);
-      return joinResult.bindingsStream;
-    };
-
     const bindingsStream = new BindingsStreamRestart(
       firstJoinOutput.bindingsStream,
       { autoStart: false, maxBufferSize: 0 },
-      createJoinOutputBindingsStream,
+      async() => (await getJoinOutputHelper()).bindingsStream,
       hashFunction,
     );
 
