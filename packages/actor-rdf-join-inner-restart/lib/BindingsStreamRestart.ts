@@ -11,22 +11,8 @@ export class BindingsStreamRestart extends TransformIterator<Bindings> implement
   private readonly hashBindings: HashFunction;
   private readonly createSource: () => Promise<BindingsStream>;
 
-  // Tracks the total number of bindings produced by the binding hash.
-  // This matches the 'output bindings bag' contents.
-  private readonly bindingsProduced: Map<number, number>;
-
-  // Tracks the number of bindings that must be skipped from the current source.
-  // When swapping sources, the contents of bindingsProduces must be copied here.
-  // This map acts as a countdown, and forces the skipping of output.
-  private readonly bindingsToSkip: Map<number, number>;
-
-  public get totalBindingsProduced(): number {
-    let total = 0;
-    for (const count of this.bindingsProduced.values()) {
-      total += count;
-    }
-    return total;
-  }
+  private readonly bindingsFromCurrentSource: Map<number, number>;
+  private readonly bindingsFromPreviousSources: Map<number, number>;
 
   public constructor(
     initialSource: BindingsStream,
@@ -35,24 +21,17 @@ export class BindingsStreamRestart extends TransformIterator<Bindings> implement
     hashBindings: HashFunction,
   ) {
     super(initialSource, options);
-    this.bindingsProduced = new Map();
-    this.bindingsToSkip = new Map();
+    this.bindingsFromCurrentSource = new Map();
+    this.bindingsFromPreviousSources = new Map();
+    this.createSource = createSource;
     this.hashBindings = hashBindings;
-    this.createSource = () => {
-      // Copy currently produced bindings into skip map, so they are dropped
-      // from the next source, and produce no unintended duplicates.
-      this.bindingsToSkip.clear();
-      for (const [ key, value ] of this.bindingsProduced) {
-        this.bindingsToSkip.set(key, value);
-      }
-      return createSource();
-    };
   }
 
   public swapSource(): void {
     if (this._source && !this._source.done) {
       this._source.destroy();
       this._source = undefined;
+      this.bindingsFromCurrentSource.clear();
       this._createSource = this.createSource;
       this._loadSourceAsync();
     }
@@ -60,15 +39,14 @@ export class BindingsStreamRestart extends TransformIterator<Bindings> implement
 
   protected override _push(item: Bindings): void {
     const bindingsHash = this.hashBindings(item, [ ...item.keys() ]);
-    const bindingsToSkip = this.bindingsToSkip.get(bindingsHash);
-    if (bindingsToSkip === undefined) {
-      const bindingsProduced = this.bindingsProduced.get(bindingsHash) ?? 0;
-      this.bindingsProduced.set(bindingsHash, bindingsProduced + 1);
-      super._push(item);
-    } else if (bindingsToSkip > 1) {
-      this.bindingsToSkip.set(bindingsHash, bindingsToSkip - 1);
+    const identicalFromPreviousSources = this.bindingsFromPreviousSources.get(bindingsHash) ?? 0;
+    const identicalFromCurrentSource = this.bindingsFromCurrentSource.get(bindingsHash) ?? 0;
+    if (identicalFromCurrentSource < identicalFromPreviousSources) {
+      this.bindingsFromCurrentSource.set(bindingsHash, identicalFromCurrentSource + 1);
     } else {
-      this.bindingsToSkip.delete(bindingsHash);
+      this.bindingsFromCurrentSource.set(bindingsHash, identicalFromCurrentSource + 1);
+      this.bindingsFromPreviousSources.set(bindingsHash, identicalFromPreviousSources + 1);
+      super._push(item);
     }
   }
 }
