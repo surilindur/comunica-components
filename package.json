@@ -2,7 +2,7 @@
   "name": "comunica-components",
   "type": "commonjs",
   "private": true,
-  "packageManager": "yarn@4.15.0",
+  "packageManager": "yarn@4.17.0",
   "description": "Experimental components for Comunica",
   "license": "MIT",
   "repository": "https://github.com/surilindur/comunica-components",
