@@ -11,8 +11,14 @@ export class BindingsStreamRestart extends TransformIterator<Bindings> implement
   private readonly hashBindings: HashFunction;
   private readonly createSource: () => Promise<BindingsStream>;
 
+  private bindingsPushed: number;
+
   private readonly bindingsFromCurrentSource: Map<number, number>;
   private readonly bindingsFromPreviousSources: Map<number, number>;
+
+  public get totalBindingsProduced(): number {
+    return this.bindingsPushed;
+  }
 
   public constructor(
     initialSource: BindingsStream,
@@ -21,6 +27,7 @@ export class BindingsStreamRestart extends TransformIterator<Bindings> implement
     hashBindings: HashFunction,
   ) {
     super(initialSource, options);
+    this.bindingsPushed = 0;
     this.bindingsFromCurrentSource = new Map();
     this.bindingsFromPreviousSources = new Map();
     this.createSource = createSource;
@@ -46,6 +53,7 @@ export class BindingsStreamRestart extends TransformIterator<Bindings> implement
     } else {
       this.bindingsFromCurrentSource.set(bindingsHash, identicalFromCurrentSource + 1);
       this.bindingsFromPreviousSources.set(bindingsHash, identicalFromPreviousSources + 1);
+      this.bindingsPushed++;
       super._push(item);
     }
   }

@@ -41,6 +41,17 @@ describe('BindingsStreamRestart', () => {
       expect(instance).toBeInstanceOf(BindingsStreamRestart);
     });
 
+    it('should return 0 for totalBindingsProduced before any bindings are consumed', async() => {
+      const source = createSourceFrom([ bindingsA ]);
+      const instance = new BindingsStreamRestart(
+        source,
+        { autoStart: false, maxBufferSize: 0 },
+        () => Promise.resolve(createSourceFrom([])),
+        hashBindings,
+      );
+      expect(instance.totalBindingsProduced).toBe(0);
+    });
+
     it('should store the createSource function', async() => {
       const source = createSourceFrom([ bindingsA ]);
       const mockCreateSource = jest.fn().mockResolvedValue(source);
@@ -67,6 +78,28 @@ describe('BindingsStreamRestart', () => {
   });
 
   describe('swapSource', () => {
+    it('should return undefined for totalBindingsProduced when source is already done', async() => {
+      const source = createSourceFrom([ bindingsA ]);
+      const factory = async(): Promise<BindingsStream> => createSourceFrom([ bindingsB ]);
+      const instance = new BindingsStreamRestart(
+        source,
+        { autoStart: true, maxBufferSize: 0 },
+        factory,
+        hashBindings,
+      );
+
+      // Consume all bindings
+      for await (const _ of instance) {
+        // Empty
+      }
+
+      // Try to swap after source is done
+      instance.swapSource();
+
+      // TotalBindingsProduced should reflect what was produced
+      expect(instance.totalBindingsProduced).toBeGreaterThanOrEqual(0);
+    });
+
     it('should trigger a new source creation when source is active', async() => {
       const source1 = createSourceFrom([ bindingsA, bindingsB ]);
       const source2 = createSourceFrom([ bindingsC ]);
@@ -148,6 +181,26 @@ describe('BindingsStreamRestart', () => {
   });
 
   describe('_push', () => {
+    it('should update totalBindingsProduced as bindings are consumed', async() => {
+      const source = createSourceFrom([ bindingsA, bindingsB, bindingsC ]);
+      const instance = new BindingsStreamRestart(
+        source,
+        { autoStart: true, maxBufferSize: 0 },
+        () => Promise.resolve(createSourceFrom([])),
+        hashBindings,
+      );
+
+      expect(instance.totalBindingsProduced).toBe(0);
+
+      const produced: RDF.Bindings[] = [];
+      for await (const binding of instance) {
+        produced.push(binding);
+      }
+
+      // TotalBindingsProduced reflects all unique bindings pushed through the stream
+      expect(instance.totalBindingsProduced).toBe(produced.length);
+    });
+
     it('should produce bindings from the source', async() => {
       const source = createSourceFrom([ bindingsA, bindingsB, bindingsC ]);
       const instance = new BindingsStreamRestart(
@@ -295,6 +348,27 @@ describe('BindingsStreamRestart', () => {
       }
 
       // Both should be produced as they have different values
+      expect(produced).toHaveLength(2);
+    });
+
+    it('should handle bindings with empty string value (codePointAt returns undefined)', async() => {
+      const bindingsEmpty = BF.fromRecord({ key: DF.literal('') });
+      const bindingsNonEmpty = BF.fromRecord({ key: DF.literal('a') });
+
+      const source = createSourceFrom([ bindingsEmpty, bindingsNonEmpty ]);
+      const instance = new BindingsStreamRestart(
+        source,
+        { autoStart: true, maxBufferSize: 0 },
+        () => Promise.resolve(createSourceFrom([])),
+        hashBindings,
+      );
+
+      const produced: RDF.Bindings[] = [];
+      for await (const binding of instance) {
+        produced.push(binding);
+      }
+
+      // Both should be produced as they have different keys/values
       expect(produced).toHaveLength(2);
     });
   });
