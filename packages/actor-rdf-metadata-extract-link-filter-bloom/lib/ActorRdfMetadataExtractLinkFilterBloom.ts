@@ -71,86 +71,19 @@ export class ActorRdfMetadataExtractLinkFilterBloom extends ActorRdfMetadataExtr
           const filters = action.context.getSafe(KeysRdfResolveHypermediaLinks.linkFilters);
           const query = action.context.getSafe(KeysInitQuery.query);
           const patterns = ActorRdfMetadataExtractLinkFilterBloom.extractPatterns(query);
+          const queryIrrelevantUriPrefixes = ActorRdfMetadataExtractLinkFilterBloom.getQueryIrrelevantDatasets(
+            patterns,
+            hashBits,
+            hashSize,
+            hashBuffer,
+            hashFunctions,
+            sourceCollections,
+            memberCollections,
+            projectedProperties,
+            projectedResources,
+          );
 
-          // The datasets that will not contain results for the current query.
-          const queryIrrelevantDatasets = new Set<string>(Object.values(sourceCollections));
-
-          for (const [ filterUri, memberCollectionUri ] of Object.entries(memberCollections)) {
-            const datasetUri = sourceCollections[memberCollectionUri];
-            if (datasetUri && queryIrrelevantDatasets.has(datasetUri)) {
-              const hashFunction = hashFunctions[filterUri];
-              const size = hashBits[filterUri];
-              const buffer = hashBuffer[filterUri];
-              const slices = hashFunction ? hashSize[hashFunction] : undefined;
-              if (size && slices && buffer) {
-                const bloem = new Bloem(size, slices, buffer);
-                const bloemProperty = projectedProperties[memberCollectionUri];
-                const bloemResource = projectedResources[memberCollectionUri];
-                for (const pattern of patterns) {
-                  // If the filter has been created for a specific property value
-                  if (bloemProperty) {
-                    // If the query has a variable predicate, there may be matching data in the dataset.
-                    if (pattern.predicate.termType === 'Variable') {
-                      queryIrrelevantDatasets.delete(datasetUri);
-                      break;
-                    } else if (pattern.predicate.value === bloemProperty &&
-                      (
-                        // If the predicate occurs with only variables, there may be matching data.
-                        (pattern.subject.termType === 'Variable' && pattern.object.termType === 'Variable') ||
-                        // If one of the values with the predicate are in the filter, there are matches.
-                        (pattern.subject.termType !== 'Variable' && bloem.has(Buffer.from(pattern.subject.value))) ||
-                        (pattern.object.termType !== 'Variable' && bloem.has(Buffer.from(pattern.object.value)))
-                      )
-                    ) {
-                      queryIrrelevantDatasets.delete(datasetUri);
-                      break;
-                    }
-                  }
-                  if (bloemResource) {
-                    // If the query has a pattern with all variables, there may be matches.
-                    if (
-                      pattern.subject.termType === 'Variable' &&
-                      pattern.predicate.termType === 'Variable' &&
-                      pattern.object.termType === 'Variable'
-                    ) {
-                      queryIrrelevantDatasets.delete(datasetUri);
-                      break;
-                    } else if (pattern.subject.termType !== 'Variable' && pattern.subject.value === bloemResource &&
-                      (
-                        (
-                          pattern.predicate.termType !== 'Variable' &&
-                          bloem.has(Buffer.from(pattern.predicate.value))
-                        ) ||
-                        (
-                          pattern.object.termType !== 'Variable' &&
-                          bloem.has(Buffer.from(pattern.object.value))
-                        )
-                      )
-                    ) {
-                      queryIrrelevantDatasets.delete(datasetUri);
-                      break;
-                    } else if (pattern.object.termType !== 'Variable' && pattern.object.value === bloemResource &&
-                      (
-                        (
-                          pattern.predicate.termType !== 'Variable' &&
-                          bloem.has(Buffer.from(pattern.predicate.value))
-                        ) ||
-                        (
-                          pattern.subject.termType !== 'Variable' &&
-                          bloem.has(Buffer.from(pattern.subject.value))
-                        )
-                      )
-                    ) {
-                      queryIrrelevantDatasets.delete(datasetUri);
-                      break;
-                    }
-                  }
-                }
-              }
-            }
-          }
-
-          for (const dataset of queryIrrelevantDatasets) {
+          for (const dataset of queryIrrelevantUriPrefixes) {
             filters.push((link) => {
               const ignore = link.url.startsWith(dataset);
               if (ignore) {
@@ -163,6 +96,101 @@ export class ActorRdfMetadataExtractLinkFilterBloom extends ActorRdfMetadataExtr
           resolve({ metadata: {}});
         });
     });
+  }
+
+  /**
+   * Determine the datasets (URI prefixes) that will not contain results for the current query.
+   */
+  public static getQueryIrrelevantDatasets(
+    queryPatterns: Iterable<Algebra.Pattern>,
+    hashBits: Record<string, number>,
+    hashSize: Record<string, number>,
+    hashBuffer: Record<string, Buffer>,
+    hashFunctions: Record<string, string>,
+    sourceCollections: Record<string, string>,
+    memberCollections: Record<string, string>,
+    projectedProperties: Record<string, string>,
+    projectedResources: Record<string, string>,
+  ): Set<string> {
+    // The datasets that will not contain results for the current query.
+    const queryIrrelevantDatasets = new Set<string>(Object.values(sourceCollections));
+
+    for (const [ filterUri, memberCollectionUri ] of Object.entries(memberCollections)) {
+      const datasetUri = sourceCollections[memberCollectionUri];
+      if (datasetUri && queryIrrelevantDatasets.has(datasetUri)) {
+        const hashFunction = hashFunctions[filterUri];
+        const size = hashBits[filterUri];
+        const buffer = hashBuffer[filterUri];
+        const slices = hashFunction ? hashSize[hashFunction] : undefined;
+        if (size && slices && buffer) {
+          const bloem = new Bloem(size, slices, buffer);
+          const bloemProperty = projectedProperties[memberCollectionUri];
+          const bloemResource = projectedResources[memberCollectionUri];
+          for (const pattern of queryPatterns) {
+            // If the filter has been created for a specific property value
+            if (bloemProperty) {
+              // If the query has a variable predicate, there may be matching data in the dataset.
+              if (pattern.predicate.termType === 'Variable') {
+                queryIrrelevantDatasets.delete(datasetUri);
+                break;
+              } else if (pattern.predicate.value === bloemProperty &&
+                (
+                  // If the predicate occurs with only variables, there may be matching data.
+                  (pattern.subject.termType === 'Variable' && pattern.object.termType === 'Variable') ||
+                  // If one of the values with the predicate are in the filter, there are matches.
+                  (pattern.subject.termType !== 'Variable' && bloem.has(Buffer.from(pattern.subject.value))) ||
+                  (pattern.object.termType !== 'Variable' && bloem.has(Buffer.from(pattern.object.value)))
+                )
+              ) {
+                queryIrrelevantDatasets.delete(datasetUri);
+                break;
+              }
+            }
+            if (bloemResource) {
+              // If the query has a pattern with all variables, there may be matches.
+              if (
+                pattern.subject.termType === 'Variable' &&
+                pattern.predicate.termType === 'Variable' &&
+                pattern.object.termType === 'Variable'
+              ) {
+                queryIrrelevantDatasets.delete(datasetUri);
+                break;
+              } else if (pattern.subject.termType !== 'Variable' && pattern.subject.value === bloemResource &&
+                (
+                  (
+                    pattern.predicate.termType !== 'Variable' &&
+                    bloem.has(Buffer.from(pattern.predicate.value))
+                  ) ||
+                  (
+                    pattern.object.termType !== 'Variable' &&
+                    bloem.has(Buffer.from(pattern.object.value))
+                  )
+                )
+              ) {
+                queryIrrelevantDatasets.delete(datasetUri);
+                break;
+              } else if (pattern.object.termType !== 'Variable' && pattern.object.value === bloemResource &&
+                (
+                  (
+                    pattern.predicate.termType !== 'Variable' &&
+                    bloem.has(Buffer.from(pattern.predicate.value))
+                  ) ||
+                  (
+                    pattern.subject.termType !== 'Variable' &&
+                    bloem.has(Buffer.from(pattern.subject.value))
+                  )
+                )
+              ) {
+                queryIrrelevantDatasets.delete(datasetUri);
+                break;
+              }
+            }
+          }
+        }
+      }
+    }
+
+    return queryIrrelevantDatasets;
   }
 
   public static extractPatterns(operation: Algebra.Operation): Algebra.Pattern[] {
