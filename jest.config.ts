@@ -28,9 +28,8 @@ const config: Config.InitialOptions = {
       transform,
       coveragePathIgnorePatterns: [
         '<rootDir>/packages/',
-        'engine-default.js',
+        'engine-default',
         'node_modules',
-        'index.js',
       ],
     },
     {
@@ -44,7 +43,7 @@ const config: Config.InitialOptions = {
       coveragePathIgnorePatterns: [
         '<rootDir>/engines/',
         'node_modules',
-        'index.js',
+        'vocabularies',
       ],
     },
   ],
