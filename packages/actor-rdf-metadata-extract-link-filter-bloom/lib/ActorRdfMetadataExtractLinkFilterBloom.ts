@@ -152,53 +152,74 @@ export class ActorRdfMetadataExtractLinkFilterBloom extends ActorRdfMetadataExtr
         (bloomFilterTargetProperty || bloomFilterTargetResource)
       ) {
         for (const pattern of queryPatterns) {
-          if (bloomFilterTargetProperty) {
-            // If the query has a variable predicate, there may be matching data in the dataset.
-            if (pattern.predicate.termType === 'Variable') {
-              datasetsToIgnore.delete(datasetUri);
-              break;
-            } else if (
-              pattern.predicate.value === bloomFilterTargetProperty &&
+          if (bloomFilterTargetProperty &&
+            (
+              // If the query has a variable predicate, there may be matching data in the dataset.
+              pattern.predicate.termType === 'Variable' ||
               (
-                // If the predicate occurs with only variables, there may be matching data.
-                (pattern.subject.termType === 'Variable' && pattern.object.termType === 'Variable') ||
-                // If one of the values with the predicate are in the filter, there are matches.
-                (pattern.subject.termType !== 'Variable' && bloomFilter.has(Buffer.from(pattern.subject.value))) ||
-                (pattern.object.termType !== 'Variable' && bloomFilter.has(Buffer.from(pattern.object.value)))
+                pattern.predicate.value === bloomFilterTargetProperty &&
+                (
+                  // If the predicate occurs with only variables, there may be matching data.
+                  (
+                    pattern.subject.termType === 'Variable' &&
+                    pattern.object.termType === 'Variable'
+                  ) ||
+                  // If one of the values with the predicate are in the filter, there are matches.
+                  (
+                    pattern.subject.termType !== 'Variable' &&
+                    bloomFilter.has(Buffer.from(pattern.subject.value))
+                  ) ||
+                  (
+                    pattern.object.termType !== 'Variable' &&
+                    bloomFilter.has(Buffer.from(pattern.object.value))
+                  )
+                )
               )
-            ) {
-              datasetsToIgnore.delete(datasetUri);
-              break;
-            }
+            )) {
+            datasetsToIgnore.delete(datasetUri);
+            break;
           }
-          if (bloomFilterTargetResource) {
-            // If the query has a pattern with all variables, there may be matches.
-            if (
-              pattern.subject.termType === 'Variable' &&
-              pattern.predicate.termType === 'Variable' &&
-              pattern.object.termType === 'Variable'
-            ) {
-              datasetsToIgnore.delete(datasetUri);
-              break;
-            } else if (
-              pattern.subject.termType !== 'Variable' && pattern.subject.value === bloomFilterTargetResource &&
+          if (
+            bloomFilterTargetResource &&
+            (
               (
-                (pattern.predicate.termType !== 'Variable' && bloomFilter.has(Buffer.from(pattern.predicate.value))) ||
-                (pattern.object.termType !== 'Variable' && bloomFilter.has(Buffer.from(pattern.object.value)))
-              )
-            ) {
-              datasetsToIgnore.delete(datasetUri);
-              break;
-            } else if (
-              pattern.object.termType !== 'Variable' && pattern.object.value === bloomFilterTargetResource &&
+                // If the query has a pattern with all variables, there may be matches.
+                pattern.subject.termType === 'Variable' &&
+                pattern.predicate.termType === 'Variable' &&
+                pattern.object.termType === 'Variable'
+              ) ||
               (
-                (pattern.predicate.termType !== 'Variable' && bloomFilter.has(Buffer.from(pattern.predicate.value))) ||
-                (pattern.subject.termType !== 'Variable' && bloomFilter.has(Buffer.from(pattern.subject.value)))
+                pattern.subject.termType !== 'Variable' &&
+                pattern.subject.value === bloomFilterTargetResource &&
+                (
+                  (
+                    pattern.predicate.termType !== 'Variable' &&
+                    bloomFilter.has(Buffer.from(pattern.predicate.value))
+                  ) ||
+                  (
+                    pattern.object.termType !== 'Variable' &&
+                    bloomFilter.has(Buffer.from(pattern.object.value))
+                  )
+                )
+              ) ||
+              (
+                pattern.object.termType !== 'Variable' &&
+                pattern.object.value === bloomFilterTargetResource &&
+                (
+                  (
+                    pattern.predicate.termType !== 'Variable' &&
+                    bloomFilter.has(Buffer.from(pattern.predicate.value))
+                  ) ||
+                  (
+                    pattern.subject.termType !== 'Variable' &&
+                    bloomFilter.has(Buffer.from(pattern.subject.value))
+                  )
+                )
               )
-            ) {
-              datasetsToIgnore.delete(datasetUri);
-              break;
-            }
+            )
+          ) {
+            datasetsToIgnore.delete(datasetUri);
+            break;
           }
         }
       }
