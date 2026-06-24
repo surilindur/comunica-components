@@ -3,14 +3,14 @@ import { ActionContext, Bus } from '@comunica/core';
 import { ActorHttpDelay } from '../lib/ActorHttpDelay';
 import '@comunica/utils-jest';
 
+const average = 40;
+const delta = 0;
+const url = 'http://localhost:3000/some/url';
+
 describe('ActorHttpDelay', () => {
   let bus: any;
   let actor: ActorHttpDelay;
   let mediatorHttp: MediatorHttp;
-
-  const average = 40;
-  const delta = 0;
-  const url = 'http://localhost:3000/some/url';
 
   beforeEach(() => {
     jest.resetAllMocks();

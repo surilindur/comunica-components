@@ -10,25 +10,26 @@ import '@comunica/utils-jest';
 const DF = new DataFactory();
 const BF = new BindingsFactory(DF);
 
-describe('BindingsStreamRestart', () => {
-  const hashBindings: HashFunction = (bindings, variables) => {
-    let hash = 0;
-    for (const variable of variables) {
-      const term = bindings.get(variable);
-      if (term) {
-        hash += term.value.codePointAt(0) ?? 0;
-      }
+const hashBindings: HashFunction = (bindings, variables) => {
+  let hash = 0;
+  for (const variable of variables) {
+    const term = bindings.get(variable);
+    if (term) {
+      hash += term.value.codePointAt(0) ?? 0;
     }
-    return hash;
-  };
+  }
+  return hash;
+};
 
-  const createSourceFrom = (bindingsArray: RDF.Bindings[]): BindingsStream =>
-    <BindingsStream> <unknown> new ArrayIterator<RDF.Bindings>(bindingsArray);
+function createSourceFrom(bindingsArray: RDF.Bindings[]): BindingsStream {
+  return <BindingsStream> <unknown> new ArrayIterator<RDF.Bindings>(bindingsArray);
+}
 
-  const bindingsA = BF.fromRecord({ var1: DF.literal('a') });
-  const bindingsB = BF.fromRecord({ var1: DF.literal('b') });
-  const bindingsC = BF.fromRecord({ var1: DF.literal('c') });
+const bindingsA = BF.fromRecord({ var1: DF.literal('a') });
+const bindingsB = BF.fromRecord({ var1: DF.literal('b') });
+const bindingsC = BF.fromRecord({ var1: DF.literal('c') });
 
+describe('BindingsStreamRestart', () => {
   describe('constructor', () => {
     it('should create an instance with initial source', async() => {
       const source = createSourceFrom([ bindingsA, bindingsB ]);

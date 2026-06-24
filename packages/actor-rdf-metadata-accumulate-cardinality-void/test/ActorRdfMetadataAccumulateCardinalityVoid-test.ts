@@ -10,6 +10,19 @@ import '@comunica/utils-jest';
 const DF = new DataFactory();
 const AF = new AlgebraFactory(DF);
 
+const datasetUri = 'ex:ds1';
+const datasetCardinality: QueryResultCardinality = { type: 'exact', value: 1, dataset: datasetUri };
+const dataset: IDataset = {
+  uri: datasetUri,
+  source: datasetUri,
+  getCardinality: (_operation: Algebra.Operation) => Promise.resolve({ ...datasetCardinality }),
+};
+
+const operation = AF.createJoin([
+  AF.createPattern(DF.variable('s'), DF.namedNode('ex:p1'), DF.variable('o1')),
+  AF.createPattern(DF.variable('s'), DF.namedNode('ex:p2'), DF.variable('o2')),
+]);
+
 jest.mock('@comunica/utils-query-operation', () => ({
   estimateCardinality: (operation: Algebra.Operation, dataset: IDataset) =>
     Promise.resolve(dataset.getCardinality(operation)),
@@ -19,19 +32,6 @@ describe('ActorRdfMetadataAccumulateCardinalityVoid', () => {
   let bus: any;
   let actor: ActorRdfMetadataAccumulateCardinalityVoid;
   let context: ActionContext;
-
-  const datasetUri = 'ex:ds1';
-  const datasetCardinality: QueryResultCardinality = { type: 'exact', value: 1, dataset: datasetUri };
-  const dataset: IDataset = {
-    uri: datasetUri,
-    source: datasetUri,
-    getCardinality: (_operation: Algebra.Operation) => Promise.resolve({ ...datasetCardinality }),
-  };
-
-  const operation = AF.createJoin([
-    AF.createPattern(DF.variable('s'), DF.namedNode('ex:p1'), DF.variable('o1')),
-    AF.createPattern(DF.variable('s'), DF.namedNode('ex:p2'), DF.variable('o2')),
-  ]);
 
   beforeEach(() => {
     bus = {

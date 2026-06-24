@@ -5,6 +5,9 @@ import type * as RDF from '@rdfjs/types';
 import { DataFactory } from 'rdf-data-factory';
 import { QueryEngine } from '../lib/QueryEngine';
 
+const DF = new DataFactory();
+const BF = new BindingsFactory(DF);
+
 describe('QueryEngine', () => {
   describe('constructor', () => {
     it('should extend QueryEngineBase', () => {
@@ -43,8 +46,6 @@ SELECT DISTINCT ?o WHERE {
       for await (const binding of result) {
         bindingsArray.push(binding);
       }
-      const DF = new DataFactory();
-      const BF = new BindingsFactory(DF);
       expect(bindingsArray).toEqualBindingsArray([
         BF.fromRecord({ o: DF.namedNode('ex:o1') }),
         BF.fromRecord({ o: DF.namedNode('ex:o2') }),
