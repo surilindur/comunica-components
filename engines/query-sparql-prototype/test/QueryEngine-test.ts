@@ -1,5 +1,8 @@
+import '@comunica/utils-jest';
 import { QueryEngineBase } from '@comunica/actor-init-query';
+import { BindingsFactory } from '@comunica/utils-bindings-factory';
 import type * as RDF from '@rdfjs/types';
+import { DataFactory } from 'rdf-data-factory';
 import { QueryEngine } from '../lib/QueryEngine';
 
 describe('QueryEngine', () => {
@@ -40,19 +43,12 @@ SELECT DISTINCT ?o WHERE {
       for await (const binding of result) {
         bindingsArray.push(binding);
       }
-      expect(bindingsArray).toHaveLength(2);
-      // Each binding is a Bindings object with an 'entries' map containing the variable bindings
-      expect(bindingsArray[0]).toMatchObject({ type: 'bindings' });
-      expect(bindingsArray[1]).toMatchObject({ type: 'bindings' });
-      // Check that the bindings contain the expected named nodes (values are prefixed as ex:o1, ex:o2)
-      const o1Binding = bindingsArray.find((b: any) => {
-        return b.entries?.get?.('o')?.value === 'ex:o1';
-      });
-      const o2Binding = bindingsArray.find((b: any) => {
-        return b.entries?.get?.('o')?.value === 'ex:o2';
-      });
-      expect(o1Binding).toBeDefined();
-      expect(o2Binding).toBeDefined();
+      const DF = new DataFactory();
+      const BF = new BindingsFactory(DF);
+      expect(bindingsArray).toEqualBindingsArray([
+        BF.fromRecord({ o: DF.namedNode('ex:o1') }),
+        BF.fromRecord({ o: DF.namedNode('ex:o2') }),
+      ]);
     });
   });
 });
