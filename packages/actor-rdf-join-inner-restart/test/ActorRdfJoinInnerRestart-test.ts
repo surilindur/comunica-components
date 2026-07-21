@@ -37,6 +37,17 @@ describe('ActorRdfJoinInnerRestart', () => {
     mediate: jest.fn().mockRejectedValue(new Error('MediatorRdfJoinEntriesSort.mediate')),
   };
 
+  const entries: IJoinEntry[] = [
+    {
+      operation: AF.createNop(),
+      output: { bindingsStream: new EmptyIterator(), metadata: jest.fn(), type: 'bindings' },
+    },
+    {
+      operation: AF.createNop(),
+      output: { bindingsStream: new EmptyIterator(), metadata: jest.fn(), type: 'bindings' },
+    },
+  ];
+
   beforeEach(() => {
     actor = new ActorRdfJoinInnerRestart({
       bus,
@@ -91,17 +102,6 @@ describe('ActorRdfJoinInnerRestart', () => {
   });
 
   describe('test', () => {
-    const entries: IJoinEntry[] = [
-      {
-        operation: AF.createNop(),
-        output: { bindingsStream: new EmptyIterator(), metadata: jest.fn(), type: 'bindings' },
-      },
-      {
-        operation: AF.createNop(),
-        output: { bindingsStream: new EmptyIterator(), metadata: jest.fn(), type: 'bindings' },
-      },
-    ];
-
     it('should pass by default', async() => {
       await expect(actor.test({
         context: new ActionContext(),
@@ -166,6 +166,13 @@ describe('ActorRdfJoinInnerRestart', () => {
         entries,
         type: 'inner',
       })).resolves.toFailTest('cannot restart even once');
+    });
+  });
+
+  describe('getJoinOutput', () => {
+    it('should invoke join bus mediator', async() => {
+      jest.spyOn(mediatorJoin, 'mediate').mockResolvedValue(<any>'output');
+      await expect(actor.getJoinOutput('inner', entries, new ActionContext())).resolves.toBe('output');
     });
   });
 });
