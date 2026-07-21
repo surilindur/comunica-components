@@ -108,6 +108,7 @@ describe('ActorRdfJoinInnerRestart', () => {
         entries,
         type: 'inner',
       })).resolves.toPassTest({
+        // This is the output of the getJoinCoefficients function
         blockingItems: 0,
         iterations: 0,
         persistedItems: 0,
@@ -166,6 +167,13 @@ describe('ActorRdfJoinInnerRestart', () => {
         entries,
         type: 'inner',
       })).resolves.toFailTest('cannot restart even once');
+    });
+  });
+
+  describe('getSortedJoinEntries', () => {
+    it('should invoke the join sort bus mediator', async() => {
+      jest.spyOn(mediatorJoinEntriesSort, 'mediate').mockResolvedValue(<any>{ entries: 'output' });
+      await expect(actor.getSortedJoinEntries(entries, new ActionContext())).resolves.toBe('output');
     });
   });
 
