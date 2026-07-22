@@ -13,6 +13,7 @@ export class BindingsStreamRestart extends TransformIterator<Bindings> implement
 
   private bindingsPushed: number;
 
+  private readonly originalInputs: BindingsStream[];
   private readonly bindingsFromCurrentSource: Map<number, number>;
   private readonly bindingsFromPreviousSources: Map<number, number>;
 
@@ -23,15 +24,24 @@ export class BindingsStreamRestart extends TransformIterator<Bindings> implement
   public constructor(
     initialSource: BindingsStream,
     options: TransformIteratorOptions<Bindings>,
+    originalInputs: BindingsStream[],
     createSource: () => Promise<BindingsStream>,
     hashBindings: HashFunction,
   ) {
     super(initialSource, options);
     this.bindingsPushed = 0;
+    this.originalInputs = originalInputs;
     this.bindingsFromCurrentSource = new Map();
     this.bindingsFromPreviousSources = new Map();
     this.createSource = createSource;
     this.hashBindings = hashBindings;
+  }
+
+  public destroy(cause?: Error): void {
+    for (const originalInput of this.originalInputs) {
+      originalInput.destroy(cause);
+    }
+    super.destroy(cause);
   }
 
   public swapSource(): void {

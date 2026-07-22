@@ -102,6 +102,8 @@ export abstract class ActorRdfJoinInnerRestartBase extends ActorRdfJoin {
     const bindingsStreamRestart = new BindingsStreamRestart(
       initialJoinOutput.bindingsStream,
       { autoStart: false, maxBufferSize: 0 },
+      // The restart stream will destroy the original inputs when it gets destroyed
+      action.entries.map(e => e.output.bindingsStream),
       // Helper function to get the next output stream after restart
       async() => (await this.executeJoin(action, context)).bindingsStream,
       hashFunction,
@@ -131,13 +133,6 @@ export abstract class ActorRdfJoinInnerRestartBase extends ActorRdfJoin {
 
     // Register triggers for restart attempts
     await this.registerRestartTriggers(joinOrder, bindingsStreamRestart, attemptJoinPlanRestart);
-
-    // Destroy the original input streams when the output stream is destroyed.
-    bindingsStreamRestart.on('end', () => {
-      for (const entry of action.entries) {
-        entry.output.bindingsStream.destroy();
-      }
-    });
 
     return { result: { type: 'bindings', bindingsStream: bindingsStreamRestart, metadata: initialJoinOutput.metadata }};
   }

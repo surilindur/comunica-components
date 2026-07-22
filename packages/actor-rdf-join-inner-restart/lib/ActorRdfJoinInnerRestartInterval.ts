@@ -35,8 +35,10 @@ export class ActorRdfJoinInnerRestartInterval extends ActorRdfJoinInnerRestartBa
     let evaluationTimeout: NodeJS.Timeout | undefined;
 
     const evaluationCallback = (): void => {
-      attemptJoinPlanRestart().then().catch((error: Error) => bindingsStreamRestart.destroy(error));
-      evaluationTimeout = setTimeout(() => evaluationCallback(), this.evaluationInterval);
+      if (!bindingsStreamRestart.done) {
+        attemptJoinPlanRestart().then().catch((error: Error) => bindingsStreamRestart.destroy(error));
+        evaluationTimeout = setTimeout(() => evaluationCallback(), this.evaluationInterval);
+      }
     };
 
     setTimeout(() => evaluationCallback(), this.evaluationInterval);
