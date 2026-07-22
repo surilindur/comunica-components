@@ -27,23 +27,22 @@ export class ActorRdfMetadataAccumulateCardinalityVoid extends ActorRdfMetadataA
     if (!action.context.has(KeysInitQuery.dataFactory)) {
       return failTest(`Actor ${this.name} requires a data factory in action context`);
     }
-    if (!action.context.has(KeysQueryOperation.operation)) {
-      return failTest(`Actor ${this.name} requires a query operation in action context`);
-    }
     return passTestVoid();
   }
 
   public async run(action: IActionRdfMetadataAccumulate): Promise<IActorRdfMetadataAccumulateOutput> {
     const metadata: Record<string, any> = {};
     if (action.mode === 'append') {
-      const datasets = this.accumulateDatasets(action);
-      if (datasets.length > 0) {
-        metadata.datasets = datasets;
-        const operation = action.context.getSafe(KeysQueryOperation.operation);
-        const dataFactory = action.context.getSafe(KeysInitQuery.dataFactory);
-        const cardinality = await this.estimateOperationCardinality(operation, dataFactory, datasets);
-        if (cardinality !== undefined) {
-          metadata.cardinality = cardinality;
+      const operation = action.context.get(KeysQueryOperation.operation);
+      const dataFactory = action.context.get(KeysInitQuery.dataFactory);
+      if (operation && dataFactory) {
+        const datasets = this.accumulateDatasets(action);
+        if (datasets.length > 0) {
+          metadata.datasets = datasets;
+          const cardinality = await this.estimateOperationCardinality(operation, dataFactory, datasets);
+          if (cardinality !== undefined) {
+            metadata.cardinality = cardinality;
+          }
         }
       }
     }
