@@ -33,7 +33,7 @@ export abstract class ActorRdfJoinInnerRestartBase extends ActorRdfJoin {
   protected readonly mediatorJoinEntriesSort: MediatorRdfJoinEntriesSort;
 
   public static readonly keyWrapped = new ActionContextKey<boolean>(
-    'urn:comunica:actor-rdf-join-inner-restart#operations',
+    '@comunica/actor-rdf-join-inner-restart:wrapped',
   );
 
   public constructor(args: IActorRdfJoinInnerRestartArgs) {
@@ -56,9 +56,6 @@ export abstract class ActorRdfJoinInnerRestartBase extends ActorRdfJoin {
     }
     if (action.context.has(ActorRdfJoinInnerRestartBase.keyWrapped)) {
       return failTest(`Actor ${this.name} can only wrap the topmost join operation`);
-    }
-    if (this.restartLimit < 1) {
-      return failTest(`Actor ${this.name} has too low restart limit`);
     }
     return super.test(action);
   }
@@ -89,9 +86,6 @@ export abstract class ActorRdfJoinInnerRestartBase extends ActorRdfJoin {
     // Take note of the current join order for comparison purposes
     let joinOrder: IJoinEntryWithMetadata[] = await this.sortJoinEntries(action.entries, context);
 
-    // Whether there is currently a join restart pending - this helps avoid unnecessary evaluations
-    let joinRestartPending = false;
-
     // How many times the current join has been restarted already
     let joinRestartCount = 0;
 
@@ -112,8 +106,7 @@ export abstract class ActorRdfJoinInnerRestartBase extends ActorRdfJoin {
     // Helper function to attempt a join restart, by checking the would-be order against the currently executing one.
     // The joinRestartPending flag exists to avoid race conditions if multiple restart checks are made too fast.
     const attemptJoinPlanRestart = async(): Promise<void> => {
-      if (!joinRestartPending && joinRestartCount < this.restartLimit && !bindingsStreamRestart.done) {
-        joinRestartPending = true;
+      if (joinRestartCount < this.restartLimit && !bindingsStreamRestart.done) {
         const updatedJoinOrder = await this.sortJoinEntries(action.entries, context);
         if (updatedJoinOrder.some((e, i) => joinOrder[i].operation !== e.operation)) {
           joinRestartCount++;
@@ -127,7 +120,6 @@ export abstract class ActorRdfJoinInnerRestartBase extends ActorRdfJoin {
           joinOrder = updatedJoinOrder;
           bindingsStreamRestart.swapSource();
         }
-        joinRestartPending = false;
       }
     };
 

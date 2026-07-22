@@ -12,22 +12,20 @@ export class ActorRdfJoinInnerRestartMetadata extends ActorRdfJoinInnerRestartBa
     attemptJoinPlanRestart: () => Promise<void>,
   ): Promise<void> {
     for (const entry of entries) {
-      // Metadata invalidation listener that attempts a join restart
-      const attemptJoinPlanRestartOnMetadataInvalidation = (): void => {
-        attemptJoinPlanRestart().then().catch((error: Error) => entry.output.bindingsStream.destroy(error));
-      };
+      let previousEntryCardinality = entry.metadata.cardinality.value;
 
-      // Metadata invalidation listener that registers the listeners on the new metadata
-      const registerInvalidationListenersOnNewMetadata = (): void => {
+      const metadataInvalidateListener = (): void => {
         entry.output.metadata().then((updatedMetadata) => {
-          updatedMetadata.state.addInvalidateListener(registerInvalidationListenersOnNewMetadata);
-          updatedMetadata.state.addInvalidateListener(attemptJoinPlanRestartOnMetadataInvalidation);
+          if (updatedMetadata.cardinality.value !== previousEntryCardinality) {
+            previousEntryCardinality = updatedMetadata.cardinality.value;
+            attemptJoinPlanRestart().then().catch((error: Error) => entry.output.bindingsStream.destroy(error));
+          }
+          updatedMetadata.state.addInvalidateListener(metadataInvalidateListener);
         }).catch((error: Error) => entry.output.bindingsStream.destroy(error));
       };
 
       // Register invalidation listeners on the initial metadata
-      entry.metadata.state.addInvalidateListener(registerInvalidationListenersOnNewMetadata);
-      entry.metadata.state.addInvalidateListener(attemptJoinPlanRestartOnMetadataInvalidation);
+      entry.metadata.state.addInvalidateListener(metadataInvalidateListener);
     }
   }
 }
