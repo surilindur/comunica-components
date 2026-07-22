@@ -52,13 +52,13 @@ export abstract class ActorRdfJoinInnerRestartBase extends ActorRdfJoin {
     action: IActionRdfJoin,
   ): Promise<TestResult<IMediatorTypeJoinCoefficients, IActorRdfJoinTestSideData>> {
     if (action.context.has(KeysRdfJoin.skipAdaptiveJoin)) {
-      return failTest(`${this.name} cannot run due to adaptive join being disabled`);
+      return failTest(`Actor ${this.name} cannot run due to adaptive join being disabled`);
     }
     if (action.context.has(ActorRdfJoinInnerRestartBase.keyWrapped)) {
-      return failTest(`${this.name} can only wrap the topmost join operation`);
+      return failTest(`Actor ${this.name} can only wrap the topmost join operation`);
     }
     if (this.restartLimit < 1) {
-      return failTest(`${this.name} has too low restart limit`);
+      return failTest(`Actor ${this.name} has too low restart limit`);
     }
     return super.test(action);
   }

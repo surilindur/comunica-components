@@ -25,10 +25,10 @@ export class ActorRdfMetadataAccumulateCardinalityVoid extends ActorRdfMetadataA
 
   public async test(action: IActionRdfMetadataAccumulate): Promise<TestResult<IActorTest>> {
     if (!action.context.has(KeysInitQuery.dataFactory)) {
-      return failTest('Cardinality estimation requires a data factory in action context.');
+      return failTest(`Actor ${this.name} requires a data factory in action context`);
     }
     if (!action.context.has(KeysQueryOperation.operation)) {
-      return failTest('Cardinality estimation requires a query operation in action context.');
+      return failTest(`Actor ${this.name} requires a query operation in action context`);
     }
     return passTestVoid();
   }

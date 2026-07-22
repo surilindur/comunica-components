@@ -22,7 +22,7 @@ export class ActorRdfJoinInnerRestartInterval extends ActorRdfJoinInnerRestartBa
     action: IActionRdfJoin,
   ): Promise<TestResult<IMediatorTypeJoinCoefficients, IActorRdfJoinTestSideData>> {
     if (this.evaluationInterval < 100) {
-      return failTest(`${this.name} has invalid evaluation interval specified`);
+      return failTest(`Actor ${this.name} has invalid evaluation interval specified`);
     }
     return super.test(action);
   }

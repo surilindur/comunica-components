@@ -17,7 +17,7 @@ export class ActorRdfMetadataExtractLinkFilterVoid extends ActorRdfMetadataExtra
 
   public async test(action: IActionRdfMetadataExtract): Promise<TestResult<IActorTest>> {
     if (!action.context.has(KeysRdfResolveHypermediaLinks.linkFilters)) {
-      return failTest('Unable to extract filters without filter output array in context');
+      return failTest(`Actor ${this.name} requires link filter array in context to extract into`);
     }
     return passTestVoid();
   }
