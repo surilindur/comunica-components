@@ -1,1 +1,2 @@
-export * from './ActorRdfJoinInnerRestart';
+export * from './ActorRdfJoinInnerRestartInterval';
+export * from './ActorRdfJoinInnerRestartMetadata';
