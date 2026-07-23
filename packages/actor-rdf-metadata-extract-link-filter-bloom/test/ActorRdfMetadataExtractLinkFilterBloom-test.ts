@@ -66,7 +66,7 @@ describe('ActorRdfMetadataExtractLinkFilterBloom', () => {
         context,
       };
       await expect(actor.test(action)).resolves.toFailTest(
-        'Unable to extract filters without filter output array in context',
+        'Actor actor requires link filter array in context to extract into',
       );
     });
   });
