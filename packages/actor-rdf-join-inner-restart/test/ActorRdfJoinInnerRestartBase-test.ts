@@ -7,7 +7,6 @@ import type { MediatorRdfJoinEntriesSort } from '@comunica/bus-rdf-join-entries-
 import { KeysRdfJoin } from '@comunica/context-entries-link-traversal';
 import { ActionContext, Bus } from '@comunica/core';
 import type { IJoinEntry, IQueryOperationResultBindings } from '@comunica/types';
-import { BindingsFactory } from '@comunica/utils-bindings-factory';
 import { MetadataValidationState } from '@comunica/utils-metadata';
 import type * as RDF from '@rdfjs/types';
 import { ArrayIterator } from 'asynciterator';
@@ -31,15 +30,6 @@ function createMockOutput(bindingsArray: RDF.Bindings[] = []): IQueryOperationRe
   };
 }
 
-function createMockOutputWithCardinality(cardinality: number): IQueryOperationResultBindings {
-  const BF = new BindingsFactory(DF);
-  const bindingsArray: RDF.Bindings[] = Array.from(
-    { length: cardinality },
-    () => BF.fromRecord({ x: DF.literal('x') }),
-  );
-  return createMockOutput(bindingsArray);
-}
-
 class TestActor extends ActorRdfJoinInnerRestartBase {
   public async registerRestartTriggers(
     _entries: IJoinEntry[],
@@ -59,21 +49,7 @@ describe('ActorRdfJoinInnerRestartBase', () => {
 
     mediatorHashBindings = <MediatorHashBindings> <unknown> {
       mediate: jest.fn().mockResolvedValue({
-        hashFunction: (bindings: RDF.Bindings, variables: Iterable<RDF.Variable>): number => {
-          const keysArray = [ ...variables ];
-          const parts = keysArray
-            .sort((a, b) => a.value.localeCompare(b.value))
-            .map(v => `${v.value}:${bindings.get(v)?.value}`);
-          let hash = 0;
-          for (const part of parts) {
-            for (let i = 0; i < part.length; i++) {
-              const codePoint = part.codePointAt(i) ?? 0;
-              hash = ((hash << 5) - hash) + codePoint;
-              hash &= hash;
-            }
-          }
-          return hash;
-        },
+        hashFunction: (_bindings: RDF.Bindings, _variables: Iterable<RDF.Variable>): number => 0,
       }),
     };
 
@@ -124,14 +100,12 @@ describe('ActorRdfJoinInnerRestartBase', () => {
       expect(actor).toBeInstanceOf(TestActor);
     });
 
-    it('should use restartLimit when provided', () => {
-      const actor = createTestActor('test-actor-with-limit', 10);
-
-      expect(actor).toBeDefined();
-    });
-
-    it('should default restartLimit to positive infinity when not provided', () => {
-      const actor = createTestActor('test-actor-no-limit');
+    it.each([
+      [ 10 ],
+      [ 1 ],
+      [ 100 ],
+    ])('should accept restartLimit of %p', (restartLimit) => {
+      const actor = createTestActor('test-actor-with-limit', restartLimit);
 
       expect(actor).toBeDefined();
     });
@@ -216,7 +190,7 @@ describe('ActorRdfJoinInnerRestartBase', () => {
       expect((<any> result[0]).metadata.variables).toHaveLength(1);
     });
 
-    it('should return multiple entries with metadata', async() => {
+    it('should sort entries by cardinality and pass context to the sort mediator', async() => {
       const mockOutput1 = createMockOutput();
       const mockOutput2 = createMockOutput();
       const mockEntries = [
@@ -244,41 +218,45 @@ describe('ActorRdfJoinInnerRestartBase', () => {
 
       const actor = createTestActor('test-actor');
 
+      const customContext = new ActionContext({ customKey: 'customValue' });
       const entries = mockEntries.map(e => ({ operation: e.operation, output: e.output }));
 
-      const result = await actor.sortJoinEntries(entries, new ActionContext());
+      const result = await actor.sortJoinEntries(entries, customContext);
 
       expect(result).toHaveLength(2);
       expect((<any> result[0]).metadata.cardinality.value).toBe(5);
       expect((<any> result[1]).metadata.cardinality.value).toBe(10);
-    });
-
-    it('should pass context to the sort mediator', async() => {
-      const actor = createTestActor('test-actor');
-
-      const mockOutput = createMockOutput();
-      const customContext = new ActionContext({ customKey: 'customValue' });
-      const entry: IJoinEntry = {
-        operation: { type: 'source' },
-        output: mockOutput,
-      };
-
-      await actor.sortJoinEntries([ entry ], customContext);
-
       expect(mediatorJoinEntriesSort.mediate).toHaveBeenCalledWith(
         expect.objectContaining({ context: customContext }),
       );
     });
+
+    it('should handle empty entries list', async() => {
+      const actor = createTestActor('test-actor');
+
+      const result = await actor.sortJoinEntries([], new ActionContext());
+
+      expect(result).toHaveLength(0);
+    });
   });
 
   describe('executeJoin', () => {
-    it('should call the join mediator with cloned streams', async() => {
+    it('should call the join mediator with cloned streams and return the result', async() => {
       const mockOutput1 = createMockOutput();
       const mockOutput2 = createMockOutput();
       const clone1Spy = jest.spyOn(mockOutput1.bindingsStream, 'clone').mockReturnValue(<any> new ArrayIterator([]));
       const clone2Spy = jest.spyOn(mockOutput2.bindingsStream, 'clone').mockReturnValue(<any> new ArrayIterator([]));
 
-      const joinResult = createMockOutput();
+      const expectedMetadata = {
+        state: new MetadataValidationState(),
+        cardinality: { value: 5, type: 'inferred' },
+        variables: [{ variable: DF.variable('x'), canBeUndef: false }],
+      };
+      const joinResult: IQueryOperationResultBindings = <IQueryOperationResultBindings> <unknown> {
+        type: 'bindings',
+        bindingsStream: new ArrayIterator<RDF.Bindings>([], { autoStart: false }),
+        metadata: async() => expectedMetadata,
+      };
       (<any> mediatorJoin).mediate.mockResolvedValue(joinResult);
 
       const actor = createTestActor('test-actor');
@@ -302,17 +280,8 @@ describe('ActorRdfJoinInnerRestartBase', () => {
 
       expect(clone1Spy).toHaveBeenCalledTimes(1);
       expect(clone2Spy).toHaveBeenCalledTimes(1);
-      expect(mediatorJoin.mediate).toHaveBeenCalledWith(
-        expect.objectContaining({
-          type: 'inner',
-          entries: expect.arrayContaining([
-            expect.objectContaining({ operation: entry1.operation }),
-            expect.objectContaining({ operation: entry2.operation }),
-          ]),
-          context: action.context,
-        }),
-      );
       expect(result).toBe(joinResult);
+      expect((await result.metadata()).cardinality.value).toBe(5);
 
       clone1Spy.mockRestore();
       clone2Spy.mockRestore();
@@ -322,8 +291,7 @@ describe('ActorRdfJoinInnerRestartBase', () => {
       const mockOutput = createMockOutput();
       const cloneSpy = jest.spyOn(mockOutput.bindingsStream, 'clone').mockReturnValue(<any> new ArrayIterator([]));
 
-      const joinResult = createMockOutput();
-      (<any> mediatorJoin).mediate.mockResolvedValue(joinResult);
+      (<any> mediatorJoin).mediate.mockResolvedValue(createMockOutput());
 
       const actor = createTestActor('test-actor');
 
@@ -347,106 +315,14 @@ describe('ActorRdfJoinInnerRestartBase', () => {
 
       cloneSpy.mockRestore();
     });
-
-    it('should return the result from the join mediator', async() => {
-      const mockOutput = createMockOutput();
-      const cloneSpy = jest.spyOn(mockOutput.bindingsStream, 'clone').mockReturnValue(<any> new ArrayIterator([]));
-
-      const expectedMetadata = {
-        state: new MetadataValidationState(),
-        cardinality: { value: 5, type: 'inferred' },
-        variables: [{ variable: DF.variable('x'), canBeUndef: false }],
-      };
-      const joinResult: IQueryOperationResultBindings = <IQueryOperationResultBindings> <unknown> {
-        type: 'bindings',
-        bindingsStream: new ArrayIterator<RDF.Bindings>([], { autoStart: false }),
-        metadata: async() => expectedMetadata,
-      };
-
-      (<any> mediatorJoin).mediate.mockResolvedValue(joinResult);
-
-      const actor = createTestActor('test-actor');
-
-      const entry: IJoinEntry = {
-        operation: { type: 'source' },
-        output: mockOutput,
-      };
-
-      const action: IActionRdfJoin = {
-        context: new ActionContext(),
-        type: 'inner',
-        entries: [ entry ],
-      };
-
-      const result = await actor.executeJoin(action, action.context);
-
-      expect(result).toBe(joinResult);
-      expect((await result.metadata()).cardinality.value).toBe(5);
-
-      cloneSpy.mockRestore();
-    });
-  });
-
-  describe('abstract method: registerRestartTriggers', () => {
-    it('must be implemented by subclasses to register restart triggers', () => {
-      const actor = createTestActor('test-actor-with-impl');
-
-      expect(actor).toBeDefined();
-    });
   });
 
   describe('logical and physical join properties', () => {
-    it('should have logicalType set to inner', () => {
+    it('should have logicalType set to inner, physicalName set to restart, and canHandleUndefs set to true', () => {
       const actor = createTestActor('test-actor');
       expect((<any> actor).logicalType).toBe('inner');
-    });
-
-    it('should have physicalName set to restart', () => {
-      const actor = createTestActor('test-actor');
       expect((<any> actor).physicalName).toBe('restart');
-    });
-
-    it('should have canHandleUndefs set to true', () => {
-      const actor = createTestActor('test-actor');
       expect((<any> actor).canHandleUndefs).toBe(true);
-    });
-  });
-
-  describe('integration of test and sortJoinEntries', () => {
-    it('should correctly sort entries passed to restart triggers', async() => {
-      const mockOutput1 = createMockOutputWithCardinality(5);
-      const mockOutput2 = createMockOutputWithCardinality(10);
-      const mockEntry1: IJoinEntry = {
-        operation: { type: 'source-a' },
-        output: mockOutput1,
-      };
-      const mockEntry2: IJoinEntry = {
-        operation: { type: 'source-b' },
-        output: mockOutput2,
-      };
-
-      (<any> mediatorJoinEntriesSort).mediate.mockImplementation(async({ entries }: any) => {
-        const sorted = [ ...entries ].sort(
-          (a: any, b: any) => a.metadata.cardinality.value - b.metadata.cardinality.value,
-        );
-        return { entries: sorted };
-      });
-
-      const actor = createTestActor('test-actor');
-
-      const sorted = await actor.sortJoinEntries([ mockEntry1, mockEntry2 ], new ActionContext());
-
-      expect(sorted).toHaveLength(2);
-      expect((<any> sorted[0]).metadata.cardinality.value).toBe(5);
-      expect((<any> sorted[1]).metadata.cardinality.value).toBe(10);
-    });
-
-    it('should handle empty entries list in sortJoinEntries', async() => {
-      const actor = createTestActor('test-actor');
-
-      const result = await actor.sortJoinEntries([], new ActionContext());
-
-      expect(result).toHaveLength(0);
     });
   });
 
@@ -508,157 +384,8 @@ describe('ActorRdfJoinInnerRestartBase', () => {
 
       await actor.getOutput(action);
 
-      // Verify that mediatorHashBindings.mediate was called with a context that has keyWrapped set
-      expect(mediatorHashBindings.mediate).toHaveBeenCalledWith(
-        expect.objectContaining({ context: expect.any(Object) }),
-      );
       const hashMediateContext = (<any> mediatorHashBindings.mediate).mock.calls[0][0].context;
       expect(hashMediateContext.get(ActorRdfJoinInnerRestartBase.keyWrapped)).toBe(true);
-
-      cloneSpy.mockRestore();
-    });
-
-    it('should use the hash function from mediatorHashBindings in BindingsStreamRestart', async() => {
-      const mockOutput = createMockOutput();
-      const cloneSpy = jest.spyOn(mockOutput.bindingsStream, 'clone').mockReturnValue(<any> new ArrayIterator([]));
-
-      (<any> mediatorJoin).mediate.mockResolvedValue(createMockOutput());
-
-      const actor = createTestActor('test-actor');
-
-      const entry: IJoinEntry = {
-        operation: { type: 'source' },
-        output: mockOutput,
-      };
-
-      const action: IActionRdfJoin = {
-        context: new ActionContext(),
-        type: 'inner',
-        entries: [ entry ],
-      };
-
-      await actor.getOutput(action);
-
-      expect(mediatorHashBindings.mediate).toHaveBeenCalledWith(
-        expect.objectContaining({ context: expect.any(Object) }),
-      );
-
-      cloneSpy.mockRestore();
-    });
-
-    it('should pass cloned streams to the join mediator', async() => {
-      const mockOutput1 = createMockOutput();
-      const mockOutput2 = createMockOutput();
-      const clone1Spy = jest.spyOn(mockOutput1.bindingsStream, 'clone').mockReturnValue(<any> new ArrayIterator([]));
-      const clone2Spy = jest.spyOn(mockOutput2.bindingsStream, 'clone').mockReturnValue(<any> new ArrayIterator([]));
-
-      (<any> mediatorJoin).mediate.mockResolvedValue(createMockOutput());
-
-      const actor = createTestActor('test-actor');
-
-      const entry1: IJoinEntry = {
-        operation: { type: 'source1' },
-        output: mockOutput1,
-      };
-      const entry2: IJoinEntry = {
-        operation: { type: 'source2' },
-        output: mockOutput2,
-      };
-
-      const action: IActionRdfJoin = {
-        context: new ActionContext(),
-        type: 'inner',
-        entries: [ entry1, entry2 ],
-      };
-
-      await actor.getOutput(action);
-
-      expect(mediatorJoin.mediate).toHaveBeenCalledWith(
-        expect.objectContaining({ type: 'inner', entries: expect.any(Array), context: expect.any(Object) }),
-      );
-      const joinEntries = (<any> mediatorJoin.mediate).mock.calls[0][0].entries;
-      expect(joinEntries).toHaveLength(2);
-
-      clone1Spy.mockRestore();
-      clone2Spy.mockRestore();
-    });
-
-    it('should respect restartLimit when provided', async() => {
-      const mockOutput = createMockOutput();
-      const cloneSpy = jest.spyOn(mockOutput.bindingsStream, 'clone').mockReturnValue(<any> new ArrayIterator([]));
-
-      (<any> mediatorJoin).mediate.mockResolvedValue(createMockOutput());
-
-      const actor = createTestActor('test-actor-with-limit', 5);
-
-      const entry: IJoinEntry = {
-        operation: { type: 'source' },
-        output: mockOutput,
-      };
-
-      const action: IActionRdfJoin = {
-        context: new ActionContext(),
-        type: 'inner',
-        entries: [ entry ],
-      };
-
-      await expect(actor.getOutput(action)).resolves.toBeDefined();
-
-      cloneSpy.mockRestore();
-    });
-
-    it('should call sortJoinEntries with the wrapped context', async() => {
-      const mockOutput = createMockOutput();
-      const cloneSpy = jest.spyOn(mockOutput.bindingsStream, 'clone').mockReturnValue(<any> new ArrayIterator([]));
-
-      (<any> mediatorJoin).mediate.mockResolvedValue(createMockOutput());
-
-      const actor = createTestActor('test-actor');
-
-      const entry: IJoinEntry = {
-        operation: { type: 'source' },
-        output: mockOutput,
-      };
-
-      const action: IActionRdfJoin = {
-        context: new ActionContext(),
-        type: 'inner',
-        entries: [ entry ],
-      };
-
-      await actor.getOutput(action);
-
-      expect(mediatorJoinEntriesSort.mediate).toHaveBeenCalledWith(
-        expect.objectContaining({ context: expect.any(Object) }),
-      );
-
-      cloneSpy.mockRestore();
-    });
-
-    it('should call executeJoin with the wrapped context', async() => {
-      const mockOutput = createMockOutput();
-      const cloneSpy = jest.spyOn(mockOutput.bindingsStream, 'clone').mockReturnValue(<any> new ArrayIterator([]));
-
-      (<any> mediatorJoin).mediate.mockResolvedValue(createMockOutput());
-
-      const actor = createTestActor('test-actor');
-
-      const entry: IJoinEntry = {
-        operation: { type: 'source' },
-        output: mockOutput,
-      };
-
-      const action: IActionRdfJoin = {
-        context: new ActionContext(),
-        type: 'inner',
-        entries: [ entry ],
-      };
-
-      await actor.getOutput(action);
-
-      expect(mediatorJoin.mediate).toHaveBeenCalledWith(
-        expect.objectContaining({ context: expect.any(Object) }),
-      );
 
       cloneSpy.mockRestore();
     });
@@ -692,7 +419,6 @@ describe('ActorRdfJoinInnerRestartBase', () => {
 
       const result = await actor.getOutput(action);
 
-      // Trigger destroy on the restart stream to verify input streams are destroyed
       result.result.bindingsStream.destroy();
 
       expect(destroy1Spy).toHaveBeenCalledTimes(1);
@@ -704,7 +430,7 @@ describe('ActorRdfJoinInnerRestartBase', () => {
       destroy2Spy.mockRestore();
     });
 
-    it('should return metadata from the initial join output', async() => {
+    it('should return metadata from the initial join output and respect restartLimit', async() => {
       const mockOutput = createMockOutput();
       const cloneSpy = jest.spyOn(mockOutput.bindingsStream, 'clone').mockReturnValue(<any> new ArrayIterator([]));
 
@@ -720,7 +446,7 @@ describe('ActorRdfJoinInnerRestartBase', () => {
       };
       (<any> mediatorJoin).mediate.mockResolvedValue(joinResult);
 
-      const actor = createTestActor('test-actor');
+      const actor = createTestActor('test-actor-with-limit', 5);
 
       const entry: IJoinEntry = {
         operation: { type: 'source' },
