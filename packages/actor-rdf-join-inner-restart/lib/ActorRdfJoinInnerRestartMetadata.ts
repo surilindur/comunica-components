@@ -1,6 +1,5 @@
-import type { IJoinEntryWithMetadata } from '@comunica/types';
+import type { BindingsStream, IJoinEntryWithMetadata } from '@comunica/types';
 import { ActorRdfJoinInnerRestartBase } from './ActorRdfJoinInnerRestartBase';
-import type { BindingsStreamRestart } from './BindingsStreamRestart';
 
 /**
  * Comunica inner join actor that evaluates the current join upon input metadata invalidation events.
@@ -8,7 +7,7 @@ import type { BindingsStreamRestart } from './BindingsStreamRestart';
 export class ActorRdfJoinInnerRestartMetadata extends ActorRdfJoinInnerRestartBase {
   public async registerRestartTriggers(
     entries: IJoinEntryWithMetadata[],
-    _bindingsStreamRestart: BindingsStreamRestart,
+    _bindingsStream: BindingsStream,
     attemptJoinPlanRestart: () => Promise<void>,
   ): Promise<void> {
     for (const entry of entries) {

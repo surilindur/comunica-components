@@ -17,6 +17,7 @@ import type {
   IQueryOperationResultBindings,
   IJoinEntry,
   IJoinEntryWithMetadata,
+  BindingsStream,
 } from '@comunica/types';
 import { BindingsStreamRestart } from './BindingsStreamRestart';
 
@@ -132,12 +133,12 @@ export abstract class ActorRdfJoinInnerRestartBase extends ActorRdfJoin {
   /**
    * Register triggers that attempt to restart the currently executing join upon specific conditions.
    * @param entries The original join input entries.
-   * @param bindingsStreamRestart The output stream.
+   * @param bindingsStream The output stream.
    * @param attemptJoinPlanRestart Helper function to attempt a join restart.
    */
   public abstract registerRestartTriggers(
     entries: IJoinEntryWithMetadata[],
-    bindingsStreamRestart: BindingsStreamRestart,
+    bindingsStream: BindingsStream,
     attemptJoinPlanRestart: () => Promise<void>,
   ): Promise<void>;
 

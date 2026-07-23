@@ -2,10 +2,9 @@ import type { IActionRdfJoin, IActorRdfJoinTestSideData } from '@comunica/bus-rd
 import type { TestResult } from '@comunica/core';
 import { failTest } from '@comunica/core';
 import type { IMediatorTypeJoinCoefficients } from '@comunica/mediatortype-join-coefficients';
-import type { IJoinEntryWithMetadata } from '@comunica/types';
+import type { BindingsStream, IJoinEntryWithMetadata } from '@comunica/types';
 import type { IActorRdfJoinInnerRestartArgs } from './ActorRdfJoinInnerRestartBase';
 import { ActorRdfJoinInnerRestartBase } from './ActorRdfJoinInnerRestartBase';
-import type { BindingsStreamRestart } from './BindingsStreamRestart';
 
 /**
  * Comunica inner join actor that evaluates the current join upon input metadata invalidation events.
@@ -29,14 +28,14 @@ export class ActorRdfJoinInnerRestartInterval extends ActorRdfJoinInnerRestartBa
 
   public async registerRestartTriggers(
     _entries: IJoinEntryWithMetadata[],
-    bindingsStreamRestart: BindingsStreamRestart,
+    bindingsStream: BindingsStream,
     attemptJoinPlanRestart: () => Promise<void>,
   ): Promise<void> {
     let evaluationTimeout: NodeJS.Timeout | undefined;
 
     const evaluationCallback = (): void => {
-      if (!bindingsStreamRestart.done) {
-        attemptJoinPlanRestart().then().catch((error: Error) => bindingsStreamRestart.destroy(error));
+      if (!bindingsStream.done) {
+        attemptJoinPlanRestart().then().catch((error: Error) => bindingsStream.destroy(error));
         evaluationTimeout = setTimeout(() => evaluationCallback(), this.evaluationInterval);
       }
     };
@@ -44,7 +43,7 @@ export class ActorRdfJoinInnerRestartInterval extends ActorRdfJoinInnerRestartBa
     setTimeout(() => evaluationCallback(), this.evaluationInterval);
 
     // Clear the timeout when the final output ends
-    bindingsStreamRestart.on('end', () => {
+    bindingsStream.on('end', () => {
       clearTimeout(evaluationTimeout);
     });
   }
