@@ -42,6 +42,7 @@ describe('ActorRdfJoinInnerRestartBase', () => {
   let mediatorHashBindings: MediatorHashBindings;
   let mediatorJoin: MediatorRdfJoin;
   let mediatorJoinEntriesSort: MediatorRdfJoinEntriesSort;
+  let actor: TestActor;
 
   beforeEach(() => {
     jest.resetAllMocks();
@@ -60,14 +61,9 @@ describe('ActorRdfJoinInnerRestartBase', () => {
     mediatorJoinEntriesSort = <MediatorRdfJoinEntriesSort> <unknown> {
       mediate: jest.fn().mockResolvedValue({ entries: []}),
     };
-  });
 
-  function createTestActor(
-    name: string,
-    restartLimit?: number,
-  ) {
-    return new TestActor({
-      bus: new Bus({ name }),
+    actor = new TestActor({
+      bus: new Bus({ name: 'test-actor' }),
       mediatorHashBindings,
       mediatorJoin,
       mediatorJoinEntriesSort,
@@ -78,10 +74,9 @@ describe('ActorRdfJoinInnerRestartBase', () => {
         mediateActor: jest.fn(),
         mediate: jest.fn().mockResolvedValue({ selectivity: 0.5 }),
       },
-      name,
-      restartLimit,
+      name: 'test-actor',
     });
-  }
+  });
 
   describe('keyWrapped', () => {
     it('should have a keyWrapped property with the correct namespace', () => {
@@ -94,8 +89,6 @@ describe('ActorRdfJoinInnerRestartBase', () => {
 
   describe('constructor', () => {
     it('should create a concrete instance with all dependencies', () => {
-      const actor = createTestActor('test-actor');
-
       expect(actor.name).toBe('test-actor');
       expect(actor).toBeInstanceOf(TestActor);
     });
@@ -105,16 +98,28 @@ describe('ActorRdfJoinInnerRestartBase', () => {
       [ 1 ],
       [ 100 ],
     ])('should accept restartLimit of %p', (restartLimit) => {
-      const actor = createTestActor('test-actor-with-limit', restartLimit);
+      const testActor = new TestActor({
+        bus: new Bus({ name: 'test-actor-with-limit' }),
+        mediatorHashBindings,
+        mediatorJoin,
+        mediatorJoinEntriesSort,
+        mediatorJoinSelectivity: <any> {
+          name: 'mock-selectivity',
+          bus: new Bus({ name: 'mock-selectivity' }),
+          publish: jest.fn(),
+          mediateActor: jest.fn(),
+          mediate: jest.fn().mockResolvedValue({ selectivity: 0.5 }),
+        },
+        name: 'test-actor-with-limit',
+        restartLimit,
+      });
 
-      expect(actor).toBeDefined();
+      expect(testActor).toBeDefined();
     });
   });
 
   describe('test', () => {
     it('should fail when adaptive join is disabled', async() => {
-      const actor = createTestActor('test-actor');
-
       await expect(actor.test({
         context: new ActionContext({ [KeysRdfJoin.skipAdaptiveJoin.name]: true }),
         type: 'inner',
@@ -125,8 +130,6 @@ describe('ActorRdfJoinInnerRestartBase', () => {
     });
 
     it('should fail when already wrapped in parent scope', async() => {
-      const actor = createTestActor('test-actor');
-
       const wrappedContext = new ActionContext().set(ActorRdfJoinInnerRestartBase.keyWrapped, true);
       await expect(actor.test({
         context: wrappedContext,
@@ -142,8 +145,6 @@ describe('ActorRdfJoinInnerRestartBase', () => {
       const mockOutput2 = createMockOutput();
 
       (<any> mediatorJoinEntriesSort).mediate.mockResolvedValue({ entries: []});
-
-      const actor = createTestActor('test-actor');
 
       await expect(actor.test({
         context: new ActionContext(),
@@ -174,8 +175,6 @@ describe('ActorRdfJoinInnerRestartBase', () => {
         },
       }];
       (<any> mediatorJoinEntriesSort).mediate.mockResolvedValue({ entries: mockEntries });
-
-      const actor = createTestActor('test-actor');
 
       const entry: IJoinEntry = {
         operation: { type: 'source' },
@@ -216,8 +215,6 @@ describe('ActorRdfJoinInnerRestartBase', () => {
 
       (<any> mediatorJoinEntriesSort).mediate.mockResolvedValue({ entries: mockEntries });
 
-      const actor = createTestActor('test-actor');
-
       const customContext = new ActionContext({ customKey: 'customValue' });
       const entries = mockEntries.map(e => ({ operation: e.operation, output: e.output }));
 
@@ -232,8 +229,6 @@ describe('ActorRdfJoinInnerRestartBase', () => {
     });
 
     it('should handle empty entries list', async() => {
-      const actor = createTestActor('test-actor');
-
       const result = await actor.sortJoinEntries([], new ActionContext());
 
       expect(result).toHaveLength(0);
@@ -258,8 +253,6 @@ describe('ActorRdfJoinInnerRestartBase', () => {
         metadata: async() => expectedMetadata,
       };
       (<any> mediatorJoin).mediate.mockResolvedValue(joinResult);
-
-      const actor = createTestActor('test-actor');
 
       const entry1: IJoinEntry = {
         operation: { type: 'source1' },
@@ -293,8 +286,6 @@ describe('ActorRdfJoinInnerRestartBase', () => {
 
       (<any> mediatorJoin).mediate.mockResolvedValue(createMockOutput());
 
-      const actor = createTestActor('test-actor');
-
       const customContext = new ActionContext({ customKey: 'customValue' });
       const entry: IJoinEntry = {
         operation: { type: 'source' },
@@ -319,7 +310,6 @@ describe('ActorRdfJoinInnerRestartBase', () => {
 
   describe('logical and physical join properties', () => {
     it('should have logicalType set to inner, physicalName set to restart, and canHandleUndefs set to true', () => {
-      const actor = createTestActor('test-actor');
       expect((<any> actor).logicalType).toBe('inner');
       expect((<any> actor).physicalName).toBe('restart');
       expect((<any> actor).canHandleUndefs).toBe(true);
@@ -335,8 +325,6 @@ describe('ActorRdfJoinInnerRestartBase', () => {
 
       const joinResult = createMockOutput();
       (<any> mediatorJoin).mediate.mockResolvedValue(joinResult);
-
-      const actor = createTestActor('test-actor');
 
       const entry1: IJoinEntry = {
         operation: { type: 'source1' },
@@ -369,8 +357,6 @@ describe('ActorRdfJoinInnerRestartBase', () => {
 
       (<any> mediatorJoin).mediate.mockResolvedValue(createMockOutput());
 
-      const actor = createTestActor('test-actor');
-
       const entry: IJoinEntry = {
         operation: { type: 'source' },
         output: mockOutput,
@@ -399,8 +385,6 @@ describe('ActorRdfJoinInnerRestartBase', () => {
       const clone2Spy = jest.spyOn(mockOutput2.bindingsStream, 'clone').mockReturnValue(<any> new ArrayIterator([]));
 
       (<any> mediatorJoin).mediate.mockResolvedValue(createMockOutput());
-
-      const actor = createTestActor('test-actor');
 
       const entry1: IJoinEntry = {
         operation: { type: 'source1' },
@@ -446,7 +430,21 @@ describe('ActorRdfJoinInnerRestartBase', () => {
       };
       (<any> mediatorJoin).mediate.mockResolvedValue(joinResult);
 
-      const actor = createTestActor('test-actor-with-limit', 5);
+      const testActor = new TestActor({
+        bus: new Bus({ name: 'test-actor-with-limit' }),
+        mediatorHashBindings,
+        mediatorJoin,
+        mediatorJoinEntriesSort,
+        mediatorJoinSelectivity: <any> {
+          name: 'mock-selectivity',
+          bus: new Bus({ name: 'mock-selectivity' }),
+          publish: jest.fn(),
+          mediateActor: jest.fn(),
+          mediate: jest.fn().mockResolvedValue({ selectivity: 0.5 }),
+        },
+        name: 'test-actor-with-limit',
+        restartLimit: 5,
+      });
 
       const entry: IJoinEntry = {
         operation: { type: 'source' },
@@ -459,7 +457,7 @@ describe('ActorRdfJoinInnerRestartBase', () => {
         entries: [ entry ],
       };
 
-      const result = await actor.getOutput(action);
+      const result = await testActor.getOutput(action);
 
       const resultMetadata = await result.result.metadata();
       expect(resultMetadata.cardinality.value).toBe(42);
