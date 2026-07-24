@@ -5,6 +5,7 @@ import type {
 } from '@comunica/bus-rdf-join';
 import type { MediatorRdfJoinEntriesSort } from '@comunica/bus-rdf-join-entries-sort';
 import type { MediatorRdfJoinSelectivity } from '@comunica/bus-rdf-join-selectivity';
+
 import { KeysRdfJoin } from '@comunica/context-entries-link-traversal';
 import { ActionContext, Bus } from '@comunica/core';
 import type { IJoinEntry, IQueryOperationResultBindings } from '@comunica/types';
@@ -98,10 +99,6 @@ describe('ActorRdfJoinInnerRestartBase', () => {
     };
 
     mediatorJoinSelectivity = <MediatorRdfJoinSelectivity> <unknown> {
-      name: 'mock-selectivity',
-      bus: new Bus({ name: 'mock-selectivity' }),
-      publish: jest.fn(),
-      mediateActor: jest.fn(),
       mediate: jest.fn().mockResolvedValue({ selectivity: 0.5 }),
     };
   });
