@@ -300,4 +300,82 @@ describe('ActorRdfJoinInnerRestartBase', () => {
       expect(cloneMock2).toHaveBeenCalledTimes(1);
     });
   });
+
+  describe('getOutput', () => {
+    it('should execute successfully', async() => {
+      const sourceOp1 = { type: 'source1' };
+      const sourceOp2 = { type: 'source2' };
+      const mockOutput1 = createMockOutput();
+      const mockOutput2 = createMockOutput();
+
+      const result = await actor.getOutput({
+        context: new ActionContext(),
+        type: 'inner',
+        entries: [
+          { operation: sourceOp1, output: mockOutput1 },
+          { operation: sourceOp2, output: mockOutput2 },
+        ],
+      });
+
+      expect(result).toBeDefined();
+      expect(result.result.type).toBe('bindings');
+      expect(result.result.bindingsStream).toBeDefined();
+      expect(result.result.metadata).toBeDefined();
+      expect(mediatorHashBindings.mediate).toHaveBeenCalledTimes(1);
+      expect(mediatorJoinEntriesSort.mediate).toHaveBeenCalledTimes(1);
+      expect(mediatorJoin.mediate).toHaveBeenCalledTimes(1);
+    });
+
+    it('should return correct metadata from the output', async() => {
+      const expectedMetadata = <MetadataBindings>{
+        state: new MetadataValidationState(),
+        cardinality: { value: 100, type: 'exact' },
+        variables: [],
+      };
+
+      const mockOutput = createMockOutput([], async() => expectedMetadata);
+
+      const result = await actor.getOutput({
+        context: new ActionContext(),
+        type: 'inner',
+        entries: [
+          { operation: { type: 'source' }, output: mockOutput },
+        ],
+      });
+
+      expect(result.result.metadata).toBeDefined();
+    });
+
+    it('should respect custom restartLimit', async() => {
+      const actorWithLimit = new TestActorRdfJoinInnerRestartBase({
+        bus: new Bus({ name: 'test-actor' }),
+        mediatorHashBindings,
+        mediatorJoin,
+        mediatorJoinEntriesSort,
+        mediatorJoinSelectivity: <any> {
+          name: 'mock-selectivity',
+          bus: new Bus({ name: 'mock-selectivity' }),
+          publish: jest.fn(),
+          mediateActor: jest.fn(),
+          mediate: jest.fn().mockResolvedValue({ selectivity: 0.5 }),
+        },
+        name: 'test-actor',
+        restartLimit: 5,
+      });
+
+      const sourceOp = { type: 'source' };
+      const mockOutput = createMockOutput();
+
+      const result = await actorWithLimit.getOutput({
+        context: new ActionContext(),
+        type: 'inner',
+        entries: [
+          { operation: sourceOp, output: mockOutput },
+        ],
+      });
+
+      expect(result).toBeDefined();
+      expect(result.result.type).toBe('bindings');
+    });
+  });
 });
