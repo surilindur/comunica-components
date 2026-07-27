@@ -4,7 +4,6 @@ import type {
 } from '@comunica/bus-rdf-join';
 import type { MediatorRdfJoinEntriesSort } from '@comunica/bus-rdf-join-entries-sort';
 import { ActionContext, Bus } from '@comunica/core';
-import type { IQueryOperationResultBindings } from '@comunica/types';
 import { MetadataValidationState } from '@comunica/utils-metadata';
 import type * as RDF from '@rdfjs/types';
 import { ArrayIterator } from 'asynciterator';
@@ -13,19 +12,6 @@ import { ActorRdfJoinInnerRestartInterval } from '../lib/ActorRdfJoinInnerRestar
 import '@comunica/utils-jest';
 
 const DF = new DataFactory();
-
-function createMockOutput(bindingsArray: RDF.Bindings[] = []): IQueryOperationResultBindings {
-  const iterator = new ArrayIterator<RDF.Bindings>(bindingsArray, { autoStart: false });
-  return <IQueryOperationResultBindings> <unknown> {
-    type: 'bindings',
-    bindingsStream: iterator,
-    metadata: async() => ({
-      state: new MetadataValidationState(),
-      cardinality: { value: bindingsArray.length, type: 'inferred' },
-      variables: [{ variable: DF.variable('x'), canBeUndef: false }],
-    }),
-  };
-}
 
 describe('ActorRdfJoinInnerRestartInterval', () => {
   let mediatorHashBindings: MediatorHashBindings;
@@ -57,7 +43,15 @@ describe('ActorRdfJoinInnerRestartInterval', () => {
     };
 
     mediatorJoin = <MediatorRdfJoin> <unknown> {
-      mediate: jest.fn().mockResolvedValue(createMockOutput()),
+      mediate: jest.fn().mockResolvedValue({
+        type: 'bindings',
+        bindingsStream: new ArrayIterator<RDF.Bindings>([], { autoStart: false }),
+        metadata: async() => ({
+          state: new MetadataValidationState(),
+          cardinality: { value: 0, type: 'estimate' },
+          variables: [{ variable: DF.variable('x'), canBeUndef: false }],
+        }),
+      }),
     };
 
     mediatorJoinEntriesSort = <MediatorRdfJoinEntriesSort> <unknown> {
@@ -98,14 +92,12 @@ describe('ActorRdfJoinInnerRestartInterval', () => {
 
     it.each([ 100, 500 ])('should pass when evaluationInterval is %d', async(interval) => {
       const actor = createTestActor('test-actor', interval);
-      const mockOutput1 = createMockOutput();
-      const mockOutput2 = createMockOutput();
       await expect(actor.test({
         context: new ActionContext(),
         type: 'inner',
         entries: [
-          { operation: { type: 'source1' }, output: mockOutput1 },
-          { operation: { type: 'source2' }, output: mockOutput2 },
+          { operation: { type: 'source1' }, output: await mediatorJoin.mediate(<any>{}) },
+          { operation: { type: 'source2' }, output: await mediatorJoin.mediate(<any>{}) },
         ],
       })).resolves.toPassTest(expect.objectContaining({
         blockingItems: expect.any(Number),
