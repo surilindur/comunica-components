@@ -1,11 +1,11 @@
+import type { ActorHttpInvalidateListenable } from '@comunica/bus-http-invalidate';
 import { ActorRdfMetadataAccumulate } from '@comunica/bus-rdf-metadata-accumulate';
 import type {
   IActionRdfMetadataAccumulate,
-  IActionRdfMetadataAccumulateAppend,
   IActorRdfMetadataAccumulateOutput,
   IActorRdfMetadataAccumulateArgs,
 } from '@comunica/bus-rdf-metadata-accumulate';
-import { KeysInitQuery, KeysQueryOperation } from '@comunica/context-entries';
+import { KeysInitQuery, KeysQueryOperation, KeysQuerySourceIdentify } from '@comunica/context-entries';
 import { failTest, passTestVoid } from '@comunica/core';
 import type { IActorTest, TestResult } from '@comunica/core';
 import type { ComunicaDataFactory, IDataset, QueryResultCardinality } from '@comunica/types';
@@ -17,18 +17,18 @@ import { estimateCardinality } from '@comunica/utils-query-operation';
  */
 export class ActorRdfMetadataAccumulateCardinalityVoid extends ActorRdfMetadataAccumulate {
   private readonly predicateBasedEstimation: boolean;
+  private readonly datasetCache: Map<string, IDataset>;
 
   public constructor(args: IActorRdfMetadataAccumulateCardinalityVoidArgs) {
     super(args);
     this.predicateBasedEstimation = args.predicateBasedEstimation;
+    this.datasetCache = new Map<string, IDataset>();
+    args.httpInvalidator.addInvalidateListener(() => this.datasetCache.clear());
   }
 
   public async test(action: IActionRdfMetadataAccumulate): Promise<TestResult<IActorTest>> {
     if (!action.context.has(KeysInitQuery.dataFactory)) {
-      return failTest('Cardinality estimation requires a data factory in action context.');
-    }
-    if (!action.context.has(KeysQueryOperation.operation)) {
-      return failTest('Cardinality estimation requires a query operation in action context.');
+      return failTest(`Actor ${this.name} requires a data factory in action context`);
     }
     return passTestVoid();
   }
@@ -36,40 +36,45 @@ export class ActorRdfMetadataAccumulateCardinalityVoid extends ActorRdfMetadataA
   public async run(action: IActionRdfMetadataAccumulate): Promise<IActorRdfMetadataAccumulateOutput> {
     const metadata: Record<string, any> = {};
     if (action.mode === 'append') {
-      const datasets = this.accumulateDatasets(action);
-      if (datasets.length > 0) {
-        metadata.datasets = datasets;
-        const operation = action.context.getSafe(KeysQueryOperation.operation);
-        const dataFactory = action.context.getSafe(KeysInitQuery.dataFactory);
-        const cardinality = await this.estimateOperationCardinality(operation, dataFactory, datasets);
-        if (cardinality !== undefined) {
+      // Accumulate the datasets if available
+      if (action.accumulatedMetadata.datasets) {
+        for (const dataset of (<IDataset[]> action.accumulatedMetadata.datasets)) {
+          this.datasetCache.set(dataset.uri, dataset);
+        }
+      }
+      if (action.appendingMetadata.datasets) {
+        for (const dataset of (<IDataset[]> action.appendingMetadata.datasets)) {
+          this.datasetCache.set(dataset.uri, dataset);
+        }
+      }
+
+      // The following code to update the cardinality of the current operation is somewhat hacky,
+      // because the previous approach is no longer functional in Comunica 5.x.
+      // Originally, the operation and the VoID datasets were both available to the accumulator at the same time,
+      // however in version 5.x, only one is available at a given time.
+      // Thus, the datasets (VoID description metadata) are cached, so they are available when the operation appears.
+      const operation = action.context.get(KeysQueryOperation.operation);
+      const dataFactory = action.context.get(KeysInitQuery.dataFactory);
+      const querySources = [ ...action.context.get(KeysQuerySourceIdentify.sourceIds)?.keys() ?? [] ];
+      if (operation && dataFactory && querySources.length > 0) {
+        const applicableDatasets: IDataset[] = [];
+        for (const [ uri, dataset ] of this.datasetCache) {
+          if (querySources.some(s => typeof s === 'string' && s.startsWith(uri))) {
+            applicableDatasets.push(dataset);
+          }
+        }
+        const cardinality = await this.estimateOperationCardinality(
+          operation,
+          dataFactory,
+          applicableDatasets,
+        );
+        if (cardinality) {
           metadata.cardinality = cardinality;
         }
       }
     }
 
     return { metadata };
-  }
-
-  /**
-   * Collects the unique dataset metadata from both entries, and produces the combined array.
-   */
-  public accumulateDatasets(action: IActionRdfMetadataAccumulateAppend): IDataset[] {
-    const datasets: Record<string, IDataset> = {};
-
-    if (action.accumulatedMetadata.datasets) {
-      for (const dataset of (<IDataset[]> action.accumulatedMetadata.datasets)) {
-        datasets[dataset.uri] = dataset;
-      }
-    }
-
-    if (action.appendingMetadata.datasets) {
-      for (const dataset of (<IDataset[]> action.appendingMetadata.datasets)) {
-        datasets[dataset.uri] = dataset;
-      }
-    }
-
-    return Object.values(datasets);
   }
 
   public async estimateOperationCardinality(
@@ -107,6 +112,13 @@ export class ActorRdfMetadataAccumulateCardinalityVoid extends ActorRdfMetadataA
 }
 
 export interface IActorRdfMetadataAccumulateCardinalityVoidArgs extends IActorRdfMetadataAccumulateArgs {
+  /* eslint-disable max-len */
+  /**
+   * An actor that listens to HTTP invalidation events
+   * @default {<default_invalidator> a <npmd:@comunica/bus-http-invalidate/^5.0.0/components/ActorHttpInvalidateListenable.jsonld#ActorHttpInvalidateListenable>}
+   */
+  httpInvalidator: ActorHttpInvalidateListenable;
+  /* eslint-enable max-len */
   /**
    * Whether the actor should estimate triple pattern cardinality as equal to the predicate cardinality,
    * regardless of the other triple pattern members. This also restricts the estimation to patterns only.

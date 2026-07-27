@@ -12,8 +12,8 @@
       "@type": "ActorHttpDelay",
       "mediatorHttp": { "@id": "urn:comunica:default:http/mediators#main" },
       "beforeActors": { "@id": "urn:comunica:default:http/actors#fetch" },
-      "average": 40,
-      "delta": 10
+      "average": 20,
+      "delta": 5
     }
   ]
 }

@@ -3,10 +3,7 @@ import type { Config } from '@jest/types';
 const moduleFileExtensions: string[] = [ 'ts', 'js' ];
 
 const transform: Record<string, Config.TransformerConfig> = {
-  '\\.ts$': [ 'ts-jest', {
-    // Enabling this can fix issues when using prereleases of typings packages
-    // isolatedModules: true
-  }],
+  '\\.ts$': [ 'ts-jest', {}],
 };
 
 const config: Config.InitialOptions = {
@@ -31,9 +28,8 @@ const config: Config.InitialOptions = {
       transform,
       coveragePathIgnorePatterns: [
         '<rootDir>/packages/',
-        'engine-default.js',
+        'engine-default',
         'node_modules',
-        'index.js',
       ],
     },
     {
@@ -47,11 +43,11 @@ const config: Config.InitialOptions = {
       coveragePathIgnorePatterns: [
         '<rootDir>/engines/',
         'node_modules',
-        '<rootDir>/packages/actor-rdf-join-inner-restart/lib/ActorRdfJoinInnerRestart.ts',
-        'index.js',
+        'vocabularies',
       ],
     },
   ],
+  resetMocks: true,
 };
 
 export default config;

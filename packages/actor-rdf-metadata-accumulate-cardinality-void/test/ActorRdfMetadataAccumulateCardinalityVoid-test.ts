@@ -1,6 +1,7 @@
-import { KeysInitQuery, KeysQueryOperation } from '@comunica/context-entries';
+import { KeysInitQuery, KeysQueryOperation, KeysQuerySourceIdentify } from '@comunica/context-entries';
 import { ActionContext } from '@comunica/core';
-import type { IDataset, QueryResultCardinality } from '@comunica/types';
+import type { Bus } from '@comunica/core';
+import type { IDataset, MetadataBindings, QueryResultCardinality } from '@comunica/types';
 import type { Algebra } from '@comunica/utils-algebra';
 import { AlgebraFactory } from '@comunica/utils-algebra';
 import { DataFactory } from 'rdf-data-factory';
@@ -10,35 +11,53 @@ import '@comunica/utils-jest';
 const DF = new DataFactory();
 const AF = new AlgebraFactory(DF);
 
+const datasetUri = 'ex:ds1';
+const datasetCardinality: QueryResultCardinality = { type: 'exact', value: 1, dataset: datasetUri };
+const dataset: IDataset = {
+  uri: datasetUri,
+  source: datasetUri,
+  getCardinality: (_operation: Algebra.Operation) => Promise.resolve({ ...datasetCardinality }),
+};
+
+const operation = AF.createJoin([
+  AF.createPattern(DF.variable('s'), DF.namedNode('ex:p1'), DF.variable('o1')),
+  AF.createPattern(DF.variable('s'), DF.namedNode('ex:p2'), DF.variable('o2')),
+]);
+
+function createMetadataBindings(overrides?: Partial<MetadataBindings>): MetadataBindings {
+  return {
+    state: {
+      valid: true,
+      invalidate: () => {},
+      addInvalidateListener: () => {},
+    },
+    cardinality: { type: 'exact', value: 0 },
+    variables: [],
+    ...overrides,
+  };
+}
+
 jest.mock('@comunica/utils-query-operation', () => ({
   estimateCardinality: (operation: Algebra.Operation, dataset: IDataset) =>
     Promise.resolve(dataset.getCardinality(operation)),
 }));
 
 describe('ActorRdfMetadataAccumulateCardinalityVoid', () => {
-  let bus: any;
+  let bus: Bus<any, any, any, any, any>;
+  let httpInvalidator: any;
   let actor: ActorRdfMetadataAccumulateCardinalityVoid;
   let context: ActionContext;
 
-  const datasetUri = 'ex:ds1';
-  const datasetCardinality: QueryResultCardinality = { type: 'exact', value: 1, dataset: datasetUri };
-  const dataset: IDataset = {
-    uri: datasetUri,
-    source: datasetUri,
-    getCardinality: (_operation: Algebra.Operation) => Promise.resolve({ ...datasetCardinality }),
-  };
-
-  const operation = AF.createJoin([
-    AF.createPattern(DF.variable('s'), DF.namedNode('ex:p1'), DF.variable('o1')),
-    AF.createPattern(DF.variable('s'), DF.namedNode('ex:p2'), DF.variable('o2')),
-  ]);
-
   beforeEach(() => {
-    bus = {
+    bus = <any>{
       subscribe: jest.fn(),
+    };
+    httpInvalidator = {
+      addInvalidateListener: jest.fn(),
     };
     actor = new ActorRdfMetadataAccumulateCardinalityVoid({
       bus,
+      httpInvalidator,
       name: 'actor',
       predicateBasedEstimation: false,
     });
@@ -46,87 +65,160 @@ describe('ActorRdfMetadataAccumulateCardinalityVoid', () => {
   });
 
   describe('test', () => {
-    it('rejects without data factory', async() => {
+    it('fails without data factory', async() => {
       await expect(actor.test(<any>{
-        context: context.set(KeysQueryOperation.operation, operation),
-      })).resolves.toFailTest('requires a data factory');
+        context: new ActionContext(),
+      })).resolves.toFailTest('Actor actor requires a data factory in action context');
     });
 
-    it('rejects without operation', async() => {
+    it('passes with data factory', async() => {
       await expect(actor.test(<any>{
-        context: context.set(KeysInitQuery.dataFactory, DF),
-      })).resolves.toFailTest('requires a query operation');
-    });
-
-    it('passes with data factory and query operation', async() => {
-      await expect(actor.test(<any>{
-        context: context.set(KeysInitQuery.dataFactory, DF).set(KeysQueryOperation.operation, operation),
+        context: new ActionContext().set(KeysInitQuery.dataFactory, DF),
       })).resolves.toPassTestVoid();
     });
   });
 
   describe('run', () => {
-    it('does nothing when initializing', async() => {
-      await expect(actor.run({ context: <any>{}, mode: 'initialize' })).resolves.toEqual({ metadata: {}});
+    it('does nothing when mode is not append', async() => {
+      const actionContext = context.set(KeysInitQuery.dataFactory, DF)
+        .set(KeysQueryOperation.operation, operation);
+      const result = await actor.run(<any>{
+        context: actionContext,
+        mode: 'initialize',
+      });
+      expect(result).toEqual({ metadata: {}});
     });
 
-    it('accumulates datasets', async() => {
-      jest.spyOn(actor, 'accumulateDatasets').mockReturnValue(<any>'datasets');
-      jest.spyOn(actor, 'estimateOperationCardinality').mockResolvedValue(<any>'cardinality');
-      expect(actor.accumulateDatasets).not.toHaveBeenCalled();
-      expect(actor.estimateOperationCardinality).not.toHaveBeenCalled();
-      await expect(actor.run(<any>{
-        context: context.set(KeysInitQuery.dataFactory, DF).set(KeysQueryOperation.operation, operation),
+    it('caches datasets from accumulatedMetadata', async() => {
+      const sourceId = datasetUri;
+      const actionContext = context.set(KeysInitQuery.dataFactory, DF)
+        .set(KeysQueryOperation.operation, operation)
+        .set(KeysQuerySourceIdentify.sourceIds, new Map([[ sourceId, datasetUri ]]));
+      const result = await actor.run({
+        context: actionContext,
         mode: 'append',
-      })).resolves.toEqual({
-        metadata: {
-          cardinality: 'cardinality',
-          datasets: 'datasets',
-        },
+        accumulatedMetadata: createMetadataBindings({ datasets: [ dataset ]}),
+        appendingMetadata: createMetadataBindings(),
       });
-      expect(actor.accumulateDatasets).toHaveBeenCalledTimes(1);
-      expect(actor.estimateOperationCardinality).toHaveBeenCalledTimes(1);
+      expect(result.metadata.cardinality).toEqual({
+        value: datasetCardinality.value,
+        type: datasetCardinality.type,
+        dataset: datasetUri,
+      });
     });
 
-    it('avoids accumulation without datasets', async() => {
-      jest.spyOn(actor, 'accumulateDatasets').mockReturnValue([]);
-      jest.spyOn(actor, 'estimateOperationCardinality').mockResolvedValue(<any>'cardinality');
-      expect(actor.accumulateDatasets).not.toHaveBeenCalled();
-      expect(actor.estimateOperationCardinality).not.toHaveBeenCalled();
-      await expect(actor.run(<any>{ context, mode: 'append' })).resolves.toEqual({
-        metadata: {},
-      });
-      expect(actor.accumulateDatasets).toHaveBeenCalledTimes(1);
-      expect(actor.estimateOperationCardinality).not.toHaveBeenCalled();
-    });
-
-    it('forwards datasets even without cardinality', async() => {
-      jest.spyOn(actor, 'accumulateDatasets').mockReturnValue(<any>'datasets');
-      jest.spyOn(actor, 'estimateOperationCardinality').mockResolvedValue(undefined);
-      expect(actor.accumulateDatasets).not.toHaveBeenCalled();
-      expect(actor.estimateOperationCardinality).not.toHaveBeenCalled();
-      await expect(actor.run(<any>{
-        context: context.set(KeysInitQuery.dataFactory, DF).set(KeysQueryOperation.operation, operation),
+    it('caches datasets from appendingMetadata', async() => {
+      const sourceId = datasetUri;
+      const actionContext = context.set(KeysInitQuery.dataFactory, DF)
+        .set(KeysQueryOperation.operation, operation)
+        .set(KeysQuerySourceIdentify.sourceIds, new Map([[ sourceId, datasetUri ]]));
+      const result = await actor.run({
+        context: actionContext,
         mode: 'append',
-      })).resolves.toEqual({
-        metadata: {
-          datasets: 'datasets',
-        },
+        accumulatedMetadata: createMetadataBindings(),
+        appendingMetadata: createMetadataBindings({ datasets: [ dataset ]}),
       });
-      expect(actor.accumulateDatasets).toHaveBeenCalledTimes(1);
-      expect(actor.estimateOperationCardinality).toHaveBeenCalledTimes(1);
-    });
-  });
-
-  describe('accumulateDatasets', () => {
-    it('avoids duplicate datasets', () => {
-      const accumulatedMetadata = { datasets: [ dataset ]};
-      const appendingMetadata = { datasets: [ dataset ]};
-      expect(actor.accumulateDatasets(<any>{ accumulatedMetadata, appendingMetadata })).toEqual([ dataset ]);
+      expect(result.metadata.cardinality).toEqual({
+        value: datasetCardinality.value,
+        type: datasetCardinality.type,
+        dataset: datasetUri,
+      });
     });
 
-    it('produces empty result without datasets', () => {
-      expect(actor.accumulateDatasets(<any>{ accumulatedMetadata: {}, appendingMetadata: {}})).toEqual([]);
+    it('returns empty metadata without operation', async() => {
+      const result = await actor.run({
+        context: context.set(KeysInitQuery.dataFactory, DF),
+        mode: 'append',
+        accumulatedMetadata: createMetadataBindings(),
+        appendingMetadata: createMetadataBindings(),
+      });
+      expect(result).toEqual({ metadata: {}});
+    });
+
+    it('returns empty metadata without data factory', async() => {
+      const result = await actor.run({
+        context: context.set(KeysQueryOperation.operation, operation),
+        mode: 'append',
+        accumulatedMetadata: createMetadataBindings(),
+        appendingMetadata: createMetadataBindings(),
+      });
+      expect(result).toEqual({ metadata: {}});
+    });
+
+    it('returns empty metadata when cardinality estimate is undefined', async() => {
+      const actionContext = context.set(KeysInitQuery.dataFactory, DF)
+        .set(KeysQueryOperation.operation, operation)
+        .set(KeysQuerySourceIdentify.sourceIds, new Map([[ datasetUri, datasetUri ]]));
+      const result = await actor.run({
+        context: actionContext,
+        mode: 'append',
+        accumulatedMetadata: createMetadataBindings(),
+        appendingMetadata: createMetadataBindings(),
+      });
+      expect(result).toEqual({ metadata: {}});
+    });
+
+    it('returns empty metadata without query sources', async() => {
+      const actionContext = context.set(KeysInitQuery.dataFactory, DF)
+        .set(KeysQueryOperation.operation, operation);
+      const result = await actor.run({
+        context: actionContext,
+        mode: 'append',
+        accumulatedMetadata: createMetadataBindings({ datasets: [ dataset ]}),
+        appendingMetadata: createMetadataBindings(),
+      });
+      expect(result).toEqual({ metadata: {}});
+    });
+
+    it('does not match dataset when query source does not start with dataset URI', async() => {
+      const otherDatasetUri = 'ex:other';
+      const otherDataset: IDataset = {
+        uri: otherDatasetUri,
+        source: otherDatasetUri,
+        getCardinality: () => Promise.resolve({ type: 'exact', value: 5, dataset: otherDatasetUri }),
+      };
+      const sourceId = 'ex:othersource';
+      const actionContext = context.set(KeysInitQuery.dataFactory, DF)
+        .set(KeysQueryOperation.operation, operation)
+        .set(KeysQuerySourceIdentify.sourceIds, new Map([[ otherDatasetUri, sourceId ]]));
+      const result = await actor.run({
+        context: actionContext,
+        mode: 'append',
+        accumulatedMetadata: createMetadataBindings({ datasets: [ dataset, otherDataset ]}),
+        appendingMetadata: createMetadataBindings(),
+      });
+      expect(result.metadata.cardinality).toEqual({
+        value: 5,
+        type: 'exact',
+        dataset: otherDatasetUri,
+      });
+    });
+
+    it('clears cache when HTTP invalidation event occurs', () => {
+      const invalidateListeners: (() => void)[] = [];
+      httpInvalidator.addInvalidateListener.mockImplementation((listener: () => void) => {
+        invalidateListeners.push(listener);
+      });
+
+      // Recreate actor to register the listener
+      actor = new ActorRdfMetadataAccumulateCardinalityVoid({
+        bus,
+        httpInvalidator,
+        name: 'actor',
+        predicateBasedEstimation: false,
+      });
+
+      // Populate cache
+      (<any>actor).datasetCache.set('ex:ds1', dataset);
+      expect((<any>actor).datasetCache.size).toBe(1);
+
+      // Trigger invalidation
+      for (const listener of invalidateListeners) {
+        listener();
+      }
+
+      // Cache should be cleared
+      expect((<any>actor).datasetCache.size).toBe(0);
     });
   });
 
@@ -135,26 +227,51 @@ describe('ActorRdfMetadataAccumulateCardinalityVoid', () => {
       await expect(actor.estimateOperationCardinality(operation, DF, [])).resolves.toBeUndefined();
     });
 
-    it('returns estimate with a dataset', async() => {
-      await expect(actor.estimateOperationCardinality(operation, DF, [ dataset ])).resolves.toEqual(datasetCardinality);
+    it('returns estimate with one dataset', async() => {
+      await expect(actor.estimateOperationCardinality(operation, DF, [ dataset ])).resolves.toEqual({
+        value: datasetCardinality.value,
+        type: datasetCardinality.type,
+        dataset: datasetUri,
+      });
     });
 
-    it('returns estimate with multiple datasets', async() => {
-      await expect(actor.estimateOperationCardinality(operation, DF, [ dataset, dataset ])).resolves.toEqual({
-        value: datasetCardinality.value * 2,
+    it('accumulates cardinality with multiple datasets', async() => {
+      const dataset2: IDataset = {
+        uri: 'ex:ds2',
+        source: 'ex:ds2',
+        getCardinality: () => Promise.resolve({ type: 'exact', value: 3, dataset: 'ex:ds2' }),
+      };
+      await expect(actor.estimateOperationCardinality(operation, DF, [ dataset, dataset2 ])).resolves.toEqual({
+        value: 4,
         type: 'estimate',
       });
     });
 
-    it('returns estimate for pattern using predicate-based estimation', async() => {
-      (<any>actor).predicateBasedEstimation = true;
-      await expect(actor.estimateOperationCardinality(operation.input[0], DF, [ dataset ])).resolves
-        .toEqual(datasetCardinality);
-    });
-
-    it('returns undefined for non-pattern using predicate-based estimation', async() => {
+    it('returns undefined for non-pattern with predicate-based estimation', async() => {
       (<any>actor).predicateBasedEstimation = true;
       await expect(actor.estimateOperationCardinality(operation, DF, [ dataset ])).resolves.toBeUndefined();
+    });
+
+    it('estimates pattern cardinality with predicate-based estimation', async() => {
+      (<any>actor).predicateBasedEstimation = true;
+      const modifiedPattern = AF.createPattern(DF.variable('s'), DF.namedNode('ex:p1'), DF.variable('o'));
+      await expect(actor.estimateOperationCardinality(modifiedPattern, DF, [ dataset ])).resolves.toEqual({
+        value: datasetCardinality.value,
+        type: datasetCardinality.type,
+        dataset: datasetUri,
+      });
+    });
+
+    it('modifies pattern in place with predicate-based estimation', async() => {
+      (<any>actor).predicateBasedEstimation = true;
+      const testPattern = AF.createPattern(
+        DF.namedNode('ex:subject'),
+        DF.namedNode('ex:predicate'),
+        DF.namedNode('ex:object'),
+      );
+      await actor.estimateOperationCardinality(testPattern, DF, [ dataset ]);
+      expect(testPattern.subject).toEqual(DF.variable('s'));
+      expect(testPattern.object).toEqual(DF.variable('o'));
     });
   });
 });

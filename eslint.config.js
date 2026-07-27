@@ -36,6 +36,8 @@ module.exports = config([
       'engines/*/bin/query.ts',
       'engines/*/bin/query-dynamic.ts',
       'engines/*/lib/QueryEngineFactory.ts',
+      'engines/*/test/*-test.ts',
+      'packages/*/test/*-test.ts',
     ],
     rules: {
       'import/no-nodejs-modules': 'off',

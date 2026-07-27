@@ -7,52 +7,63 @@ import { TransformIterator } from 'asynciterator';
  * An iterator that can be instructed to pull a new source at will,
  * and automatically skips would-be-produced duplicates.
  */
-export class BindingsStreamRestart extends TransformIterator<Bindings> {
-  private readonly createSource: () => Promise<BindingsStream>;
+export class BindingsStreamRestart extends TransformIterator<Bindings> implements BindingsStream {
   private readonly hashBindings: HashFunction;
+  private readonly createSource: () => Promise<BindingsStream>;
 
-  private readonly bindingsProduced: Map<number, number>;
-  private readonly bindingsSkipped: Map<number, number>;
+  private bindingsPushed: number;
+
+  private readonly originalInputs: BindingsStream[];
+  private readonly bindingsFromCurrentSource: Map<number, number>;
+  private readonly bindingsFromPreviousSources: Map<number, number>;
 
   public get totalBindingsProduced(): number {
-    let total = 0;
-    for (const count of this.bindingsProduced.values()) {
-      total += count;
-    }
-    return total;
+    return this.bindingsPushed;
   }
 
   public constructor(
-    source: BindingsStream,
+    initialSource: BindingsStream,
     options: TransformIteratorOptions<Bindings>,
+    originalInputs: BindingsStream[],
     createSource: () => Promise<BindingsStream>,
     hashBindings: HashFunction,
   ) {
-    super(source, options);
+    super(initialSource, options);
+    this.bindingsPushed = 0;
+    this.originalInputs = originalInputs;
+    this.bindingsFromCurrentSource = new Map();
+    this.bindingsFromPreviousSources = new Map();
     this.createSource = createSource;
     this.hashBindings = hashBindings;
-    this.bindingsProduced = new Map();
-    this.bindingsSkipped = new Map();
+  }
+
+  public destroy(cause?: Error): void {
+    for (const originalInput of this.originalInputs) {
+      originalInput.destroy(cause);
+    }
+    super.destroy(cause);
   }
 
   public swapSource(): void {
     if (this._source && !this._source.done) {
       this._source.destroy();
-      this.bindingsSkipped.clear();
       this._source = undefined;
+      this.bindingsFromCurrentSource.clear();
       this._createSource = this.createSource;
       this._loadSourceAsync();
     }
   }
 
   protected override _push(item: Bindings): void {
-    const bindingsKey = this.hashBindings(item, [ ...item.keys() ]);
-    const currentSkipped = this.bindingsSkipped.get(bindingsKey) ?? 0;
-    const currentProduced = this.bindingsProduced.get(bindingsKey) ?? 0;
-    if (currentSkipped < currentProduced) {
-      this.bindingsSkipped.set(bindingsKey, currentSkipped + 1);
+    const bindingsHash = this.hashBindings(item, [ ...item.keys() ]);
+    const identicalFromPreviousSources = this.bindingsFromPreviousSources.get(bindingsHash) ?? 0;
+    const identicalFromCurrentSource = this.bindingsFromCurrentSource.get(bindingsHash) ?? 0;
+    if (identicalFromCurrentSource < identicalFromPreviousSources) {
+      this.bindingsFromCurrentSource.set(bindingsHash, identicalFromCurrentSource + 1);
     } else {
-      this.bindingsProduced.set(bindingsKey, currentProduced + 1);
+      this.bindingsFromCurrentSource.set(bindingsHash, identicalFromCurrentSource + 1);
+      this.bindingsFromPreviousSources.set(bindingsHash, identicalFromPreviousSources + 1);
+      this.bindingsPushed++;
       super._push(item);
     }
   }

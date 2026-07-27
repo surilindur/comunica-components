@@ -21,10 +21,10 @@ export class ActorHttpDelay extends ActorHttp {
 
   public async test(action: IActionHttp): Promise<TestResult<IMediatorTypeTime>> {
     if (action.context.has(ActorHttpDelay.keyWrapped)) {
-      return failTest(`${this.name} can only wrap a request once`);
+      return failTest(`Actor ${this.name} can only wrap a request once`);
     }
     if (this.minimum === 0 && this.range === 0) {
-      return failTest(`${this.name} has no latency range available`);
+      return failTest(`Actor ${this.name} has no latency range available`);
     }
     return passTest({ time: 0 });
   }
