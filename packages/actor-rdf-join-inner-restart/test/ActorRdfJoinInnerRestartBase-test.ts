@@ -2,46 +2,59 @@ import type { MediatorHashBindings } from '@comunica/bus-hash-bindings';
 import type {
   MediatorRdfJoin,
 } from '@comunica/bus-rdf-join';
-import type { MediatorRdfJoinEntriesSort } from '@comunica/bus-rdf-join-entries-sort';
+import type {
+  IActionRdfJoinEntriesSort,
+  IActorRdfJoinEntriesSortOutput,
+  MediatorRdfJoinEntriesSort,
+} from '@comunica/bus-rdf-join-entries-sort';
 import { KeysRdfJoin } from '@comunica/context-entries-link-traversal';
 import { ActionContext, Bus } from '@comunica/core';
 import type {
   BindingsStream,
+  IActionContext,
   IJoinEntry,
   IJoinEntryWithMetadata,
   IQueryOperationResultBindings,
   MetadataBindings,
 } from '@comunica/types';
+import { BF, DF } from '@comunica/utils-jest';
 import { MetadataValidationState } from '@comunica/utils-metadata';
 import type * as RDF from '@rdfjs/types';
+import { ArrayIterator } from 'asynciterator';
 import { ActorRdfJoinInnerRestartBase } from '../lib/ActorRdfJoinInnerRestartBase';
-import '@comunica/utils-jest';
-
-function createMockOutput(
-  bindingsArray: RDF.Bindings[] = [],
-  metadataFn?: () => Promise<MetadataBindings>,
-): IQueryOperationResultBindings {
-  return <IQueryOperationResultBindings> <unknown> {
-    type: 'bindings',
-    bindingsStream: <any>{ destroy: jest.fn(), clone: jest.fn() },
-    metadata: metadataFn ?? (async() => ({
-      state: new MetadataValidationState(),
-      cardinality: { value: bindingsArray.length, type: 'inferred' },
-      variables: [],
-    })),
-  };
-}
+import { BindingsStreamRestart } from '../lib/BindingsStreamRestart';
 
 /**
  * Concrete implementation of the abstract base class for testing.
  */
 class TestActorRdfJoinInnerRestartBase extends ActorRdfJoinInnerRestartBase {
+  public restartCallback: (() => Promise<void>) | null = null;
+
   public async registerRestartTriggers(
     _entries: IJoinEntryWithMetadata[],
     _bindingsStream: BindingsStream,
-    _attemptJoinPlanRestart: () => Promise<void>,
+    attemptJoinPlanRestart: () => Promise<void>,
   ): Promise<void> {
-    // Empty implementation for base class testing
+    // Store the restart callback for manual triggering in tests
+    this.restartCallback = attemptJoinPlanRestart;
+  }
+
+  /**
+   * Helper function to force join restart attempts.
+   */
+  public async triggerRestart(): Promise<void> {
+    if (this.restartCallback) {
+      await this.restartCallback();
+    }
+  }
+
+  /**
+   * Force the data function to be called
+   */
+  protected logWarn(_context: IActionContext, _message: string, data?: (() => any)): void {
+    if (data) {
+      data();
+    }
   }
 }
 
@@ -77,7 +90,15 @@ describe('ActorRdfJoinInnerRestartBase', () => {
     };
 
     mediatorJoin = <MediatorRdfJoin> <unknown> {
-      mediate: jest.fn().mockResolvedValue(createMockOutput()),
+      mediate: jest.fn().mockResolvedValue(<IQueryOperationResultBindings> <unknown> {
+        type: 'bindings',
+        bindingsStream: <any>{ destroy: jest.fn(), clone: jest.fn() },
+        metadata: async() => ({
+          state: new MetadataValidationState(),
+          cardinality: { value: 0, type: 'inferred' },
+          variables: [],
+        }),
+      }),
     };
 
     mediatorJoinEntriesSortMock = jest.fn().mockResolvedValue({ entries: []});
@@ -98,17 +119,18 @@ describe('ActorRdfJoinInnerRestartBase', () => {
         mediate: jest.fn().mockResolvedValue({ selectivity: 0.5 }),
       },
       name: 'test-actor',
+      restartLimit: 1,
     });
   });
 
   describe('constructor', () => {
-    it('should create a concrete instance with all dependencies', () => {
-      expect(actor.name).toBe('test-actor');
+    it('should use provided restartLimit value', () => {
       expect(actor).toBeInstanceOf(TestActorRdfJoinInnerRestartBase);
+      expect(actor).toHaveProperty('restartLimit', 1);
     });
 
-    it('should create instance with custom restartLimit', () => {
-      const actorWithLimit = new TestActorRdfJoinInnerRestartBase({
+    it('should default to unlimited restarts without a limit', () => {
+      actor = new TestActorRdfJoinInnerRestartBase({
         bus: new Bus({ name: 'test-actor' }),
         mediatorHashBindings,
         mediatorJoin,
@@ -121,17 +143,33 @@ describe('ActorRdfJoinInnerRestartBase', () => {
           mediate: jest.fn().mockResolvedValue({ selectivity: 0.5 }),
         },
         name: 'test-actor',
-        restartLimit: 10,
+        restartLimit: undefined,
       });
-
-      expect(actorWithLimit).toBeDefined();
+      expect(actor).toBeInstanceOf(TestActorRdfJoinInnerRestartBase);
+      expect(actor).toHaveProperty('restartLimit', Number.POSITIVE_INFINITY);
     });
   });
 
   describe('test', () => {
     it('should pass when adaptive join is enabled and not wrapped', async() => {
-      const mockOutput1 = createMockOutput();
-      const mockOutput2 = createMockOutput();
+      const mockOutput1 = <IQueryOperationResultBindings> <unknown> {
+        type: 'bindings',
+        bindingsStream: <any>{ destroy: jest.fn(), clone: jest.fn() },
+        metadata: async() => ({
+          state: new MetadataValidationState(),
+          cardinality: { value: 0, type: 'inferred' },
+          variables: [],
+        }),
+      };
+      const mockOutput2 = <IQueryOperationResultBindings> <unknown> {
+        type: 'bindings',
+        bindingsStream: <any>{ destroy: jest.fn(), clone: jest.fn() },
+        metadata: async() => ({
+          state: new MetadataValidationState(),
+          cardinality: { value: 0, type: 'inferred' },
+          variables: [],
+        }),
+      };
 
       await expect(actor.test({
         context: new ActionContext(),
@@ -192,8 +230,24 @@ describe('ActorRdfJoinInnerRestartBase', () => {
     it('should sort join entries and attach metadata', async() => {
       const source1Op = { type: 'source1' };
       const source2Op = { type: 'source2' };
-      const mockOutput1 = createMockOutput();
-      const mockOutput2 = createMockOutput();
+      const mockOutput1 = <IQueryOperationResultBindings> <unknown> {
+        type: 'bindings',
+        bindingsStream: <any>{ destroy: jest.fn(), clone: jest.fn() },
+        metadata: async() => ({
+          state: new MetadataValidationState(),
+          cardinality: { value: 0, type: 'inferred' },
+          variables: [],
+        }),
+      };
+      const mockOutput2 = <IQueryOperationResultBindings> <unknown> {
+        type: 'bindings',
+        bindingsStream: <any>{ destroy: jest.fn(), clone: jest.fn() },
+        metadata: async() => ({
+          state: new MetadataValidationState(),
+          cardinality: { value: 0, type: 'inferred' },
+          variables: [],
+        }),
+      };
 
       const entries: IJoinEntry[] = [
         { operation: source1Op, output: mockOutput1 },
@@ -236,7 +290,15 @@ describe('ActorRdfJoinInnerRestartBase', () => {
 
     it('should call mediatorJoinEntriesSort with sorted entries', async() => {
       const sourceOp = { type: 'source' };
-      const mockOutput = createMockOutput();
+      const mockOutput = <IQueryOperationResultBindings> <unknown> {
+        type: 'bindings',
+        bindingsStream: <any>{ destroy: jest.fn(), clone: jest.fn() },
+        metadata: async() => ({
+          state: new MetadataValidationState(),
+          cardinality: { value: 0, type: 'inferred' },
+          variables: [],
+        }),
+      };
 
       mediatorJoinEntriesSortMock.mockResolvedValueOnce({
         entries: [{ operation: sourceOp, output: mockOutput, metadata: await mockOutput.metadata() }],
@@ -261,7 +323,15 @@ describe('ActorRdfJoinInnerRestartBase', () => {
   describe('executeJoin', () => {
     it('should call mediatorJoin with cloned streams', async() => {
       const sourceOp = { type: 'source' };
-      const mockOutput = createMockOutput();
+      const mockOutput = <IQueryOperationResultBindings> <unknown> {
+        type: 'bindings',
+        bindingsStream: <any>{ destroy: jest.fn(), clone: jest.fn() },
+        metadata: async() => ({
+          state: new MetadataValidationState(),
+          cardinality: { value: 0, type: 'inferred' },
+          variables: [],
+        }),
+      };
       const cloneMock = jest.fn();
       (<any> mockOutput.bindingsStream).clone = cloneMock;
 
@@ -282,8 +352,24 @@ describe('ActorRdfJoinInnerRestartBase', () => {
       const sourceOp2 = { type: 'source2' };
       const cloneMock1 = jest.fn();
       const cloneMock2 = jest.fn();
-      const mockOutput1 = createMockOutput();
-      const mockOutput2 = createMockOutput();
+      const mockOutput1 = <IQueryOperationResultBindings> <unknown> {
+        type: 'bindings',
+        bindingsStream: <any>{ destroy: jest.fn(), clone: jest.fn() },
+        metadata: async() => ({
+          state: new MetadataValidationState(),
+          cardinality: { value: 0, type: 'inferred' },
+          variables: [],
+        }),
+      };
+      const mockOutput2 = <IQueryOperationResultBindings> <unknown> {
+        type: 'bindings',
+        bindingsStream: <any>{ destroy: jest.fn(), clone: jest.fn() },
+        metadata: async() => ({
+          state: new MetadataValidationState(),
+          cardinality: { value: 0, type: 'inferred' },
+          variables: [],
+        }),
+      };
       (<any> mockOutput1.bindingsStream).clone = cloneMock1;
       (<any> mockOutput2.bindingsStream).clone = cloneMock2;
 
@@ -305,8 +391,24 @@ describe('ActorRdfJoinInnerRestartBase', () => {
     it('should execute successfully', async() => {
       const sourceOp1 = { type: 'source1' };
       const sourceOp2 = { type: 'source2' };
-      const mockOutput1 = createMockOutput();
-      const mockOutput2 = createMockOutput();
+      const mockOutput1 = <IQueryOperationResultBindings> <unknown> {
+        type: 'bindings',
+        bindingsStream: <any>{ destroy: jest.fn(), clone: jest.fn() },
+        metadata: async() => ({
+          state: new MetadataValidationState(),
+          cardinality: { value: 0, type: 'inferred' },
+          variables: [],
+        }),
+      };
+      const mockOutput2 = <IQueryOperationResultBindings> <unknown> {
+        type: 'bindings',
+        bindingsStream: <any>{ destroy: jest.fn(), clone: jest.fn() },
+        metadata: async() => ({
+          state: new MetadataValidationState(),
+          cardinality: { value: 0, type: 'inferred' },
+          variables: [],
+        }),
+      };
 
       const result = await actor.getOutput({
         context: new ActionContext(),
@@ -333,7 +435,11 @@ describe('ActorRdfJoinInnerRestartBase', () => {
         variables: [],
       };
 
-      const mockOutput = createMockOutput([], async() => expectedMetadata);
+      const mockOutput = <IQueryOperationResultBindings> <unknown> {
+        type: 'bindings',
+        bindingsStream: <any>{ destroy: jest.fn(), clone: jest.fn() },
+        metadata: async() => expectedMetadata,
+      };
 
       const result = await actor.getOutput({
         context: new ActionContext(),
@@ -346,36 +452,124 @@ describe('ActorRdfJoinInnerRestartBase', () => {
       expect(result.result.metadata).toBeDefined();
     });
 
-    it('should respect custom restartLimit', async() => {
-      const actorWithLimit = new TestActorRdfJoinInnerRestartBase({
-        bus: new Bus({ name: 'test-actor' }),
-        mediatorHashBindings,
-        mediatorJoin,
-        mediatorJoinEntriesSort,
-        mediatorJoinSelectivity: <any> {
-          name: 'mock-selectivity',
-          bus: new Bus({ name: 'mock-selectivity' }),
-          publish: jest.fn(),
-          mediateActor: jest.fn(),
-          mediate: jest.fn().mockResolvedValue({ selectivity: 0.5 }),
-        },
-        name: 'test-actor',
-        restartLimit: 5,
+    it('should restart bindings stream as many times as allowed whenever join order changes', async() => {
+      const metadataState = new MetadataValidationState();
+      const variable = DF.variable('var1');
+      const joinOutputLength = 20;
+
+      const joinOutputValues1: RDF.Bindings[] = [];
+      const joinOutputValues2: RDF.Bindings[] = [];
+
+      for (let i = 0; i < joinOutputLength; i++) {
+        joinOutputValues1.push(BF.fromRecord({ [variable.value]: DF.literal(`bindings 1 entry ${i}`) }));
+        joinOutputValues2.push(BF.fromRecord({ [variable.value]: DF.literal(`bindings 2 entry ${i}`) }));
+      }
+
+      const mockJoinInputBindings1Metadata = jest.fn().mockResolvedValue({
+        state: metadataState,
+        cardinality: { value: Math.round(100 * Math.random()), type: 'exact' },
+        variables: [],
       });
 
-      const sourceOp = { type: 'source' };
-      const mockOutput = createMockOutput();
+      const mockJoinInputBindings1 = <IQueryOperationResultBindings> {
+        type: 'bindings',
+        bindingsStream: <any>{ destroy: jest.fn() },
+        metadata: mockJoinInputBindings1Metadata,
+      };
 
-      const result = await actorWithLimit.getOutput({
+      const mockJoinInputBindings2Metadata = jest.fn().mockResolvedValue({
+        state: new MetadataValidationState(),
+        cardinality: { value: Math.round(100 * Math.random()), type: 'estimate' },
+        variables: [],
+      });
+
+      const mockJoinInputBindings2 = <IQueryOperationResultBindings> {
+        type: 'bindings',
+        bindingsStream: <any>{ destroy: jest.fn() },
+        metadata: mockJoinInputBindings2Metadata,
+      };
+
+      // Mock the join output, which will be cycled through the restart stream
+      jest.spyOn(actor, 'executeJoin')
+        .mockResolvedValueOnce({
+          type: 'bindings',
+          bindingsStream: new ArrayIterator(joinOutputValues1),
+          metadata: <any>'metadata',
+        })
+        .mockResolvedValueOnce({
+          type: 'bindings',
+          bindingsStream: new ArrayIterator(joinOutputValues2),
+          metadata: <any>'metadata',
+        });
+
+      // Mock the join entry sort output, with every second call being reversed
+      let useOriginalJoinOrder = true;
+      jest.spyOn(mediatorJoinEntriesSort, 'mediate').mockImplementation(
+        async(action: IActionRdfJoinEntriesSort): Promise<IActorRdfJoinEntriesSortOutput> => {
+          useOriginalJoinOrder = !useOriginalJoinOrder;
+          return {
+            entries: useOriginalJoinOrder ? action.entries : action.entries.reverse(),
+          };
+        },
+      );
+
+      expect(actor.executeJoin).not.toHaveBeenCalled();
+      expect(mediatorJoinEntriesSort.mediate).not.toHaveBeenCalled();
+
+      const result = await actor.getOutput({
         context: new ActionContext(),
         type: 'inner',
         entries: [
-          { operation: sourceOp, output: mockOutput },
+          { operation: { type: 'mock1' }, output: mockJoinInputBindings1 },
+          { operation: { type: 'mock2' }, output: mockJoinInputBindings2 },
         ],
       });
 
-      expect(result).toBeDefined();
-      expect(result.result.type).toBe('bindings');
+      expect(result.result.bindingsStream).toBeInstanceOf(BindingsStreamRestart);
+
+      // Read one set of bindings, then check function call counts
+      await expect(new Promise<RDF.Bindings>((resolve, reject) => {
+        result.result.bindingsStream
+          .once('data', bindings => resolve(bindings))
+          .on('error', reject);
+      })).resolves.toEqual(joinOutputValues1[0]);
+      expect(actor.executeJoin).toHaveBeenCalledTimes(1);
+      expect(mediatorJoinEntriesSort.mediate).toHaveBeenCalledTimes(1);
+
+      // Trigger the first restart, but keep the join order, so the restart should be skipped
+      useOriginalJoinOrder = true;
+      await expect(actor.triggerRestart()).resolves.not.toThrow();
+
+      // Read one set of bindings, then check function call counts
+      await expect(new Promise<RDF.Bindings>((resolve, reject) => {
+        result.result.bindingsStream
+          .once('data', bindings => resolve(bindings))
+          .on('error', reject);
+      })).resolves.toEqual(joinOutputValues1[1]);
+      expect(actor.executeJoin).toHaveBeenCalledTimes(1);
+      expect(mediatorJoinEntriesSort.mediate).toHaveBeenCalledTimes(2);
+
+      // Trigger the second restart, which should go through because the join order changes
+      await expect(actor.triggerRestart()).resolves.not.toThrow();
+
+      // Trigger some activity again, then check function call counts
+      await expect(new Promise<RDF.Bindings>((resolve, reject) => {
+        result.result.bindingsStream
+          .once('data', bindings => resolve(bindings))
+          .on('error', reject);
+      })).resolves.toEqual(joinOutputValues1[2]);
+
+      expect(actor.executeJoin).toHaveBeenCalledTimes(2);
+      expect(mediatorJoinEntriesSort.mediate).toHaveBeenCalledTimes(3);
+
+      // Trigger the second restart, which should not happen
+      await expect(actor.triggerRestart()).resolves.not.toThrow();
+      expect(actor.executeJoin).toHaveBeenCalledTimes(2);
+      expect(mediatorJoinEntriesSort.mediate).toHaveBeenCalledTimes(3);
+
+      // Read the remainder of the output stream. The stream buffers one entry,
+      // and thus far, two entries have been read. Therefore, the next entry comes from values 2.
+      await expect(result.result.bindingsStream.toArray()).resolves.toEqual(joinOutputValues2);
     });
   });
 });
