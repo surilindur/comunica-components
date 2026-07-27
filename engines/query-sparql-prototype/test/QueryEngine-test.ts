@@ -34,14 +34,12 @@ describe('QueryEngine', () => {
   describe('query', () => {
     it('should execute SPARQL query with VALUES clause', async() => {
       const engine = new QueryEngine();
-      // Using the exact query format from the task with ex: prefix URIs
       const query = `PREFIX ex: <http://example.com/>
 SELECT DISTINCT ?o WHERE {
   VALUES ?o { <ex:o1> <ex:o2> }
 }`;
       const result = await engine.queryBindings(query);
       expect(result).toBeDefined();
-      // Collect all bindings from the stream
       const bindingsArray: RDF.Bindings[] = [];
       for await (const binding of result) {
         bindingsArray.push(binding);
