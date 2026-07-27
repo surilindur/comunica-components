@@ -157,6 +157,16 @@ describe('ActorRdfJoinInnerRestartBase', () => {
         entries: [],
       })).resolves.toFailTest('Actor test-actor cannot run due to adaptive join being disabled');
     });
+
+    it('should fail when trying to wrap a non-topmost operation via keyWrapped context', async() => {
+      const context = new ActionContext().set(ActorRdfJoinInnerRestartBase.keyWrapped, true);
+
+      await expect(actor.test({
+        context,
+        type: 'inner',
+        entries: [],
+      })).resolves.toFailTest('Actor test-actor can only wrap the topmost join operation');
+    });
   });
 
   describe('getJoinCoefficients', () => {

@@ -3,8 +3,7 @@ import type {
   MediatorRdfJoin,
 } from '@comunica/bus-rdf-join';
 import type { MediatorRdfJoinEntriesSort } from '@comunica/bus-rdf-join-entries-sort';
-import { KeysRdfJoin } from '@comunica/context-entries-link-traversal';
-import { ActionContext, Bus } from '@comunica/core';
+import { Bus } from '@comunica/core';
 import type { IQueryOperationResultBindings, MetadataBindings } from '@comunica/types';
 import type * as RDF from '@rdfjs/types';
 import { ActorRdfJoinInnerRestartMetadata } from '../lib/ActorRdfJoinInnerRestartMetadata';
@@ -150,42 +149,6 @@ describe('ActorRdfJoinInnerRestartMetadata', () => {
     mediatorJoinEntriesSort = mocks.mediatorJoinEntriesSort;
 
     actor = createActor('test-actor', mediatorHashBindings, mediatorJoin, mediatorJoinEntriesSort);
-  });
-
-  describe('test', () => {
-    it('should fail when adaptive join is disabled via skipAdaptiveJoin context', async() => {
-      const context = new ActionContext().set(KeysRdfJoin.skipAdaptiveJoin, true);
-      await expect(actor.test({
-        context,
-        type: 'inner',
-        entries: [],
-      })).resolves.toFailTest('Actor test-actor cannot run due to adaptive join being disabled');
-    });
-
-    it('should fail when keyWrapped is already set in context', async() => {
-      const context = new ActionContext().set(<any> ActorRdfJoinInnerRestartMetadata.keyWrapped, true);
-      await expect(actor.test({
-        context,
-        type: 'inner',
-        entries: [],
-      })).resolves.toFailTest('Actor test-actor can only wrap the topmost join operation');
-    });
-
-    it('should pass when adaptive join is enabled and not wrapped', async() => {
-      await expect(actor.test({
-        context: new ActionContext(),
-        type: 'inner',
-        entries: [
-          { operation: { type: 'source1' }, output: createMockOutput() },
-          { operation: { type: 'source2' }, output: createMockOutput() },
-        ],
-      })).resolves.toPassTest(expect.objectContaining({
-        blockingItems: expect.any(Number),
-        iterations: expect.any(Number),
-        persistedItems: expect.any(Number),
-        requestTime: expect.any(Number),
-      }));
-    });
   });
 
   describe('constructor', () => {
