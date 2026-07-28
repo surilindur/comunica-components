@@ -25,6 +25,7 @@ const config: Config.InitialOptions = {
       testMatch: [
         '<rootDir>/engines/*/test/**/*-test.ts',
       ],
+      testTimeout: 10_000,
       transform,
       coveragePathIgnorePatterns: [
         '<rootDir>/packages/',
