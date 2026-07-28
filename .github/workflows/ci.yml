@@ -39,15 +39,14 @@ jobs:
     needs: lint
     strategy:
       matrix:
-        os:
-          # - macos-latest <- disabled due to coveralls homebrew errors
-          - ubuntu-latest
-          # - windows-latest <- disabled due to Components.js errors
+        project:
+          - packages
+          - engines
         node-version:
           - 22.x
           - 24.x
           - 26.x
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -60,12 +59,12 @@ jobs:
       - name: Install dependencies
         run: yarn install --immutable
       - name: Execute unit tests
-        run: yarn run test --selectProjects packages
+        run: yarn run test --selectProjects ${{ matrix.project }}
       - name: Submit coverage results
         uses: coverallsapp/github-action@5cbfd81b66ca5d10c19b062c04de0199c215fb6e # v2.3.7
         with:
           github-token: ${{ secrets.github_token }}
-          flag-name: ${{ matrix.os }}-${{ matrix.node-version }}
+          flag-name: ${{ matrix.project }}-${{ matrix.node-version }}
           parallel: true
           fail-on-error: true
 
