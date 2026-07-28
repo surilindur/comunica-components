@@ -1,7 +1,5 @@
 import type { MediatorHashBindings } from '@comunica/bus-hash-bindings';
-import type {
-  MediatorRdfJoin,
-} from '@comunica/bus-rdf-join';
+import type { MediatorRdfJoin } from '@comunica/bus-rdf-join';
 import type { MediatorRdfJoinEntriesSort } from '@comunica/bus-rdf-join-entries-sort';
 import { ActionContext, Bus } from '@comunica/core';
 import { MetadataValidationState } from '@comunica/utils-metadata';
@@ -11,9 +9,9 @@ import { DataFactory } from 'rdf-data-factory';
 import { ActorRdfJoinInnerRestartInterval } from '../lib/ActorRdfJoinInnerRestartInterval';
 import '@comunica/utils-jest';
 
-const DF = new DataFactory();
-
 describe('ActorRdfJoinInnerRestartInterval', () => {
+  const DF = new DataFactory();
+
   let mediatorHashBindings: MediatorHashBindings;
   let mediatorJoin: MediatorRdfJoin;
   let mediatorJoinEntriesSort: MediatorRdfJoinEntriesSort;
@@ -59,30 +57,46 @@ describe('ActorRdfJoinInnerRestartInterval', () => {
     };
   });
 
-  function createTestActor(
-    name: string,
-    evaluationInterval: number,
-  ) {
-    return new ActorRdfJoinInnerRestartInterval({
-      bus: new Bus({ name }),
-      mediatorHashBindings,
-      mediatorJoin,
-      mediatorJoinEntriesSort,
-      mediatorJoinSelectivity: <any> {
-        name: 'mock-selectivity',
-        bus: new Bus({ name: 'mock-selectivity' }),
-        publish: jest.fn(),
-        mediateActor: jest.fn(),
-        mediate: jest.fn().mockResolvedValue({ selectivity: 0.5 }),
-      },
-      name,
-      evaluationInterval,
+  describe('constructor', () => {
+    it('should create a concrete instance with all dependencies including evaluationInterval', () => {
+      const actor = new ActorRdfJoinInnerRestartInterval({
+        bus: new Bus({ name: 'test-actor' }),
+        mediatorHashBindings,
+        mediatorJoin,
+        mediatorJoinEntriesSort,
+        mediatorJoinSelectivity: <any> {
+          name: 'mock-selectivity',
+          bus: new Bus({ name: 'mock-selectivity' }),
+          publish: jest.fn(),
+          mediateActor: jest.fn(),
+          mediate: jest.fn().mockResolvedValue({ selectivity: 0.5 }),
+        },
+        name: 'test-actor',
+        evaluationInterval: 1000,
+      });
+
+      expect(actor.name).toBe('test-actor');
+      expect(actor).toBeInstanceOf(ActorRdfJoinInnerRestartInterval);
     });
-  }
+  });
 
   describe('test', () => {
     it.each([ -100, 0, 1, 99 ])('should fail when evaluationInterval is %d', async(intervals) => {
-      const actor = createTestActor('test-actor', intervals);
+      const actor = new ActorRdfJoinInnerRestartInterval({
+        bus: new Bus({ name: 'test-actor' }),
+        mediatorHashBindings,
+        mediatorJoin,
+        mediatorJoinEntriesSort,
+        mediatorJoinSelectivity: <any> {
+          name: 'mock-selectivity',
+          bus: new Bus({ name: 'mock-selectivity' }),
+          publish: jest.fn(),
+          mediateActor: jest.fn(),
+          mediate: jest.fn().mockResolvedValue({ selectivity: 0.5 }),
+        },
+        name: 'test-actor',
+        evaluationInterval: intervals,
+      });
       await expect(actor.test({
         context: new ActionContext(),
         type: 'inner',
@@ -91,7 +105,21 @@ describe('ActorRdfJoinInnerRestartInterval', () => {
     });
 
     it.each([ 100, 500 ])('should pass when evaluationInterval is %d', async(interval) => {
-      const actor = createTestActor('test-actor', interval);
+      const actor = new ActorRdfJoinInnerRestartInterval({
+        bus: new Bus({ name: 'test-actor' }),
+        mediatorHashBindings,
+        mediatorJoin,
+        mediatorJoinEntriesSort,
+        mediatorJoinSelectivity: <any> {
+          name: 'mock-selectivity',
+          bus: new Bus({ name: 'mock-selectivity' }),
+          publish: jest.fn(),
+          mediateActor: jest.fn(),
+          mediate: jest.fn().mockResolvedValue({ selectivity: 0.5 }),
+        },
+        name: 'test-actor',
+        evaluationInterval: interval,
+      });
       await expect(actor.test({
         context: new ActionContext(),
         type: 'inner',
@@ -108,42 +136,36 @@ describe('ActorRdfJoinInnerRestartInterval', () => {
     });
   });
 
-  describe('constructor', () => {
-    it('should create a concrete instance with all dependencies including evaluationInterval', () => {
-      const actor = createTestActor('test-actor', 1000);
-
-      expect(actor.name).toBe('test-actor');
-      expect(actor).toBeInstanceOf(ActorRdfJoinInnerRestartInterval);
-    });
-  });
-
   describe('registerRestartTriggers', () => {
-    function createMockBindingsStream(done = false): any {
+    it('should call attemptJoinPlanRestart at each evaluation interval while stream is not done', async() => {
+      jest.useFakeTimers();
+      const actor = new ActorRdfJoinInnerRestartInterval({
+        bus: new Bus({ name: 'test-actor' }),
+        mediatorHashBindings,
+        mediatorJoin,
+        mediatorJoinEntriesSort,
+        mediatorJoinSelectivity: <any> {
+          name: 'mock-selectivity',
+          bus: new Bus({ name: 'mock-selectivity' }),
+          publish: jest.fn(),
+          mediateActor: jest.fn(),
+          mediate: jest.fn().mockResolvedValue({ selectivity: 0.5 }),
+        },
+        name: 'test-actor',
+        evaluationInterval: 100,
+      });
+
       const listeners: Record<string, Function[]> = {};
-      return {
-        done,
-        totalBindingsProduced: 0,
+      const mockStream = <any> {
+        done: false,
         on: jest.fn((event: string, callback: Function) => {
           if (!listeners[event]) {
             listeners[event] = [];
           }
           listeners[event].push(callback);
         }),
-        emitEvent: jest.fn((event: string) => {
-          if (listeners[event]) {
-            for (const cb of listeners[event]) {
-              cb();
-            }
-          }
-        }),
         destroy: jest.fn(),
       };
-    }
-
-    it('should call attemptJoinPlanRestart at each evaluation interval while stream is not done', async() => {
-      jest.useFakeTimers();
-      const actor = createTestActor('test-actor', 100);
-      const mockStream = createMockBindingsStream(false);
       const attemptRestart = jest.fn().mockResolvedValue(undefined);
 
       await actor.registerRestartTriggers([], mockStream, attemptRestart);
@@ -161,8 +183,33 @@ describe('ActorRdfJoinInnerRestartInterval', () => {
 
     it('should stop calling attemptJoinPlanRestart when bindingsStream.done becomes true', async() => {
       jest.useFakeTimers();
-      const actor = createTestActor('test-actor', 100);
-      const mockStream = createMockBindingsStream(false);
+      const actor = new ActorRdfJoinInnerRestartInterval({
+        bus: new Bus({ name: 'test-actor' }),
+        mediatorHashBindings,
+        mediatorJoin,
+        mediatorJoinEntriesSort,
+        mediatorJoinSelectivity: <any> {
+          name: 'mock-selectivity',
+          bus: new Bus({ name: 'mock-selectivity' }),
+          publish: jest.fn(),
+          mediateActor: jest.fn(),
+          mediate: jest.fn().mockResolvedValue({ selectivity: 0.5 }),
+        },
+        name: 'test-actor',
+        evaluationInterval: 100,
+      });
+
+      const listeners: Record<string, Function[]> = {};
+      const mockStream = <any> {
+        done: false,
+        on: jest.fn((event: string, callback: Function) => {
+          if (!listeners[event]) {
+            listeners[event] = [];
+          }
+          listeners[event].push(callback);
+        }),
+        destroy: jest.fn(),
+      };
       const attemptRestart = jest.fn().mockResolvedValue(undefined);
 
       await actor.registerRestartTriggers([], mockStream, attemptRestart);
@@ -182,8 +229,40 @@ describe('ActorRdfJoinInnerRestartInterval', () => {
 
     it('should clear timeout when bindingsStream emits end event', async() => {
       jest.useFakeTimers();
-      const actor = createTestActor('test-actor', 100);
-      const mockStream = createMockBindingsStream(false);
+      const actor = new ActorRdfJoinInnerRestartInterval({
+        bus: new Bus({ name: 'test-actor' }),
+        mediatorHashBindings,
+        mediatorJoin,
+        mediatorJoinEntriesSort,
+        mediatorJoinSelectivity: <any> {
+          name: 'mock-selectivity',
+          bus: new Bus({ name: 'mock-selectivity' }),
+          publish: jest.fn(),
+          mediateActor: jest.fn(),
+          mediate: jest.fn().mockResolvedValue({ selectivity: 0.5 }),
+        },
+        name: 'test-actor',
+        evaluationInterval: 100,
+      });
+
+      const listeners: Record<string, Function[]> = {};
+      const mockStream = <any> {
+        done: false,
+        on: jest.fn((event: string, callback: Function) => {
+          if (!listeners[event]) {
+            listeners[event] = [];
+          }
+          listeners[event].push(callback);
+        }),
+        emitEvent: jest.fn((event: string) => {
+          if (listeners[event]) {
+            for (const cb of listeners[event]) {
+              cb();
+            }
+          }
+        }),
+        destroy: jest.fn(),
+      };
       const attemptRestart = jest.fn().mockResolvedValue(undefined);
 
       await actor.registerRestartTriggers([], mockStream, attemptRestart);
@@ -200,8 +279,33 @@ describe('ActorRdfJoinInnerRestartInterval', () => {
 
     it('should handle async errors from attemptJoinPlanRestart by destroying the stream', async() => {
       jest.useFakeTimers();
-      const actor = createTestActor('test-actor', 100);
-      const mockStream = createMockBindingsStream(false);
+      const actor = new ActorRdfJoinInnerRestartInterval({
+        bus: new Bus({ name: 'test-actor' }),
+        mediatorHashBindings,
+        mediatorJoin,
+        mediatorJoinEntriesSort,
+        mediatorJoinSelectivity: <any> {
+          name: 'mock-selectivity',
+          bus: new Bus({ name: 'mock-selectivity' }),
+          publish: jest.fn(),
+          mediateActor: jest.fn(),
+          mediate: jest.fn().mockResolvedValue({ selectivity: 0.5 }),
+        },
+        name: 'test-actor',
+        evaluationInterval: 100,
+      });
+
+      const listeners: Record<string, Function[]> = {};
+      const mockStream = <any> {
+        done: false,
+        on: jest.fn((event: string, callback: Function) => {
+          if (!listeners[event]) {
+            listeners[event] = [];
+          }
+          listeners[event].push(callback);
+        }),
+        destroy: jest.fn(),
+      };
       const error = new Error('Restart failed');
       const attemptRestart = jest.fn().mockRejectedValue(error);
 
@@ -214,8 +318,33 @@ describe('ActorRdfJoinInnerRestartInterval', () => {
 
     it('should schedule first evaluation after exactly evaluationInterval milliseconds', async() => {
       jest.useFakeTimers();
-      const actor = createTestActor('test-actor', 500);
-      const mockStream = createMockBindingsStream(false);
+      const actor = new ActorRdfJoinInnerRestartInterval({
+        bus: new Bus({ name: 'test-actor' }),
+        mediatorHashBindings,
+        mediatorJoin,
+        mediatorJoinEntriesSort,
+        mediatorJoinSelectivity: <any> {
+          name: 'mock-selectivity',
+          bus: new Bus({ name: 'mock-selectivity' }),
+          publish: jest.fn(),
+          mediateActor: jest.fn(),
+          mediate: jest.fn().mockResolvedValue({ selectivity: 0.5 }),
+        },
+        name: 'test-actor',
+        evaluationInterval: 500,
+      });
+
+      const listeners: Record<string, Function[]> = {};
+      const mockStream = <any> {
+        done: false,
+        on: jest.fn((event: string, callback: Function) => {
+          if (!listeners[event]) {
+            listeners[event] = [];
+          }
+          listeners[event].push(callback);
+        }),
+        destroy: jest.fn(),
+      };
       const attemptRestart = jest.fn().mockResolvedValue(undefined);
 
       await actor.registerRestartTriggers([], mockStream, attemptRestart);
@@ -232,8 +361,33 @@ describe('ActorRdfJoinInnerRestartInterval', () => {
 
     it('should not call attemptJoinPlanRestart if stream is already done at registration', async() => {
       jest.useFakeTimers();
-      const actor = createTestActor('test-actor', 100);
-      const mockStream = createMockBindingsStream(true);
+      const actor = new ActorRdfJoinInnerRestartInterval({
+        bus: new Bus({ name: 'test-actor' }),
+        mediatorHashBindings,
+        mediatorJoin,
+        mediatorJoinEntriesSort,
+        mediatorJoinSelectivity: <any> {
+          name: 'mock-selectivity',
+          bus: new Bus({ name: 'mock-selectivity' }),
+          publish: jest.fn(),
+          mediateActor: jest.fn(),
+          mediate: jest.fn().mockResolvedValue({ selectivity: 0.5 }),
+        },
+        name: 'test-actor',
+        evaluationInterval: 100,
+      });
+
+      const listeners: Record<string, Function[]> = {};
+      const mockStream = <any> {
+        done: true,
+        on: jest.fn((event: string, callback: Function) => {
+          if (!listeners[event]) {
+            listeners[event] = [];
+          }
+          listeners[event].push(callback);
+        }),
+        destroy: jest.fn(),
+      };
       const attemptRestart = jest.fn().mockResolvedValue(undefined);
 
       await actor.registerRestartTriggers([], mockStream, attemptRestart);

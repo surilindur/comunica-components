@@ -8,35 +8,6 @@ import { DataFactory } from 'rdf-data-factory';
 import { ActorRdfMetadataAccumulateCardinalityVoid } from '../lib/ActorRdfMetadataAccumulateCardinalityVoid';
 import '@comunica/utils-jest';
 
-const DF = new DataFactory();
-const AF = new AlgebraFactory(DF);
-
-const datasetUri = 'ex:ds1';
-const datasetCardinality: QueryResultCardinality = { type: 'exact', value: 1, dataset: datasetUri };
-const dataset: IDataset = {
-  uri: datasetUri,
-  source: datasetUri,
-  getCardinality: (_operation: Algebra.Operation) => Promise.resolve({ ...datasetCardinality }),
-};
-
-const operation = AF.createJoin([
-  AF.createPattern(DF.variable('s'), DF.namedNode('ex:p1'), DF.variable('o1')),
-  AF.createPattern(DF.variable('s'), DF.namedNode('ex:p2'), DF.variable('o2')),
-]);
-
-function createMetadataBindings(overrides?: Partial<MetadataBindings>): MetadataBindings {
-  return {
-    state: {
-      valid: true,
-      invalidate: () => {},
-      addInvalidateListener: () => {},
-    },
-    cardinality: { type: 'exact', value: 0 },
-    variables: [],
-    ...overrides,
-  };
-}
-
 jest.mock('@comunica/utils-query-operation', () => ({
   estimateCardinality: (operation: Algebra.Operation, dataset: IDataset) =>
     Promise.resolve(dataset.getCardinality(operation)),
@@ -46,7 +17,22 @@ describe('ActorRdfMetadataAccumulateCardinalityVoid', () => {
   let bus: Bus<any, any, any, any, any>;
   let httpInvalidator: any;
   let actor: ActorRdfMetadataAccumulateCardinalityVoid;
-  let context: ActionContext;
+
+  const DF = new DataFactory();
+  const AF = new AlgebraFactory(DF);
+
+  const datasetUri = 'ex:ds1';
+  const datasetCardinality: QueryResultCardinality = { type: 'exact', value: 1, dataset: datasetUri };
+  const dataset: IDataset = {
+    uri: datasetUri,
+    source: datasetUri,
+    getCardinality: (_operation: Algebra.Operation) => Promise.resolve({ ...datasetCardinality }),
+  };
+
+  const operation = AF.createJoin([
+    AF.createPattern(DF.variable('s'), DF.namedNode('ex:p1'), DF.variable('o1')),
+    AF.createPattern(DF.variable('s'), DF.namedNode('ex:p2'), DF.variable('o2')),
+  ]);
 
   beforeEach(() => {
     bus = <any>{
@@ -61,7 +47,6 @@ describe('ActorRdfMetadataAccumulateCardinalityVoid', () => {
       name: 'actor',
       predicateBasedEstimation: false,
     });
-    context = new ActionContext();
   });
 
   describe('test', () => {
@@ -80,25 +65,33 @@ describe('ActorRdfMetadataAccumulateCardinalityVoid', () => {
 
   describe('run', () => {
     it('does nothing when mode is not append', async() => {
-      const actionContext = context.set(KeysInitQuery.dataFactory, DF)
-        .set(KeysQueryOperation.operation, operation);
       const result = await actor.run(<any>{
-        context: actionContext,
+        context: new ActionContext()
+          .set(KeysInitQuery.dataFactory, DF)
+          .set(KeysQueryOperation.operation, operation),
         mode: 'initialize',
       });
       expect(result).toEqual({ metadata: {}});
     });
 
     it('caches datasets from accumulatedMetadata', async() => {
-      const sourceId = datasetUri;
-      const actionContext = context.set(KeysInitQuery.dataFactory, DF)
-        .set(KeysQueryOperation.operation, operation)
-        .set(KeysQuerySourceIdentify.sourceIds, new Map([[ sourceId, datasetUri ]]));
       const result = await actor.run({
-        context: actionContext,
+        context: new ActionContext()
+          .set(KeysInitQuery.dataFactory, DF)
+          .set(KeysQueryOperation.operation, operation)
+          .set(KeysQuerySourceIdentify.sourceIds, new Map([[ datasetUri, datasetUri ]])),
         mode: 'append',
-        accumulatedMetadata: createMetadataBindings({ datasets: [ dataset ]}),
-        appendingMetadata: createMetadataBindings(),
+        accumulatedMetadata: <MetadataBindings>{
+          state: { valid: true, invalidate: () => {}, addInvalidateListener: () => {} },
+          cardinality: { type: 'exact', value: 0 },
+          variables: [],
+          datasets: [ dataset ],
+        },
+        appendingMetadata: <MetadataBindings>{
+          state: { valid: true, invalidate: () => {}, addInvalidateListener: () => {} },
+          cardinality: { type: 'exact', value: 0 },
+          variables: [],
+        },
       });
       expect(result.metadata.cardinality).toEqual({
         value: datasetCardinality.value,
@@ -108,15 +101,23 @@ describe('ActorRdfMetadataAccumulateCardinalityVoid', () => {
     });
 
     it('caches datasets from appendingMetadata', async() => {
-      const sourceId = datasetUri;
-      const actionContext = context.set(KeysInitQuery.dataFactory, DF)
-        .set(KeysQueryOperation.operation, operation)
-        .set(KeysQuerySourceIdentify.sourceIds, new Map([[ sourceId, datasetUri ]]));
       const result = await actor.run({
-        context: actionContext,
+        context: new ActionContext()
+          .set(KeysInitQuery.dataFactory, DF)
+          .set(KeysQueryOperation.operation, operation)
+          .set(KeysQuerySourceIdentify.sourceIds, new Map([[ datasetUri, datasetUri ]])),
         mode: 'append',
-        accumulatedMetadata: createMetadataBindings(),
-        appendingMetadata: createMetadataBindings({ datasets: [ dataset ]}),
+        accumulatedMetadata: <MetadataBindings>{
+          state: { valid: true, invalidate: () => {}, addInvalidateListener: () => {} },
+          cardinality: { type: 'exact', value: 0 },
+          variables: [],
+        },
+        appendingMetadata: <MetadataBindings>{
+          state: { valid: true, invalidate: () => {}, addInvalidateListener: () => {} },
+          cardinality: { type: 'exact', value: 0 },
+          variables: [],
+          datasets: [ dataset ],
+        },
       });
       expect(result.metadata.cardinality).toEqual({
         value: datasetCardinality.value,
@@ -125,47 +126,49 @@ describe('ActorRdfMetadataAccumulateCardinalityVoid', () => {
       });
     });
 
-    it('returns empty metadata without operation', async() => {
+    it.each([
+      [ 'without operation', new ActionContext().set(KeysInitQuery.dataFactory, DF) ],
+      [ 'without data factory', new ActionContext().set(KeysQueryOperation.operation, operation) ],
+      [ 'without query sources', new ActionContext()
+        .set(KeysInitQuery.dataFactory, DF)
+        .set(KeysQueryOperation.operation, operation) ],
+    ])('returns empty metadata %s', async(_title, actionContext) => {
       const result = await actor.run({
-        context: context.set(KeysInitQuery.dataFactory, DF),
+        context: actionContext,
         mode: 'append',
-        accumulatedMetadata: createMetadataBindings(),
-        appendingMetadata: createMetadataBindings(),
-      });
-      expect(result).toEqual({ metadata: {}});
-    });
-
-    it('returns empty metadata without data factory', async() => {
-      const result = await actor.run({
-        context: context.set(KeysQueryOperation.operation, operation),
-        mode: 'append',
-        accumulatedMetadata: createMetadataBindings(),
-        appendingMetadata: createMetadataBindings(),
+        accumulatedMetadata: <MetadataBindings>{
+          state: { valid: true, invalidate: () => {}, addInvalidateListener: () => {} },
+          cardinality: { type: 'exact', value: 0 },
+          variables: [],
+          datasets: [ dataset ],
+        },
+        appendingMetadata: <MetadataBindings>{
+          state: { valid: true, invalidate: () => {}, addInvalidateListener: () => {} },
+          cardinality: { type: 'exact', value: 0 },
+          variables: [],
+        },
       });
       expect(result).toEqual({ metadata: {}});
     });
 
     it('returns empty metadata when cardinality estimate is undefined', async() => {
-      const actionContext = context.set(KeysInitQuery.dataFactory, DF)
+      const actionContext = new ActionContext()
+        .set(KeysInitQuery.dataFactory, DF)
         .set(KeysQueryOperation.operation, operation)
         .set(KeysQuerySourceIdentify.sourceIds, new Map([[ datasetUri, datasetUri ]]));
       const result = await actor.run({
         context: actionContext,
         mode: 'append',
-        accumulatedMetadata: createMetadataBindings(),
-        appendingMetadata: createMetadataBindings(),
-      });
-      expect(result).toEqual({ metadata: {}});
-    });
-
-    it('returns empty metadata without query sources', async() => {
-      const actionContext = context.set(KeysInitQuery.dataFactory, DF)
-        .set(KeysQueryOperation.operation, operation);
-      const result = await actor.run({
-        context: actionContext,
-        mode: 'append',
-        accumulatedMetadata: createMetadataBindings({ datasets: [ dataset ]}),
-        appendingMetadata: createMetadataBindings(),
+        accumulatedMetadata: <MetadataBindings>{
+          state: { valid: true, invalidate: () => {}, addInvalidateListener: () => {} },
+          cardinality: { type: 'exact', value: 0 },
+          variables: [],
+        },
+        appendingMetadata: <MetadataBindings>{
+          state: { valid: true, invalidate: () => {}, addInvalidateListener: () => {} },
+          cardinality: { type: 'exact', value: 0 },
+          variables: [],
+        },
       });
       expect(result).toEqual({ metadata: {}});
     });
@@ -178,14 +181,24 @@ describe('ActorRdfMetadataAccumulateCardinalityVoid', () => {
         getCardinality: () => Promise.resolve({ type: 'exact', value: 5, dataset: otherDatasetUri }),
       };
       const sourceId = 'ex:othersource';
-      const actionContext = context.set(KeysInitQuery.dataFactory, DF)
+      const actionContext = new ActionContext()
+        .set(KeysInitQuery.dataFactory, DF)
         .set(KeysQueryOperation.operation, operation)
         .set(KeysQuerySourceIdentify.sourceIds, new Map([[ otherDatasetUri, sourceId ]]));
       const result = await actor.run({
         context: actionContext,
         mode: 'append',
-        accumulatedMetadata: createMetadataBindings({ datasets: [ dataset, otherDataset ]}),
-        appendingMetadata: createMetadataBindings(),
+        accumulatedMetadata: <MetadataBindings>{
+          state: { valid: true, invalidate: () => {}, addInvalidateListener: () => {} },
+          cardinality: { type: 'exact', value: 0 },
+          variables: [],
+          datasets: [ dataset, otherDataset ],
+        },
+        appendingMetadata: <MetadataBindings>{
+          state: { valid: true, invalidate: () => {}, addInvalidateListener: () => {} },
+          cardinality: { type: 'exact', value: 0 },
+          variables: [],
+        },
       });
       expect(result.metadata.cardinality).toEqual({
         value: 5,

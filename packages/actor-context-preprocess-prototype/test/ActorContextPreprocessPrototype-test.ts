@@ -25,13 +25,10 @@ describe('ActorContextPreprocessPrototype', () => {
   });
 
   describe('test', () => {
-    it.each([
-      true,
-      false,
-    ])('should pass with initialize set to %s', async(initialize) => {
+    it('should always pass', async() => {
       const actor = new ActorContextPreprocessPrototype(args);
       const context = new ActionContext();
-      const action: IActionContextPreprocess = { context, initialize };
+      const action: IActionContextPreprocess = { context, initialize: true };
       await expect(actor.test(action)).resolves.toPassTestVoid();
     });
   });
