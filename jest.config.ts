@@ -25,7 +25,6 @@ const config: Config.InitialOptions = {
       testMatch: [
         '<rootDir>/engines/*/test/**/*-test.ts',
       ],
-      testTimeout: 10_000,
       transform,
       coveragePathIgnorePatterns: [
         '<rootDir>/packages/',
@@ -49,6 +48,7 @@ const config: Config.InitialOptions = {
     },
   ],
   resetMocks: true,
+  testTimeout: 10_000,
 };
 
 export default config;
