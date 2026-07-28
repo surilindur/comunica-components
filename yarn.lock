@@ -2010,6 +2010,20 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@comunica/actor-optimize-query-operation-distinct-terms-pushdown@npm:^5.0.0":
+  version: 5.3.0
+  resolution: "@comunica/actor-optimize-query-operation-distinct-terms-pushdown@npm:5.3.0"
+  dependencies:
+    "@comunica/bus-optimize-query-operation": "npm:^5.3.0"
+    "@comunica/context-entries": "npm:^5.3.0"
+    "@comunica/core": "npm:^5.3.0"
+    "@comunica/types": "npm:^5.3.0"
+    "@comunica/utils-algebra": "npm:^5.3.0"
+    "@comunica/utils-query-operation": "npm:^5.3.0"
+  checksum: 10/69124943499928677fc2e3454b0f4d01aabbcf1b89f1aeb58061b1d809daf3675fd780eef13153fabe268aaf7cf2d41ebdc4ef586cbf6d6005f9027e70ee163f
+  languageName: node
+  linkType: hard
+
 "@comunica/actor-optimize-query-operation-filter-pushdown@npm:^5.0.0":
   version: 5.3.0
   resolution: "@comunica/actor-optimize-query-operation-filter-pushdown@npm:5.3.0"
@@ -2023,6 +2037,18 @@ __metadata:
     "@rdfjs/types": "npm:*"
     rdf-terms: "npm:^2.0.0"
   checksum: 10/a108639b1bf7cf8e20ef239da08f1b27b6b6cba22dd5fd5231bad89a851634e776e61aa9be68511d0ad9f988e5f4ddf41daac7a85332cce096738a87760fc08f
+  languageName: node
+  linkType: hard
+
+"@comunica/actor-optimize-query-operation-group-file-sources@npm:^5.0.0":
+  version: 5.3.0
+  resolution: "@comunica/actor-optimize-query-operation-group-file-sources@npm:5.3.0"
+  dependencies:
+    "@comunica/bus-optimize-query-operation": "npm:^5.3.0"
+    "@comunica/bus-query-source-identify": "npm:^5.3.0"
+    "@comunica/context-entries": "npm:^5.3.0"
+    "@comunica/core": "npm:^5.3.0"
+  checksum: 10/0a597ad3ffeba57ef5c0a5d39aeb5e817434b0fd8f6438cc8148db6cf99b62b93c6624a463b03fe17f9d279df4210af3be6697bb7dd0ce894f544b1e01e9db10
   languageName: node
   linkType: hard
 
@@ -2374,6 +2400,20 @@ __metadata:
     "@comunica/utils-algebra": "npm:^5.3.0"
     "@comunica/utils-query-operation": "npm:^5.3.0"
   checksum: 10/5059314f1a2fc476f441ceb2b3328e244baa76a2c289e0e362192e0ea7647ed780a4a778a1e5f6c447f6339abb5766073b17e438143af787dcfc86d5b943c182
+  languageName: node
+  linkType: hard
+
+"@comunica/actor-query-operation-nodes@npm:^5.0.0":
+  version: 5.3.0
+  resolution: "@comunica/actor-query-operation-nodes@npm:5.3.0"
+  dependencies:
+    "@comunica/bus-query-operation": "npm:^5.3.0"
+    "@comunica/context-entries": "npm:^5.3.0"
+    "@comunica/core": "npm:^5.3.0"
+    "@comunica/types": "npm:^5.3.0"
+    "@comunica/utils-algebra": "npm:^5.3.0"
+    "@comunica/utils-query-operation": "npm:^5.3.0"
+  checksum: 10/7e912a5df9bc13268354c2dca740541533995945328158961b565536e0f708670b64ef43b8b602a1b16bb4335e2c8d3b953057b2d0635ad7309f2e07e1e386ee
   languageName: node
   linkType: hard
 
@@ -4597,7 +4637,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@comunica/config-query-sparql-solid@npm:^5.0.0, @comunica/config-query-sparql-solid@npm:~5.0.0":
+"@comunica/config-query-sparql-solid@npm:^5.0.0":
   version: 5.0.0
   resolution: "@comunica/config-query-sparql-solid@npm:5.0.0"
   dependencies:
@@ -5119,6 +5159,9 @@ __metadata:
     "@comunica/actor-http-delay": "npm:^0.0.0"
     "@comunica/actor-http-limit-rate": "npm:^5.0.0"
     "@comunica/actor-init-query": "npm:^5.0.0"
+    "@comunica/actor-optimize-query-operation-distinct-terms-pushdown": "npm:^5.0.0"
+    "@comunica/actor-optimize-query-operation-group-file-sources": "npm:^5.0.0"
+    "@comunica/actor-query-operation-nodes": "npm:^5.0.0"
     "@comunica/actor-rdf-join-entries-sort-selectivity": "npm:^5.0.0"
     "@comunica/actor-rdf-join-inner-restart": "npm:^0.0.0"
     "@comunica/actor-rdf-metadata-accumulate-cardinality-void": "npm:^0.0.0"
@@ -5137,7 +5180,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@comunica/query-sparql-solid@npm:^5.0.1":
+"@comunica/query-sparql-solid@npm:^5.0.0":
   version: 5.0.1
   resolution: "@comunica/query-sparql-solid@npm:5.0.1"
   dependencies:
@@ -7874,11 +7917,11 @@ __metadata:
   linkType: hard
 
 "baseline-browser-mapping@npm:^2.10.44":
-  version: 2.11.4
-  resolution: "baseline-browser-mapping@npm:2.11.4"
+  version: 2.11.5
+  resolution: "baseline-browser-mapping@npm:2.11.5"
   bin:
     baseline-browser-mapping: dist/cli.cjs
-  checksum: 10/40dfae493547aa02da0e20b86025ff4509f73993e19c53e451c3058817ebc342a7a6c4b67efbdeecbb53836d9cec910b65b951fc4369bf048178ac4dd8e0c06f
+  checksum: 10/f0e5cf7bd696049d32c06d4a6c003c03c19e177b3ca2d421fbeb860accfca8ec0bc3a50d574633799eec970c61333c71aeb92e4092ec08b2533e9ca0aab728e5
   languageName: node
   linkType: hard
 

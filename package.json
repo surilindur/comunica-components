@@ -36,7 +36,12 @@
   },
   "resolutions": {
     "@comunica/config-query-sparql": "^5.0.0",
+    "@comunica/config-query-sparql-link-traversal": "^0.8.0",
+    "@comunica/config-query-sparql-solid": "^5.0.0",
     "@comunica/query-sparql": "^5.0.0",
+    "@comunica/query-sparql-link-traversal": "^0.8.0",
+    "@comunica/query-sparql-link-traversal-solid": "^0.8.0",
+    "@comunica/query-sparql-solid": "^5.0.0",
     "@rdfjs/types": "^2.0.0",
     "@types/jest": "^30.0.0",
     "jest": "^30.0.0",
