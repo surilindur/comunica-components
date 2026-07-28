@@ -10,27 +10,13 @@ import { ActorRdfMetadataExtractLinkFilterBloom } from '../lib/ActorRdfMetadataE
 import { mem } from '../lib/vocabularies';
 import '@comunica/utils-jest';
 
-const DF = new DataFactory();
-const AF = new AlgebraFactory(DF);
-
-// Helper to create a Bloom filter binary representation buffer
-function createBloomBuffer(bitSize: number, hashSize: number, setBits: number[][]): Buffer {
-  const totalBytes = Math.ceil(bitSize / 8);
-  const buffer = Buffer.alloc(totalBytes, 0);
-  for (const [ bitIndex ] of setBits) {
-    const byteIndex = Math.floor(bitIndex / 8);
-    const bitOffset = bitIndex % 8;
-    if (byteIndex < totalBytes) {
-      buffer[byteIndex] |= (1 << bitOffset);
-    }
-  }
-  return buffer;
-}
-
 describe('ActorRdfMetadataExtractLinkFilterBloom', () => {
   let bus: any;
   let actor: ActorRdfMetadataExtractLinkFilterBloom;
   let context: ActionContext;
+
+  const DF = new DataFactory();
+  const AF = new AlgebraFactory(DF);
 
   beforeEach(() => {
     bus = { subscribe: jest.fn() };
@@ -95,7 +81,6 @@ describe('ActorRdfMetadataExtractLinkFilterBloom', () => {
       const actionContext = context
         .set(KeysRdfResolveHypermediaLinks.linkFilters, filters)
         .set(KeysInitQuery.query, <any>mockQueryOperation);
-      // Missing bitSize, hashSize, or binaryRepresentation - bloom filter can't be reconstructed
       const quads: RDF.Quad[] = [
         DF.quad(
           DF.namedNode('http://example.org/bloom1'),
@@ -107,7 +92,6 @@ describe('ActorRdfMetadataExtractLinkFilterBloom', () => {
           DF.namedNode(mem.sourceCollection),
           DF.literal('http://example.org/dataset1'),
         ),
-        // Missing bitSize, hashSize, binaryRepresentation
       ];
       const action = {
         url: 'http://example.org',
@@ -130,7 +114,7 @@ describe('ActorRdfMetadataExtractLinkFilterBloom', () => {
       const collectionUri = 'http://example.org/collection1';
       const bitSize = 64;
       const hashSize = 3;
-      const buffer = createBloomBuffer(bitSize, hashSize, [[ 0 ], [ 10 ], [ 50 ]]);
+      const buffer = Buffer.from([ 0x01, 0x04, 0x00, 0x00, 0x00, 0x00, 0x04, 0x00 ]);
       const base64Buffer = buffer.toString('base64');
       const quads: RDF.Quad[] = [
         DF.quad(
@@ -185,8 +169,8 @@ describe('ActorRdfMetadataExtractLinkFilterBloom', () => {
       const collectionUri2 = 'http://example.org/collection2';
       const bitSize = 64;
       const hashSize = 3;
-      const buffer1 = createBloomBuffer(bitSize, hashSize, [[ 0 ]]);
-      const buffer2 = createBloomBuffer(bitSize, hashSize, [[ 1 ]]);
+      const buffer1 = Buffer.from([ 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 ]);
+      const buffer2 = Buffer.from([ 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 ]);
       const quads: RDF.Quad[] = [
         DF.quad(
           DF.namedNode(bloomFilterUri1),
@@ -260,7 +244,6 @@ describe('ActorRdfMetadataExtractLinkFilterBloom', () => {
       const datasetUri = 'http://example.org/dataset1';
       const bloomFilterUri = 'http://example.org/bloom1';
       const collectionUri = 'http://example.org/collection1';
-      // Missing bitSize, hashSize, or binaryRepresentation - bloom filter can't be reconstructed
       const quads: RDF.Quad[] = [
         DF.quad(
           DF.namedNode(bloomFilterUri),
@@ -272,8 +255,6 @@ describe('ActorRdfMetadataExtractLinkFilterBloom', () => {
           DF.namedNode(mem.sourceCollection),
           DF.literal(datasetUri),
         ),
-        // Missing bitSize, hashSize, binaryRepresentation - so bloom filter can't be reconstructed
-        // and dataset should be ignored
       ];
       const action = {
         url: 'http://example.org',
@@ -283,7 +264,6 @@ describe('ActorRdfMetadataExtractLinkFilterBloom', () => {
       };
       const result = await actor.run(action);
       expect(result).toEqual({ metadata: {}});
-      // Bloom filter can't be reconstructed, so dataset is still ignored
       expect(filters).toHaveLength(1);
     });
   });
@@ -300,7 +280,7 @@ describe('ActorRdfMetadataExtractLinkFilterBloom', () => {
         md5: 3,
       };
       const hashBuffer: Record<string, Buffer> = {
-        'http://example.org/collection1': createBloomBuffer(64, 3, [[ 0 ], [ 10 ], [ 50 ]]),
+        'http://example.org/collection1': Buffer.from([ 0x01, 0x04, 0x00, 0x00, 0x00, 0x00, 0x04, 0x00 ]),
       };
       const hashFunctions: Record<string, string> = {
         'http://example.org/collection1': 'md5',
@@ -347,8 +327,8 @@ describe('ActorRdfMetadataExtractLinkFilterBloom', () => {
         sha1: 5,
       };
       const hashBuffer: Record<string, Buffer> = {
-        'http://example.org/collection1': createBloomBuffer(64, 3, [[ 0 ]]),
-        'http://example.org/collection2': createBloomBuffer(128, 5, [[ 0 ], [ 60 ]]),
+        'http://example.org/collection1': Buffer.from([ 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 ]),
+        'http://example.org/collection2': Buffer.from([ 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 ]),
       };
       const hashFunctions: Record<string, string> = {
         'http://example.org/collection1': 'md5',
@@ -1374,7 +1354,7 @@ describe('ActorRdfMetadataExtractLinkFilterBloom', () => {
       const collectionUri = 'http://example.org/collection1';
       const bitSize = 64;
       const hashSize = 3;
-      const buffer = createBloomBuffer(bitSize, hashSize, [[ 0 ], [ 10 ], [ 50 ]]);
+      const buffer = Buffer.from([ 0x01, 0x04, 0x00, 0x00, 0x00, 0x00, 0x04, 0x00 ]);
       const base64Buffer = buffer.toString('base64');
       const quads: RDF.Quad[] = [
         DF.quad(
@@ -1434,7 +1414,7 @@ describe('ActorRdfMetadataExtractLinkFilterBloom', () => {
       const bitSize = 64;
       const hashSize = 3;
       const hashFunction = 'md5';
-      const buffer = createBloomBuffer(bitSize, hashSize, [[ 0 ], [ 10 ], [ 50 ]]);
+      const buffer = Buffer.from([ 0x01, 0x04, 0x00, 0x00, 0x00, 0x00, 0x04, 0x00 ]);
       const base64Buffer = buffer.toString('base64');
       const quads: RDF.Quad[] = [
         DF.quad(

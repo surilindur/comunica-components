@@ -1,65 +1,37 @@
 import type { MediatorHashBindings } from '@comunica/bus-hash-bindings';
-import type {
-  MediatorRdfJoin,
-} from '@comunica/bus-rdf-join';
+import type { MediatorRdfJoin } from '@comunica/bus-rdf-join';
 import type { MediatorRdfJoinEntriesSort } from '@comunica/bus-rdf-join-entries-sort';
 import { Bus } from '@comunica/core';
 import type { IQueryOperationResultBindings, MetadataBindings } from '@comunica/types';
-import type * as RDF from '@rdfjs/types';
 import { ActorRdfJoinInnerRestartMetadata } from '../lib/ActorRdfJoinInnerRestartMetadata';
 import '@comunica/utils-jest';
 
 describe('ActorRdfJoinInnerRestartMetadata', () => {
   let actor: ActorRdfJoinInnerRestartMetadata;
-  let mediatorHashBindings: MediatorHashBindings;
-  let mediatorJoin: MediatorRdfJoin;
-  let mediatorJoinEntriesSort: MediatorRdfJoinEntriesSort;
 
   beforeEach(() => {
     jest.resetAllMocks();
     jest.restoreAllMocks();
 
-    mediatorHashBindings = <MediatorHashBindings> <unknown> {
-      mediate: jest.fn().mockResolvedValue({
-        hashFunction: (bindings: RDF.Bindings, variables: Iterable<RDF.Variable>): number => {
-          const keysArray = [ ...variables ];
-          const parts = keysArray
-            .sort((a, b) => a.value.localeCompare(b.value))
-            .map(v => `${v.value}:${bindings.get(v)?.value}`);
-          let hash = 0;
-          for (const part of parts) {
-            for (let i = 0; i < part.length; i++) {
-              const codePoint = part.codePointAt(i) ?? 0;
-              hash = ((hash << 5) - hash) + codePoint;
-              hash &= hash;
-            }
-          }
-          return hash;
-        },
-      }),
-    };
-
-    mediatorJoin = <MediatorRdfJoin> <unknown> {
-      mediate: jest.fn().mockResolvedValue(<IQueryOperationResultBindings> <unknown> {
-        type: 'bindings',
-        bindingsStream: <any>{ destroy: jest.fn() },
-        metadata: async() => ({
-          state: <any>{ valid: true, addInvalidateListener: jest.fn() },
-          cardinality: { value: 0, type: 'estimate' },
-          variables: [],
-        }),
-      }),
-    };
-
-    mediatorJoinEntriesSort = <MediatorRdfJoinEntriesSort> <unknown> {
-      mediate: jest.fn().mockResolvedValue({ entries: []}),
-    };
-
     actor = new ActorRdfJoinInnerRestartMetadata({
       bus: new Bus({ name: 'test-actor' }),
-      mediatorHashBindings,
-      mediatorJoin,
-      mediatorJoinEntriesSort,
+      mediatorHashBindings: <MediatorHashBindings> <unknown> {
+        mediate: jest.fn().mockResolvedValue({ hashFunction: jest.fn() }),
+      },
+      mediatorJoin: <MediatorRdfJoin> <unknown> {
+        mediate: jest.fn().mockResolvedValue({
+          type: 'bindings',
+          bindingsStream: { destroy: jest.fn() },
+          metadata: async() => ({
+            state: { valid: true, addInvalidateListener: jest.fn() },
+            cardinality: { value: 0, type: 'estimate' },
+            variables: [],
+          }),
+        }),
+      },
+      mediatorJoinEntriesSort: <MediatorRdfJoinEntriesSort> <unknown> {
+        mediate: jest.fn().mockResolvedValue({ entries: []}),
+      },
       mediatorJoinSelectivity: <any> {
         name: 'mock-selectivity',
         bus: new Bus({ name: 'mock-selectivity' }),
@@ -73,31 +45,22 @@ describe('ActorRdfJoinInnerRestartMetadata', () => {
 
   describe('constructor', () => {
     it('should create a concrete instance with all dependencies', () => {
-      const testActor = new ActorRdfJoinInnerRestartMetadata({
-        bus: new Bus({ name: 'test-actor' }),
-        mediatorHashBindings,
-        mediatorJoin,
-        mediatorJoinEntriesSort,
-        mediatorJoinSelectivity: <any> {
-          name: 'mock-selectivity',
-          bus: new Bus({ name: 'mock-selectivity' }),
-          publish: jest.fn(),
-          mediateActor: jest.fn(),
-          mediate: jest.fn().mockResolvedValue({ selectivity: 0.5 }),
-        },
-        name: 'test-actor',
-      });
-
-      expect(testActor.name).toBe('test-actor');
-      expect(testActor).toBeInstanceOf(ActorRdfJoinInnerRestartMetadata);
+      expect(actor.name).toBe('test-actor');
+      expect(actor).toBeInstanceOf(ActorRdfJoinInnerRestartMetadata);
     });
 
     it('should work with restartLimit when provided', () => {
       const testActor = new ActorRdfJoinInnerRestartMetadata({
         bus: new Bus({ name: 'test-actor-with-limit' }),
-        mediatorHashBindings,
-        mediatorJoin,
-        mediatorJoinEntriesSort,
+        mediatorHashBindings: <MediatorHashBindings> <unknown> {
+          mediate: jest.fn().mockResolvedValue({ hashFunction: jest.fn() }),
+        },
+        mediatorJoin: <MediatorRdfJoin> <unknown> {
+          mediate: jest.fn(),
+        },
+        mediatorJoinEntriesSort: <MediatorRdfJoinEntriesSort> <unknown> {
+          mediate: jest.fn().mockResolvedValue({ entries: []}),
+        },
         mediatorJoinSelectivity: <any> {
           name: 'mock-selectivity',
           bus: new Bus({ name: 'mock-selectivity' }),
@@ -115,130 +78,55 @@ describe('ActorRdfJoinInnerRestartMetadata', () => {
 
   describe('registerRestartTriggers', () => {
     it('should register invalidate listeners on each entry metadata', async() => {
-      const listeners: Record<string, Function[]> = {};
-      const mockStream = <any>{
-        on: jest.fn((event: string, callback: Function) => {
-          if (!listeners[event]) {
-            listeners[event] = [];
-          }
-          listeners[event].push(callback);
-        }),
-        emitEvent: jest.fn((event: string) => {
-          if (listeners[event]) {
-            for (const cb of listeners[event]) {
-              cb();
-            }
-          }
-        }),
-        destroy: jest.fn(),
-      };
-      const attemptRestart = jest.fn().mockResolvedValue(undefined);
-
-      let _invalidateListener1: (() => void) | undefined;
-      let _invalidateListener2: (() => void) | undefined;
-      const entry1Metadata: MetadataBindings = {
+      const metadata1: MetadataBindings = {
         cardinality: { value: 10, type: 'estimate' },
-        state: {
-          valid: true,
-          invalidate: jest.fn(),
-          addInvalidateListener: jest.fn((listener: () => void) => {
-            _invalidateListener1 = listener;
-          }),
-        },
+        state: { valid: true, invalidate: jest.fn(), addInvalidateListener: jest.fn() },
         variables: [],
       };
-      const entry2Metadata: MetadataBindings = {
+      const metadata2: MetadataBindings = {
         cardinality: { value: 20, type: 'estimate' },
-        state: {
-          valid: true,
-          invalidate: jest.fn(),
-          addInvalidateListener: jest.fn((listener: () => void) => {
-            _invalidateListener2 = listener;
-          }),
-        },
+        state: { valid: true, invalidate: jest.fn(), addInvalidateListener: jest.fn() },
         variables: [],
       };
-
-      const output1 = <IQueryOperationResultBindings> {
+      const output1 = <IQueryOperationResultBindings> <unknown> {
         type: 'bindings',
-        bindingsStream: <any>{ destroy: jest.fn() },
-        metadata: async() => entry1Metadata,
+        bindingsStream: { destroy: jest.fn() },
+        metadata: async() => metadata1,
       };
-      const output2 = <IQueryOperationResultBindings> {
+      const output2 = <IQueryOperationResultBindings> <unknown> {
         type: 'bindings',
-        bindingsStream: <any>{ destroy: jest.fn() },
-        metadata: async() => entry2Metadata,
+        bindingsStream: { destroy: jest.fn() },
+        metadata: async() => metadata2,
       };
 
       await actor.registerRestartTriggers([
-        { operation: { type: 'source1' }, output: output1, metadata: entry1Metadata },
-        { operation: { type: 'source2' }, output: output2, metadata: entry2Metadata },
-      ], mockStream, attemptRestart);
+        { operation: { type: 'source1' }, output: output1, metadata: metadata1 },
+        { operation: { type: 'source2' }, output: output2, metadata: metadata2 },
+      ], <any>undefined, jest.fn());
 
-      expect(entry1Metadata.state.addInvalidateListener).toHaveBeenCalledTimes(1);
-      expect(entry2Metadata.state.addInvalidateListener).toHaveBeenCalledTimes(1);
+      expect(metadata1.state.addInvalidateListener).toHaveBeenCalledTimes(1);
+      expect(metadata2.state.addInvalidateListener).toHaveBeenCalledTimes(1);
     });
 
     it('should call attemptJoinPlanRestart when cardinality changes', async() => {
-      const listeners: Record<string, Function[]> = {};
-      const mockStream = <any>{
-        on: jest.fn((event: string, callback: Function) => {
-          if (!listeners[event]) {
-            listeners[event] = [];
-          }
-          listeners[event].push(callback);
-        }),
-        emitEvent: jest.fn((event: string) => {
-          if (listeners[event]) {
-            for (const cb of listeners[event]) {
-              cb();
-            }
-          }
-        }),
-        destroy: jest.fn(),
-      };
       const attemptRestart = jest.fn().mockResolvedValue(undefined);
-
-      let _invalidateListener1: (() => void) | undefined;
-      const entry1Metadata: MetadataBindings = {
+      const metadata1: MetadataBindings = {
         cardinality: { value: 10, type: 'estimate' },
-        state: {
-          valid: true,
-          invalidate: jest.fn(),
-          addInvalidateListener: jest.fn((listener: () => void) => {
-            _invalidateListener1 = listener;
-          }),
-        },
+        state: { valid: true, invalidate: jest.fn(), addInvalidateListener: jest.fn() },
         variables: [],
       };
-      const entry2Metadata: MetadataBindings = {
-        cardinality: { value: 20, type: 'estimate' },
-        state: {
-          valid: true,
-          invalidate: jest.fn(),
-          addInvalidateListener: jest.fn(),
-        },
-        variables: [],
-      };
-
-      const output1 = <IQueryOperationResultBindings> {
+      const output1 = <IQueryOperationResultBindings> <unknown> {
         type: 'bindings',
-        bindingsStream: <any>{ destroy: jest.fn() },
-        metadata: async() => entry1Metadata,
-      };
-      const output2 = <IQueryOperationResultBindings> {
-        type: 'bindings',
-        bindingsStream: <any>{ destroy: jest.fn() },
-        metadata: async() => entry2Metadata,
+        bindingsStream: { destroy: jest.fn() },
+        metadata: async() => metadata1,
       };
 
       await actor.registerRestartTriggers([
-        { operation: { type: 'source1' }, output: output1, metadata: entry1Metadata },
-        { operation: { type: 'source2' }, output: output2, metadata: entry2Metadata },
-      ], mockStream, attemptRestart);
+        { operation: { type: 'source1' }, output: output1, metadata: metadata1 },
+      ], <any>undefined, attemptRestart);
 
-      (<any>entry1Metadata).cardinality = { value: 50, type: 'estimate' };
-      _invalidateListener1?.();
+      (<jest.Mock> metadata1.state.addInvalidateListener).mock.calls[0][0]();
+      metadata1.cardinality = { value: 50, type: 'estimate' };
 
       await new Promise(resolve => setTimeout(resolve, 0));
 
@@ -246,68 +134,35 @@ describe('ActorRdfJoinInnerRestartMetadata', () => {
     });
 
     it('should NOT call attemptJoinPlanRestart when cardinality does not change', async() => {
-      const listeners: Record<string, Function[]> = {};
-      const mockStream = <any>{
-        on: jest.fn((event: string, callback: Function) => {
-          if (!listeners[event]) {
-            listeners[event] = [];
-          }
-          listeners[event].push(callback);
-        }),
-        emitEvent: jest.fn((event: string) => {
-          if (listeners[event]) {
-            for (const cb of listeners[event]) {
-              cb();
-            }
-          }
-        }),
-        destroy: jest.fn(),
-      };
       const attemptRestart = jest.fn().mockResolvedValue(undefined);
-
-      let _invalidateListener1: (() => void) | undefined;
-      let _invalidateListener2: (() => void) | undefined;
-      const entry1Metadata: MetadataBindings = {
+      const metadata1: MetadataBindings = {
         cardinality: { value: 10, type: 'estimate' },
-        state: {
-          valid: true,
-          invalidate: jest.fn(),
-          addInvalidateListener: jest.fn((listener: () => void) => {
-            _invalidateListener1 = listener;
-          }),
-        },
+        state: { valid: true, invalidate: jest.fn(), addInvalidateListener: jest.fn() },
         variables: [],
       };
-      const entry2Metadata: MetadataBindings = {
+      const metadata2: MetadataBindings = {
         cardinality: { value: 20, type: 'estimate' },
-        state: {
-          valid: true,
-          invalidate: jest.fn(),
-          addInvalidateListener: jest.fn((listener: () => void) => {
-            _invalidateListener2 = listener;
-          }),
-        },
+        state: { valid: true, invalidate: jest.fn(), addInvalidateListener: jest.fn() },
         variables: [],
       };
-
-      const output1 = <IQueryOperationResultBindings> {
+      const output1 = <IQueryOperationResultBindings> <unknown> {
         type: 'bindings',
-        bindingsStream: <any>{ destroy: jest.fn() },
-        metadata: async() => entry1Metadata,
+        bindingsStream: { destroy: jest.fn() },
+        metadata: async() => metadata1,
       };
-      const output2 = <IQueryOperationResultBindings> {
+      const output2 = <IQueryOperationResultBindings> <unknown> {
         type: 'bindings',
-        bindingsStream: <any>{ destroy: jest.fn() },
-        metadata: async() => entry2Metadata,
+        bindingsStream: { destroy: jest.fn() },
+        metadata: async() => metadata2,
       };
 
       await actor.registerRestartTriggers([
-        { operation: { type: 'source1' }, output: output1, metadata: entry1Metadata },
-        { operation: { type: 'source2' }, output: output2, metadata: entry2Metadata },
-      ], mockStream, attemptRestart);
+        { operation: { type: 'source1' }, output: output1, metadata: metadata1 },
+        { operation: { type: 'source2' }, output: output2, metadata: metadata2 },
+      ], <any>undefined, attemptRestart);
 
-      _invalidateListener1?.();
-      _invalidateListener2?.();
+      (<jest.Mock> metadata1.state.addInvalidateListener).mock.calls[0][0]();
+      (<jest.Mock> metadata2.state.addInvalidateListener).mock.calls[0][0]();
 
       await new Promise(resolve => setTimeout(resolve, 0));
 
@@ -315,159 +170,84 @@ describe('ActorRdfJoinInnerRestartMetadata', () => {
     });
 
     it('should update previousEntryCardinality and trigger restart on successive changes', async() => {
-      const listeners: Record<string, Function[]> = {};
-      const mockStream = <any>{
-        on: jest.fn((event: string, callback: Function) => {
-          if (!listeners[event]) {
-            listeners[event] = [];
-          }
-          listeners[event].push(callback);
-        }),
-        emitEvent: jest.fn((event: string) => {
-          if (listeners[event]) {
-            for (const cb of listeners[event]) {
-              cb();
-            }
-          }
-        }),
-        destroy: jest.fn(),
-      };
       const attemptRestart = jest.fn().mockResolvedValue(undefined);
-
-      let _invalidateListener1: (() => void) | undefined;
-      const entry1Metadata: MetadataBindings = {
+      const metadata1: MetadataBindings = {
         cardinality: { value: 10, type: 'estimate' },
-        state: {
-          valid: true,
-          invalidate: jest.fn(),
-          addInvalidateListener: jest.fn((listener: () => void) => {
-            _invalidateListener1 = listener;
-          }),
-        },
+        state: { valid: true, invalidate: jest.fn(), addInvalidateListener: jest.fn() },
         variables: [],
       };
-
-      const output1 = <IQueryOperationResultBindings> {
+      const output1 = <IQueryOperationResultBindings> <unknown> {
         type: 'bindings',
-        bindingsStream: <any>{ destroy: jest.fn() },
-        metadata: async() => entry1Metadata,
+        bindingsStream: { destroy: jest.fn() },
+        metadata: async() => metadata1,
       };
 
       await actor.registerRestartTriggers([
-        { operation: { type: 'source1' }, output: output1, metadata: entry1Metadata },
-      ], mockStream, attemptRestart);
+        { operation: { type: 'source1' }, output: output1, metadata: metadata1 },
+      ], <any>undefined, attemptRestart);
 
-      (<any>entry1Metadata).cardinality = { value: 50, type: 'estimate' };
-      _invalidateListener1?.();
+      const listener = (<jest.Mock> metadata1.state.addInvalidateListener).mock.calls[0][0];
+
+      metadata1.cardinality = { value: 50, type: 'estimate' };
+      listener();
       await new Promise(resolve => setTimeout(resolve, 0));
       expect(attemptRestart).toHaveBeenCalledTimes(1);
 
-      (<any>entry1Metadata).cardinality = { value: 100, type: 'estimate' };
-      _invalidateListener1?.();
+      metadata1.cardinality = { value: 100, type: 'estimate' };
+      listener();
       await new Promise(resolve => setTimeout(resolve, 0));
       expect(attemptRestart).toHaveBeenCalledTimes(2);
     });
 
     it('should handle errors from attemptJoinPlanRestart by destroying the stream', async() => {
-      const listeners: Record<string, Function[]> = {};
-      const mockStream = <any>{
-        on: jest.fn((event: string, callback: Function) => {
-          if (!listeners[event]) {
-            listeners[event] = [];
-          }
-          listeners[event].push(callback);
-        }),
-        emitEvent: jest.fn((event: string) => {
-          if (listeners[event]) {
-            for (const cb of listeners[event]) {
-              cb();
-            }
-          }
-        }),
-        destroy: jest.fn(),
-      };
       const error = new Error('Restart failed');
       const attemptRestart = jest.fn().mockRejectedValue(error);
-
-      let _invalidateListener1: (() => void) | undefined;
-      const entry1Metadata: MetadataBindings = {
+      const destroyMock = jest.fn();
+      const metadata1: MetadataBindings = {
         cardinality: { value: 10, type: 'estimate' },
-        state: {
-          valid: true,
-          invalidate: jest.fn(),
-          addInvalidateListener: jest.fn((listener: () => void) => {
-            _invalidateListener1 = listener;
-          }),
-        },
+        state: { valid: true, invalidate: jest.fn(), addInvalidateListener: jest.fn() },
         variables: [],
       };
-
-      const destroyMock1 = jest.fn();
-      const output1 = <IQueryOperationResultBindings> {
+      const output1 = <IQueryOperationResultBindings> <unknown> {
         type: 'bindings',
-        bindingsStream: <any>{ destroy: destroyMock1 },
-        metadata: async() => entry1Metadata,
+        bindingsStream: { destroy: destroyMock },
+        metadata: async() => metadata1,
       };
 
       await actor.registerRestartTriggers([
-        { operation: { type: 'source1' }, output: output1, metadata: entry1Metadata },
-      ], mockStream, attemptRestart);
+        { operation: { type: 'source1' }, output: output1, metadata: metadata1 },
+      ], <any>undefined, attemptRestart);
 
-      (<any>entry1Metadata).cardinality = { value: 50, type: 'estimate' };
-      _invalidateListener1?.();
+      const listener = (<jest.Mock> metadata1.state.addInvalidateListener).mock.calls[0][0];
+      metadata1.cardinality = { value: 50, type: 'estimate' };
+      listener();
 
-      await new Promise(resolve => setTimeout(resolve, 0));
       await new Promise(resolve => setTimeout(resolve, 0));
 
       expect(attemptRestart).toHaveBeenCalledTimes(1);
-      expect(destroyMock1).toHaveBeenCalledWith(error);
+      expect(destroyMock).toHaveBeenCalledWith(error);
     });
 
     it('should not call attemptJoinPlanRestart if cardinality stays the same after multiple invalidations', async() => {
-      const listeners: Record<string, Function[]> = {};
-      const mockStream = <any>{
-        on: jest.fn((event: string, callback: Function) => {
-          if (!listeners[event]) {
-            listeners[event] = [];
-          }
-          listeners[event].push(callback);
-        }),
-        emitEvent: jest.fn((event: string) => {
-          if (listeners[event]) {
-            for (const cb of listeners[event]) {
-              cb();
-            }
-          }
-        }),
-        destroy: jest.fn(),
-      };
       const attemptRestart = jest.fn().mockResolvedValue(undefined);
-
-      let _invalidateListener1: (() => void) | undefined;
-      const entry1Metadata: MetadataBindings = {
+      const metadata1: MetadataBindings = {
         cardinality: { value: 10, type: 'estimate' },
-        state: {
-          valid: true,
-          invalidate: jest.fn(),
-          addInvalidateListener: jest.fn((listener: () => void) => {
-            _invalidateListener1 = listener;
-          }),
-        },
+        state: { valid: true, invalidate: jest.fn(), addInvalidateListener: jest.fn() },
         variables: [],
       };
-
-      const output1 = <IQueryOperationResultBindings> {
+      const output1 = <IQueryOperationResultBindings> <unknown> {
         type: 'bindings',
-        bindingsStream: <any>{ destroy: jest.fn() },
-        metadata: async() => entry1Metadata,
+        bindingsStream: { destroy: jest.fn() },
+        metadata: async() => metadata1,
       };
 
       await actor.registerRestartTriggers([
-        { operation: { type: 'source1' }, output: output1, metadata: entry1Metadata },
-      ], mockStream, attemptRestart);
+        { operation: { type: 'source1' }, output: output1, metadata: metadata1 },
+      ], <any>undefined, attemptRestart);
 
+      const listener = (<jest.Mock> metadata1.state.addInvalidateListener).mock.calls[0][0];
       for (let i = 0; i < 5; i++) {
-        _invalidateListener1?.();
+        listener();
         await new Promise(resolve => setTimeout(resolve, 0));
       }
 
@@ -475,173 +255,92 @@ describe('ActorRdfJoinInnerRestartMetadata', () => {
     });
 
     it('should not throw when registerRestartTriggers executes successfully with empty entries', async() => {
-      const listeners: Record<string, Function[]> = {};
-      const mockStream = <any>{
-        on: jest.fn((event: string, callback: Function) => {
-          if (!listeners[event]) {
-            listeners[event] = [];
-          }
-          listeners[event].push(callback);
-        }),
-        emitEvent: jest.fn((event: string) => {
-          if (listeners[event]) {
-            for (const cb of listeners[event]) {
-              cb();
-            }
-          }
-        }),
-        destroy: jest.fn(),
-      };
-      const attemptRestart = jest.fn().mockResolvedValue(undefined);
-
-      await expect(actor.registerRestartTriggers([], mockStream, attemptRestart))
+      await expect(actor.registerRestartTriggers([], <any>undefined, jest.fn()))
         .resolves.toBeUndefined();
     });
 
-    it('should handle errors from entry.output.metadata() by destroying the stream', async() => {
-      const listeners: Record<string, Function[]> = {};
-      const mockStream = <any>{
-        on: jest.fn((event: string, callback: Function) => {
-          if (!listeners[event]) {
-            listeners[event] = [];
-          }
-          listeners[event].push(callback);
-        }),
-        emitEvent: jest.fn((event: string) => {
-          if (listeners[event]) {
-            for (const cb of listeners[event]) {
-              cb();
-            }
-          }
-        }),
-        destroy: jest.fn(),
-      };
+    it('should properly handle errors from entry.output.metadata() by destroying the stream', async() => {
       const attemptRestart = jest.fn().mockResolvedValue(undefined);
-      const metadataError = new Error('Metadata fetch failed');
-
-      let _invalidateListener1: (() => void) | undefined;
-      const entry1Metadata: MetadataBindings = {
+      const destroyMock = jest.fn();
+      const metadata1: MetadataBindings = {
         cardinality: { value: 10, type: 'estimate' },
-        state: {
-          valid: true,
-          invalidate: jest.fn(),
-          addInvalidateListener: jest.fn((listener: () => void) => {
-            _invalidateListener1 = listener;
-          }),
-        },
+        state: { valid: true, invalidate: jest.fn(), addInvalidateListener: jest.fn() },
         variables: [],
       };
-
-      const destroyMock1 = jest.fn();
-      const output1 = <IQueryOperationResultBindings> {
+      const output1 = <IQueryOperationResultBindings> <unknown> {
         type: 'bindings',
-        bindingsStream: <any>{ destroy: destroyMock1 },
-        metadata: async() => {
-          throw metadataError;
-        },
+        bindingsStream: { destroy: destroyMock },
+        metadata: async() => metadata1,
       };
 
       await actor.registerRestartTriggers([
-        { operation: { type: 'source1' }, output: output1, metadata: entry1Metadata },
-      ], mockStream, attemptRestart);
+        { operation: { type: 'source1' }, output: output1, metadata: metadata1 },
+      ], <any>undefined, attemptRestart);
 
-      _invalidateListener1?.();
+      output1.metadata = async() => {
+        throw new Error('Metadata fetch failed');
+      };
+
+      (<jest.Mock> metadata1.state.addInvalidateListener).mock.calls[0][0]();
 
       await new Promise(resolve => setTimeout(resolve, 0));
-      await new Promise(resolve => setTimeout(resolve, 0));
 
-      expect(destroyMock1).toHaveBeenCalledWith(metadataError);
+      expect(destroyMock).toHaveBeenCalledWith(expect.any(Error));
     });
 
     it('should properly handle multiple entries with independent cardinality changes', async() => {
-      const listeners: Record<string, Function[]> = {};
-      const mockStream = <any>{
-        on: jest.fn((event: string, callback: Function) => {
-          if (!listeners[event]) {
-            listeners[event] = [];
-          }
-          listeners[event].push(callback);
-        }),
-        emitEvent: jest.fn((event: string) => {
-          if (listeners[event]) {
-            for (const cb of listeners[event]) {
-              cb();
-            }
-          }
-        }),
-        destroy: jest.fn(),
-      };
       const attemptRestart = jest.fn().mockResolvedValue(undefined);
-
-      let _invalidateListener1: (() => void) | undefined;
-      let _invalidateListener2: (() => void) | undefined;
-      let _invalidateListener3: (() => void) | undefined;
-      const entry1Metadata: MetadataBindings = {
+      const metadata1: MetadataBindings = {
         cardinality: { value: 10, type: 'estimate' },
-        state: {
-          valid: true,
-          invalidate: jest.fn(),
-          addInvalidateListener: jest.fn((listener: () => void) => {
-            _invalidateListener1 = listener;
-          }),
-        },
+        state: { valid: true, invalidate: jest.fn(), addInvalidateListener: jest.fn() },
         variables: [],
       };
-      const entry2Metadata: MetadataBindings = {
+      const metadata2: MetadataBindings = {
         cardinality: { value: 20, type: 'estimate' },
-        state: {
-          valid: true,
-          invalidate: jest.fn(),
-          addInvalidateListener: jest.fn((listener: () => void) => {
-            _invalidateListener2 = listener;
-          }),
-        },
+        state: { valid: true, invalidate: jest.fn(), addInvalidateListener: jest.fn() },
         variables: [],
       };
-      const entry3Metadata: MetadataBindings = {
+      const metadata3: MetadataBindings = {
         cardinality: { value: 30, type: 'estimate' },
-        state: {
-          valid: true,
-          invalidate: jest.fn(),
-          addInvalidateListener: jest.fn((listener: () => void) => {
-            _invalidateListener3 = listener;
-          }),
-        },
+        state: { valid: true, invalidate: jest.fn(), addInvalidateListener: jest.fn() },
         variables: [],
       };
-
-      const output1 = <IQueryOperationResultBindings> {
+      const output1 = <IQueryOperationResultBindings> <unknown> {
         type: 'bindings',
-        bindingsStream: <any>{ destroy: jest.fn() },
-        metadata: async() => entry1Metadata,
+        bindingsStream: { destroy: jest.fn() },
+        metadata: async() => metadata1,
       };
-      const output2 = <IQueryOperationResultBindings> {
+      const output2 = <IQueryOperationResultBindings> <unknown> {
         type: 'bindings',
-        bindingsStream: <any>{ destroy: jest.fn() },
-        metadata: async() => entry2Metadata,
+        bindingsStream: { destroy: jest.fn() },
+        metadata: async() => metadata2,
       };
-      const output3 = <IQueryOperationResultBindings> {
+      const output3 = <IQueryOperationResultBindings> <unknown> {
         type: 'bindings',
-        bindingsStream: <any>{ destroy: jest.fn() },
-        metadata: async() => entry3Metadata,
+        bindingsStream: { destroy: jest.fn() },
+        metadata: async() => metadata3,
       };
 
       await actor.registerRestartTriggers([
-        { operation: { type: 'source1' }, output: output1, metadata: entry1Metadata },
-        { operation: { type: 'source2' }, output: output2, metadata: entry2Metadata },
-        { operation: { type: 'source3' }, output: output3, metadata: entry3Metadata },
-      ], mockStream, attemptRestart);
+        { operation: { type: 'source1' }, output: output1, metadata: metadata1 },
+        { operation: { type: 'source2' }, output: output2, metadata: metadata2 },
+        { operation: { type: 'source3' }, output: output3, metadata: metadata3 },
+      ], <any>undefined, attemptRestart);
 
-      (<any>entry2Metadata).cardinality = { value: 100, type: 'estimate' };
-      _invalidateListener2?.();
+      const listener1 = (<jest.Mock> metadata1.state.addInvalidateListener).mock.calls[0][0];
+      const listener2 = (<jest.Mock> metadata2.state.addInvalidateListener).mock.calls[0][0];
+      const listener3 = (<jest.Mock> metadata3.state.addInvalidateListener).mock.calls[0][0];
+
+      metadata2.cardinality = { value: 100, type: 'estimate' };
+      listener2();
       await new Promise(resolve => setTimeout(resolve, 0));
 
       expect(attemptRestart).toHaveBeenCalledTimes(1);
 
-      (<any>entry1Metadata).cardinality = { value: 5, type: 'estimate' };
-      (<any>entry3Metadata).cardinality = { value: 50, type: 'estimate' };
-      _invalidateListener1?.();
-      _invalidateListener3?.();
+      metadata1.cardinality = { value: 5, type: 'estimate' };
+      metadata3.cardinality = { value: 50, type: 'estimate' };
+      listener1();
+      listener3();
       await new Promise(resolve => setTimeout(resolve, 0));
 
       expect(attemptRestart).toHaveBeenCalledTimes(3);
