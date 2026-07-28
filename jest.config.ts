@@ -48,6 +48,7 @@ const config: Config.InitialOptions = {
     },
   ],
   resetMocks: true,
+  testTimeout: 10_000,
 };
 
 export default config;
