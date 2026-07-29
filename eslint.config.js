@@ -2,6 +2,15 @@ const config = require('@rubensworks/eslint-config');
 
 module.exports = config([
   {
+    files: [ '**/*.js' ],
+  },
+  {
+    files: [ 'engines/*/spec/sparql-engine.js' ],
+    rules: {
+      'import/no-extraneous-dependencies': 'off',
+    },
+  },
+  {
     files: [ '**/*.ts' ],
     languageOptions: {
       parserOptions: {
