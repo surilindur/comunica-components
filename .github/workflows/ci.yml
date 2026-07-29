@@ -55,6 +55,12 @@ jobs:
         run: corepack enable
       - name: Install dependencies
         run: yarn install --immutable
+      - name: Execute TypeScript compiler
+        run: yarn run build:ts
+      - name: Generate Components.js declarations
+        run: yarn run build:components
+      - name: Compile query engines
+        run: yarn run build:engines
       - name: Execute unit tests
         run: yarn run test
       - name: Execute specification tests
@@ -110,10 +116,7 @@ jobs:
 
   coveralls:
     name: Coverage check
-    needs:
-      - test
-      - docker
-      - documentation
+    needs: test
     runs-on: ubuntu-latest
     steps:
       - name: Consolidate test coverage from different jobs
