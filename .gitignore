@@ -1,3 +1,4 @@
+.rdf-test-suite-cache/
 .yarn/
 components/
 componentsjs-error-state.json
@@ -6,6 +7,7 @@ documentation
 engines/**/*.d.ts
 engines/**/*.js
 engines/**/*.js.map
+!engines/**/spec/sparql-engine.js
 node_modules/
 packages/**/*.d.ts
 packages/**/*.js

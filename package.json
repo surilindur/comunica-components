@@ -18,7 +18,9 @@
     "clean": "git clean -dfx",
     "doc": "typedoc",
     "lint": "eslint .",
-    "test": "jest"
+    "test": "jest",
+    "test:spec": "yarn workspace @comunica/query-sparql-prototype run spec",
+    "test:system": "yarn workspace @comunica/query-sparql-prototype run spec"
   },
   "devDependencies": {
     "@comunica/utils-jest": "^5.0.0",
@@ -29,6 +31,7 @@
     "componentsjs-generator": "^4.0.0",
     "eslint": "^8.0.0",
     "jest": "^30.0.0",
+    "rdf-test-suite": "^2.0.0",
     "ts-jest": "^29.0.0",
     "ts-node": "^10.0.0",
     "typedoc": "^0.28.0",
