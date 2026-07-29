@@ -35,7 +35,7 @@ jobs:
         run: yarn run lint
 
   test:
-    name: Unit tests
+    name: Test
     needs: lint
     strategy:
       matrix:
@@ -112,6 +112,8 @@ jobs:
     name: Coverage check
     needs:
       - test
+      - docker
+      - documentation
     runs-on: ubuntu-latest
     steps:
       - name: Consolidate test coverage from different jobs
