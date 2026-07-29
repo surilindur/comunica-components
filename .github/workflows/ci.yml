@@ -40,6 +40,7 @@ jobs:
     strategy:
       matrix:
         node-version:
+          - 22.x
           - 24.x
           - 26.x
     runs-on: ubuntu-latest
@@ -54,8 +55,12 @@ jobs:
         run: corepack enable
       - name: Install dependencies
         run: yarn install --immutable
-      - name: Execute package tests
+      - name: Execute unit tests
         run: yarn run test
+      - name: Execute specification tests
+        run: yarn run test:spec
+      - name: Execute system tests
+        run: yarn run test:system
       - name: Submit coverage results
         uses: coverallsapp/github-action@5cbfd81b66ca5d10c19b062c04de0199c215fb6e # v2.3.7
         with:
@@ -63,33 +68,6 @@ jobs:
           flag-name: ${{ matrix.node-version }}
           parallel: true
           fail-on-error: true
-
-  spec:
-    name: System tests
-    needs: test
-    strategy:
-      matrix:
-        node-version:
-          - 24.x
-          - 26.x
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
-        with:
-          node-version: ${{ matrix.node-version }}
-      - name: Enable corepack
-        run: corepack enable
-      - name: Install dependencies
-        run: yarn install --immutable
-      - name: Build query engines
-        run: yarn run build
-      - name: Execute specification tests
-        run: yarn run test:spec
-      - name: Execute system tests
-        run: yarn run test:system
 
   docker:
     name: Docker
@@ -134,7 +112,6 @@ jobs:
     name: Coverage check
     needs:
       - test
-      - spec
     runs-on: ubuntu-latest
     steps:
       - name: Consolidate test coverage from different jobs
